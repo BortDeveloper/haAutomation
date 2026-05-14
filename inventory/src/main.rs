@@ -31,9 +31,25 @@ enum Command {
         listen: String,
     },
     /// Synchronisiert das Inventar aus einer Live-Quelle.
-    Sync,
+    Sync {
+        #[command(subcommand)]
+        source: SyncSource,
+    },
     /// Wendet ausstehende DB-Migrationen an.
     Migrate,
+}
+
+#[derive(Subcommand)]
+enum SyncSource {
+    /// Home Assistant: GET /api/states gegen eine HA-Instanz.
+    Ha {
+        /// Basis-URL, z.B. http://homeassistant.local:8123.
+        #[arg(long, env = "HA_URL")]
+        url: String,
+        /// Long-Lived Access Token. Auch ueber HA_TOKEN env setzbar.
+        #[arg(long, env = "HA_TOKEN", hide_env_values = true)]
+        token: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -53,9 +69,21 @@ fn main() -> Result<()> {
             );
             http::serve(server, conn, auth_cfg)?;
         }
-        Command::Sync => {
-            println!("TODO S9+: Sync gegen konfigurierte Quelle ausfuehren");
-        }
+        Command::Sync { source } => match source {
+            SyncSource::Ha { url, token } => {
+                let conn = db::open(&cli.db)?;
+                db::migrate(&conn)?;
+                let entities = sync::ha::fetch_states(&url, &token)?;
+                let devices = sync::ha::map_to_devices(&entities);
+                let n = db::upsert_devices(&conn, &devices)?;
+                println!(
+                    "HA sync ok: {} entities total, {} devices upserted ({}-Quelle)",
+                    entities.len(),
+                    n,
+                    "ha"
+                );
+            }
+        },
         Command::Migrate => {
             let conn = db::open(&cli.db)?;
             db::migrate(&conn)?;
