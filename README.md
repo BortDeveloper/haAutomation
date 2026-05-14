@@ -22,6 +22,7 @@ VPS-VPS, das ueber VPN das heimische Netz inspiziert.
 - [Anforderungen](docs/requirements.md) — was gebaut wird und warum
 - [Architektur](docs/architecture.md) — Komponenten, Datenfluss, Trust
 - [Roadmap](docs/roadmap.md) — Schrittplan S1–S14
+- [VPS-Setup](docs/vps-setup.md) — Server-Bootstrap, SSH/Keys, Operations, DR
 - [Inventory Backend](inventory/) — Rust-App
 - [Docker / VPN](inventory/docker/README.md) — Sidecar-Setup, Provider-Wechsel
 - [Secrets](inventory/secrets/) — sops+age-Layout
