@@ -28,7 +28,10 @@ weitergehen.
 | S9 | `sync/ha.rs` + Mapping `HaEntity -> Device`, gegen Mock-Server im Test | Mock-JSON -> N erwartete Devices |
 | S10 | HA-Sync gegen echtes HA (lokal im LAN) | Reale Devices in UI, idempotenter Re-Run |
 | S11 | CCU-Sync (XML-API), Firmware in `firmware_snapshot` mit Timestamp | Re-Run ohne FW-Aenderung -> 0 neue Snapshots; FW geaendert -> 1 neuer |
-| S12 | `git_publish.rs`: nach Sync `git add/commit/push` nur bei Diff | Synth. Datenaenderung -> Commit + Push; kein Diff -> kein Commit |
+| S11b | Philips-Hue-Sync gegen mehrere Bridges (`sync hue --config`) | Mock-Bridge -> N Lights/Sensoren mit Firmware; Diff-basierte FW-Snapshots |
+| S11c | Shelly-Sync via mDNS-Discovery + Per-Device-Fetch (Gen1+Gen2) | Mock-Device -> Devices+Firmware; ohne Discovery laeuft `--ip` Liste |
+| S12a | YAML-Export pro Sync-Quelle nach `inventory/yaml/<source>.yaml` | nach Sync schreibt Datei; stable sortiert; deterministisch |
+| S12b | `git_publish.rs`: `git add/commit/push` nur bei YAML-Diff | Synth. Datenaenderung -> Commit + Push; kein Diff -> kein Commit |
 
 ## Phase 4 — VPS-Deployment
 
