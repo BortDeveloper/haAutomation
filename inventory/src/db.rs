@@ -1,6 +1,6 @@
 use crate::types::Device;
 use anyhow::{Context, Result};
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, OptionalExtension};
 use std::path::Path;
 
 /// Liste aller bekannten Migrations, geordnet nach Version.
@@ -84,6 +84,48 @@ pub fn upsert_devices(conn: &Connection, devices: &[Device]) -> Result<usize> {
     }
     tx.commit()?;
     Ok(count)
+}
+
+/// Fuegt nur dann einen neuen firmware_snapshot ein, wenn sich der Firmware-Stand
+/// gegenueber dem letzten Snapshot dieses Geraets unterscheidet (oder noch keiner
+/// existiert). Gibt true zurueck, wenn ein Snapshot geschrieben wurde.
+pub fn record_firmware_if_changed(
+    conn: &Connection,
+    source: &str,
+    source_id: &str,
+    firmware: &str,
+) -> Result<bool> {
+    let device_id: Option<i64> = conn
+        .query_row(
+            "SELECT id FROM devices WHERE source = ?1 AND source_id = ?2",
+            params![source, source_id],
+            |r| r.get(0),
+        )
+        .optional()?;
+
+    let Some(device_id) = device_id else {
+        return Ok(false);
+    };
+
+    let latest: Option<String> = conn
+        .query_row(
+            "SELECT firmware FROM firmware_snapshot
+             WHERE device_id = ?1
+             ORDER BY observed_at DESC, id DESC LIMIT 1",
+            params![device_id],
+            |r| r.get(0),
+        )
+        .optional()?;
+
+    if latest.as_deref() == Some(firmware) {
+        return Ok(false);
+    }
+
+    conn.execute(
+        "INSERT INTO firmware_snapshot (device_id, firmware) VALUES (?1, ?2)",
+        params![device_id, firmware],
+    )?;
+    Ok(true)
 }
 
 /// Liefert alle Geraete, sortiert nach (source, source_id) fuer Determinismus.
@@ -208,6 +250,70 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM devices", [], |r| r.get(0))
             .unwrap();
         assert_eq!(n, 3, "doppelter Lauf darf keine Duplikate erzeugen");
+    }
+
+    fn make_test_device(source: &str, id: &str) -> Device {
+        Device {
+            source: source.into(),
+            source_id: id.into(),
+            name: "Test".into(),
+            manufacturer: None,
+            model: None,
+            kind: None,
+            room: None,
+        }
+    }
+
+    #[test]
+    fn firmware_first_call_inserts() {
+        let conn = fresh();
+        migrate(&conn).unwrap();
+        upsert_devices(&conn, &[make_test_device("ccu", "ABC123")]).unwrap();
+
+        let inserted = record_firmware_if_changed(&conn, "ccu", "ABC123", "1.0").unwrap();
+        assert!(inserted);
+        let n: i64 = conn
+            .query_row("SELECT COUNT(*) FROM firmware_snapshot", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(n, 1);
+    }
+
+    #[test]
+    fn firmware_unchanged_does_not_insert() {
+        let conn = fresh();
+        migrate(&conn).unwrap();
+        upsert_devices(&conn, &[make_test_device("ccu", "ABC123")]).unwrap();
+
+        record_firmware_if_changed(&conn, "ccu", "ABC123", "1.0").unwrap();
+        let inserted = record_firmware_if_changed(&conn, "ccu", "ABC123", "1.0").unwrap();
+        assert!(!inserted);
+        let n: i64 = conn
+            .query_row("SELECT COUNT(*) FROM firmware_snapshot", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(n, 1);
+    }
+
+    #[test]
+    fn firmware_change_inserts_new_snapshot() {
+        let conn = fresh();
+        migrate(&conn).unwrap();
+        upsert_devices(&conn, &[make_test_device("ccu", "ABC123")]).unwrap();
+
+        record_firmware_if_changed(&conn, "ccu", "ABC123", "1.0").unwrap();
+        let inserted = record_firmware_if_changed(&conn, "ccu", "ABC123", "1.1").unwrap();
+        assert!(inserted);
+        let n: i64 = conn
+            .query_row("SELECT COUNT(*) FROM firmware_snapshot", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(n, 2);
+    }
+
+    #[test]
+    fn firmware_unknown_device_is_noop() {
+        let conn = fresh();
+        migrate(&conn).unwrap();
+        let inserted = record_firmware_if_changed(&conn, "ccu", "NOPE", "1.0").unwrap();
+        assert!(!inserted);
     }
 
     #[test]

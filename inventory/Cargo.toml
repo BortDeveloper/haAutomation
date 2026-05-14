@@ -25,6 +25,9 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml_ng = "0.10"
 
+# XML (fuer CCU/RaspberryMatic devicelist.cgi)
+roxmltree = "0.20"
+
 # Error-Handling
 anyhow = "1"
 
