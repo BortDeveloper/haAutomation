@@ -1,4 +1,3 @@
-#![allow(dead_code)] // wird ab S5 / S9 verwendet
 use serde::{Deserialize, Serialize};
 
 /// Ein Geraet im Inventar. Spiegelt die Tabelle `devices` ohne die

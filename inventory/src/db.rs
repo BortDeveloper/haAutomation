@@ -88,7 +88,6 @@ pub fn upsert_devices(conn: &Connection, devices: &[Device]) -> Result<usize> {
 }
 
 /// Liefert alle Geraete, sortiert nach (source, source_id) fuer Determinismus.
-#[allow(dead_code)] // wird ab S5 verkabelt
 pub fn list_devices(conn: &Connection) -> Result<Vec<Device>> {
     let mut stmt = conn.prepare(
         "SELECT source, source_id, name, manufacturer, model, kind, room

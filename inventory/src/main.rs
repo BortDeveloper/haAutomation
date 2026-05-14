@@ -5,6 +5,7 @@ use std::path::PathBuf;
 mod db;
 mod http;
 mod types;
+mod views;
 mod yaml_io;
 
 #[derive(Parser)]
@@ -36,9 +37,11 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Command::Serve { listen } => {
+            let conn = db::open(&cli.db)?;
+            db::migrate(&conn)?;
             let server = http::bind(&listen)?;
-            println!("listening on {}", listen);
-            http::serve(server)?;
+            println!("listening on {} (db: {})", listen, cli.db.display());
+            http::serve(server, conn)?;
         }
         Command::Sync => {
             println!("TODO S9+: Sync gegen konfigurierte Quelle ausfuehren");
