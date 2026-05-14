@@ -9,7 +9,7 @@ publish = false
 
 [dependencies]
 # CLI
-clap = { version = "4", features = ["derive"] }
+clap = { version = "4", features = ["derive", "env"] }
 
 # HTTP server (sync, ohne tokio)
 tiny_http = "0.12"
