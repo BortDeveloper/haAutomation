@@ -1,0 +1,38 @@
+[package]
+name = "inventory"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+description = "haBortfeld inventory backend"
+license = "UNLICENSED"
+publish = false
+
+[dependencies]
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# HTTP server (sync, ohne tokio)
+tiny_http = "0.12"
+
+# HTTP client (sync, blocking)
+ureq = { version = "2", default-features = false, features = ["tls"] }
+
+# Datenbank
+rusqlite = { version = "0.31", features = ["bundled"] }
+
+# Serialisierung
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml_ng = "0.10"
+
+# Error-Handling
+anyhow = "1"
+
+[profile.release]
+strip = true
+lto = "thin"
+codegen-units = 1
+opt-level = "z"
+
+[profile.dev]
+opt-level = 0
