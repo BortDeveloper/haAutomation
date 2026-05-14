@@ -50,6 +50,12 @@ enum SyncSource {
         #[arg(long, env = "HA_TOKEN", hide_env_values = true)]
         token: String,
     },
+    /// CCU / RaspberryMatic: GET /addons/xmlapi/devicelist.cgi.
+    Ccu {
+        /// Basis-URL der CCU, z.B. http://192.168.10.6
+        #[arg(long, env = "CCU_URL")]
+        url: String,
+    },
 }
 
 fn main() -> Result<()> {
@@ -77,10 +83,31 @@ fn main() -> Result<()> {
                 let devices = sync::ha::map_to_devices(&entities);
                 let n = db::upsert_devices(&conn, &devices)?;
                 println!(
-                    "HA sync ok: {} entities total, {} devices upserted ({}-Quelle)",
+                    "HA sync ok: {} entities, {} devices upserted",
                     entities.len(),
+                    n
+                );
+            }
+            SyncSource::Ccu { url } => {
+                let conn = db::open(&cli.db)?;
+                db::migrate(&conn)?;
+                let ccu_devices = sync::ccu::fetch_devicelist(&url)?;
+                let devices = sync::ccu::map_to_devices(&ccu_devices);
+                let n = db::upsert_devices(&conn, &devices)?;
+                let mut new_snaps = 0usize;
+                for d in &ccu_devices {
+                    if d.firmware.is_empty() {
+                        continue;
+                    }
+                    if db::record_firmware_if_changed(&conn, "ccu", &d.address, &d.firmware)? {
+                        new_snaps += 1;
+                    }
+                }
+                println!(
+                    "CCU sync ok: {} devices total, {} upserted, {} neue firmware-snapshots",
+                    ccu_devices.len(),
                     n,
-                    "ha"
+                    new_snaps
                 );
             }
         },

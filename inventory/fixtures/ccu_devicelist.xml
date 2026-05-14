@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<deviceList>
+  <device name="Wandthermostat Wohnzimmer" address="0001D3C99A1234" ise_id="3001"
+          interface="HmIP-RF" device_type="HmIP-WTH-2" parent_type="" parent=""
+          firmware="2.6.4" available_firmware="" updatable="0">
+    <channel name="WoZi:0" address="0001D3C99A1234:0" ise_id="3002" direction="0"/>
+    <channel name="WoZi:1" address="0001D3C99A1234:1" ise_id="3003" direction="0"/>
+  </device>
+  <device name="Wandschalter Flur" address="MEQ0099887" ise_id="4001"
+          interface="BidCos-RF" device_type="HM-LC-Sw1-Pl-DN-R1" parent_type="" parent=""
+          firmware="2.6" available_firmware="" updatable="0">
+    <channel name="Flur:0" address="MEQ0099887:0" ise_id="4002"/>
+  </device>
+  <device name="Tasterbatterie Kueche" address="OEQ1234567" ise_id="5001"
+          interface="BidCos-RF" device_type="HM-PB-2-WM55" parent_type="" parent=""
+          firmware="2.4" available_firmware="2.5" updatable="1"/>
+  <device name="HmIP-RCV-50" address="HmIP-RF" ise_id="1"
+          interface="HmIP-RF" device_type="HmIP-RCV-50" firmware=""/>
+</deviceList>
