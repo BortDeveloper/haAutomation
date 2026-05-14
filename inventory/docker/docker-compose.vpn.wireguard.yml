@@ -1,0 +1,62 @@
+# Overlay: VPN via WireGuard.
+#
+# Anders als Tailscale/NetBird kein Auth-Key, sondern eine komplette Config-Datei
+# wg0.conf (mit PrivateKey + Peers). Diese ist sops-verschlüsselt im Repo
+# (inventory/secrets/vpn.wireguard/wg0.conf.enc).
+#
+# Ein Init-Container 'vpn-init' entschlüsselt einmalig in ein Named Volume,
+# bevor der wireguard-Container startet. Der age-Key liegt auf dem Host unter
+# /etc/inventory/age.key (chmod 400, root:root).
+
+services:
+  vpn-init:
+    image: ghcr.io/getsops/sops:latest
+    container_name: vpn-init
+    entrypoint: ["sh", "-c"]
+    command:
+      - |
+        set -eu
+        sops -d /enc/wg0.conf.enc > /out/wg0.conf
+        chmod 600 /out/wg0.conf
+        echo "wg0.conf decrypted ($(wc -c < /out/wg0.conf) bytes)"
+    environment:
+      SOPS_AGE_KEY_FILE: /age.key
+    volumes:
+      - ../secrets/vpn.wireguard/wg0.conf.enc:/enc/wg0.conf.enc:ro
+      - ../secrets/age.key:/age.key:ro
+      - wg-conf:/out
+
+  vpn:
+    image: linuxserver/wireguard:latest
+    container_name: vpn-wireguard
+    restart: unless-stopped
+    depends_on:
+      vpn-init:
+        condition: service_completed_successfully
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      PUID: "1000"
+      PGID: "1000"
+      TZ: Europe/Berlin
+    volumes:
+      - wg-conf:/config/wg_confs:ro
+      - /lib/modules:/lib/modules:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "wg show wg0 latest-handshakes 2>/dev/null | awk '{ if ($$2 > 0 && (systime()-$$2) < 300) exit 0; exit 1 }'"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - app-net
+
+volumes:
+  wg-conf:

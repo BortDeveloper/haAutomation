@@ -1,0 +1,40 @@
+# Overlay: VPN via NetBird (SaaS oder self-hosted).
+#
+# Secrets via justfile aus inventory/secrets/vpn.netbird.env.enc.
+# Erwartete Variablen:
+#   NB_SETUP_KEY       Setup-Key aus NetBird-UI
+#   NB_MANAGEMENT_URL  leer (oder weglassen) => SaaS api.netbird.io
+#                      gesetzt => self-hosted, z.B. https://nb.example.com
+#   NB_HOSTNAME        (optional, default: inventory-vps)
+
+services:
+  vpn:
+    image: netbirdio/netbird:latest
+    container_name: vpn-netbird
+    hostname: ${NB_HOSTNAME:-inventory-vps}
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - SYS_ADMIN
+      - SYS_RESOURCE
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      NB_SETUP_KEY: ${NB_SETUP_KEY:?NB_SETUP_KEY must be set}
+      NB_MANAGEMENT_URL: ${NB_MANAGEMENT_URL:-}
+      NB_HOSTNAME: ${NB_HOSTNAME:-inventory-vps}
+    volumes:
+      - netbird-state:/etc/netbird
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "netbird status 2>/dev/null | grep -qi 'Connected'"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    networks:
+      - app-net
+
+volumes:
+  netbird-state:

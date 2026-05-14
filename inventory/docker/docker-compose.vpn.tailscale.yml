@@ -1,0 +1,39 @@
+# Overlay: VPN via Tailscale.
+#
+# Secrets via justfile aus inventory/secrets/vpn.tailscale.env.enc dekryptiert
+# und als --env-file an docker compose übergeben. Erwartete Variablen:
+#   TS_AUTHKEY    Reusable oder Ephemeral, mit Tag tag:inventory
+#   TS_HOSTNAME   (optional, default: inventory-vps)
+
+services:
+  vpn:
+    image: tailscale/tailscale:latest
+    container_name: vpn-tailscale
+    hostname: ${TS_HOSTNAME:-inventory-vps}
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    environment:
+      TS_AUTHKEY: ${TS_AUTHKEY:?TS_AUTHKEY must be set}
+      TS_HOSTNAME: ${TS_HOSTNAME:-inventory-vps}
+      TS_STATE_DIR: /var/lib/tailscale
+      TS_USERSPACE: "false"
+      TS_EXTRA_ARGS: "--ssh=false --advertise-tags=tag:inventory --accept-routes"
+    volumes:
+      - tailscale-state:/var/lib/tailscale
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - "tailscale status --json 2>/dev/null | grep -q '\"BackendState\":\"Running\"'"
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    networks:
+      - app-net
+
+volumes:
+  tailscale-state:

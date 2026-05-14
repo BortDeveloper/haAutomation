@@ -1,0 +1,51 @@
+# Base stack. Provider-unabhängig.
+# Start: nicht direkt — immer mit einem VPN-Overlay kombinieren via justfile.
+#
+# Konvention: der VPN-Sidecar heißt IMMER 'vpn'. Die inventory-App joint
+# seinen Netzwerk-Namespace und ist deshalb komplett VPN-agnostisch.
+#
+# Caddy reicht inventory nach außen. Da inventory keinen eigenen Netzwerk-
+# Stack hat, erreicht Caddy es über den vpn-Service-Namen.
+
+services:
+  inventory:
+    image: inventory:dev
+    container_name: inventory
+    restart: unless-stopped
+    network_mode: "service:vpn"
+    depends_on:
+      vpn:
+        condition: service_healthy
+    volumes:
+      - ./data:/var/lib/inventory:rw
+      - ./secrets/age.key:/etc/inventory/age.key:ro
+    environment:
+      INVENTORY_DB: /var/lib/inventory/inventory.db
+      INVENTORY_LISTEN: "0.0.0.0:8080"
+      AUTH_HEADER: X-Authentik-Username
+      AGE_KEY_FILE: /etc/inventory/age.key
+      RUST_LOG: info
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - app-net
+    depends_on:
+      - inventory
+
+networks:
+  app-net:
+    driver: bridge
+
+volumes:
+  caddy-data:
+  caddy-config:
