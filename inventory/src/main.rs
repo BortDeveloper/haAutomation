@@ -1,9 +1,16 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
+use std::path::PathBuf;
+
+mod db;
 
 #[derive(Parser)]
 #[command(name = "inventory", version, about = "haAutomation inventory backend")]
 struct Cli {
+    /// Pfad zur SQLite-Datei. Wird angelegt falls nicht vorhanden.
+    #[arg(long, default_value = "inventory.db", env = "INVENTORY_DB")]
+    db: PathBuf,
+
     #[command(subcommand)]
     command: Command,
 }
@@ -28,7 +35,9 @@ fn main() -> Result<()> {
             println!("TODO S9+: Sync gegen konfigurierte Quelle ausfuehren");
         }
         Command::Migrate => {
-            println!("TODO S2: Migrationen anwenden");
+            let conn = db::open(&cli.db)?;
+            db::migrate(&conn)?;
+            println!("Migrationen angewandt: {}", cli.db.display());
         }
     }
     Ok(())
