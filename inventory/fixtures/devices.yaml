@@ -1,0 +1,26 @@
+# Test-Fixture: drei Geraete aus unterschiedlichen Quellen.
+# Wird von S3-Tests gelesen, nicht zur Laufzeit.
+
+- source: ha
+  source_id: light.RoomA_decke
+  name: RoomA Decke
+  manufacturer: IKEA Tradfri
+  model: LED2003G10
+  kind: light
+  room: RoomA
+
+- source: ccu
+  source_id: "0001AAAAAAAAA1"
+  name: Thermostat RoomA
+  manufacturer: eQ-3
+  model: HmIP-WTH-2
+  kind: thermostat
+  room: LivingRoom
+
+- source: z2m
+  source_id: "0x00158d0001234567"
+  name: Tuerkontakt Eingang
+  manufacturer: Aqara
+  model: MCCGQ11LM
+  kind: contact
+  room: Hallway

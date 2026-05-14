@@ -1,3 +1,4 @@
+use crate::types::Device;
 use anyhow::{Context, Result};
 use rusqlite::{params, Connection};
 use std::path::Path;
@@ -56,9 +57,73 @@ pub fn migrate(conn: &Connection) -> Result<()> {
     Ok(())
 }
 
+/// Fuegt Geraete ein oder aktualisiert sie (Natural Key: source + source_id).
+/// Aktualisiert last_seen und active=1 bei jedem Aufruf.
+#[allow(dead_code)] // wird ab S10 verkabelt
+pub fn upsert_devices(conn: &Connection, devices: &[Device]) -> Result<usize> {
+    let tx = conn.unchecked_transaction()?;
+    let mut count = 0usize;
+    {
+        let mut stmt = tx.prepare(
+            "INSERT INTO devices (source, source_id, name, manufacturer, model, kind, room, last_seen)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, CURRENT_TIMESTAMP)
+             ON CONFLICT(source, source_id) DO UPDATE SET
+                name = excluded.name,
+                manufacturer = excluded.manufacturer,
+                model = excluded.model,
+                kind = excluded.kind,
+                room = excluded.room,
+                last_seen = CURRENT_TIMESTAMP,
+                active = 1",
+        )?;
+        for d in devices {
+            stmt.execute(params![
+                d.source, d.source_id, d.name, d.manufacturer, d.model, d.kind, d.room
+            ])?;
+            count += 1;
+        }
+    }
+    tx.commit()?;
+    Ok(count)
+}
+
+/// Liefert alle Geraete, sortiert nach (source, source_id) fuer Determinismus.
+#[allow(dead_code)] // wird ab S5 verkabelt
+pub fn list_devices(conn: &Connection) -> Result<Vec<Device>> {
+    let mut stmt = conn.prepare(
+        "SELECT source, source_id, name, manufacturer, model, kind, room
+         FROM devices
+         ORDER BY source, source_id",
+    )?;
+    let rows = stmt.query_map([], |r| {
+        Ok(Device {
+            source: r.get(0)?,
+            source_id: r.get(1)?,
+            name: r.get(2)?,
+            manufacturer: r.get(3)?,
+            model: r.get(4)?,
+            kind: r.get(5)?,
+            room: r.get(6)?,
+        })
+    })?;
+    let mut out = Vec::new();
+    for row in rows {
+        out.push(row?);
+    }
+    Ok(out)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::yaml_io;
+    use std::path::PathBuf;
+
+    fn fixture(name: &str) -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("fixtures")
+            .join(name)
+    }
 
     fn fresh() -> Connection {
         Connection::open(":memory:").unwrap()
@@ -111,5 +176,55 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM schema_migrations", [], |r| r.get(0))
             .unwrap();
         assert_eq!(n, MIGRATIONS.len() as i64);
+    }
+
+    fn sorted(mut v: Vec<Device>) -> Vec<Device> {
+        v.sort_by(|a, b| (&a.source, &a.source_id).cmp(&(&b.source, &b.source_id)));
+        v
+    }
+
+    #[test]
+    fn roundtrip_devices_from_fixture() {
+        let conn = fresh();
+        migrate(&conn).unwrap();
+
+        let input = yaml_io::load_devices(fixture("devices.yaml")).unwrap();
+        assert_eq!(input.len(), 3, "Fixture muss 3 Geraete liefern");
+
+        let n = upsert_devices(&conn, &input).unwrap();
+        assert_eq!(n, 3);
+
+        let read = list_devices(&conn).unwrap();
+        assert_eq!(read.len(), 3);
+        assert_eq!(sorted(input), sorted(read));
+    }
+
+    #[test]
+    fn upsert_is_idempotent_no_duplicates() {
+        let conn = fresh();
+        migrate(&conn).unwrap();
+        let input = yaml_io::load_devices(fixture("devices.yaml")).unwrap();
+        upsert_devices(&conn, &input).unwrap();
+        upsert_devices(&conn, &input).unwrap();
+        let n: i64 = conn
+            .query_row("SELECT COUNT(*) FROM devices", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(n, 3, "doppelter Lauf darf keine Duplikate erzeugen");
+    }
+
+    #[test]
+    fn upsert_updates_existing_row() {
+        let conn = fresh();
+        migrate(&conn).unwrap();
+        let mut input = yaml_io::load_devices(fixture("devices.yaml")).unwrap();
+        upsert_devices(&conn, &input).unwrap();
+
+        // Aenderung simulieren: Raum umbenennen
+        input[0].room = Some("RoomA neu".into());
+        upsert_devices(&conn, &input).unwrap();
+
+        let read = list_devices(&conn).unwrap();
+        let updated = read.iter().find(|d| d.source_id == "light.RoomA_decke").unwrap();
+        assert_eq!(updated.room.as_deref(), Some("RoomA neu"));
     }
 }

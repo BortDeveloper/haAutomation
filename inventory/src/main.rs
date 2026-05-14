@@ -3,6 +3,8 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 mod db;
+mod types;
+mod yaml_io;
 
 #[derive(Parser)]
 #[command(name = "inventory", version, about = "haAutomation inventory backend")]
