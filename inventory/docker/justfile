@@ -1,0 +1,84 @@
+# Dispatcher für das Compose-Setup.
+# Provider-Auswahl explizit als Argument — kein magisches Default.
+#
+# Beispiele:
+#   just up tailscale
+#   just up netbird
+#   just up wireguard
+#   just down tailscale
+#   just status tailscale
+#
+# Voraussetzungen auf dem Host:
+#   - docker + docker compose v2
+#   - just  (https://github.com/casey/just)
+#   - sops  (für tailscale/netbird env decryption)
+#   - age-Key in /etc/inventory/age.key (chmod 400, root:root)
+#   - Datei inventory/secrets/vpn.<provider>.env.enc (für ts/nb)
+#     oder    inventory/secrets/vpn.wireguard/wg0.conf.enc (für wg)
+
+set shell := ["bash", "-cu"]
+
+age_key   := "/etc/inventory/age.key"
+secrets   := "../secrets"
+runtime   := "/run/inventory"
+base      := "docker-compose.yml"
+
+# tmpfs-Pfad für transient dekryptierte env-Files
+_prepare-runtime:
+    sudo mkdir -p {{runtime}}
+    sudo chmod 700 {{runtime}}
+
+# Entschlüsselt vpn.<provider>.env.enc nach {{runtime}}/vpn.env (tmpfs).
+# Für wireguard: keine env-Datei nötig, init-Container im Overlay erledigt das.
+_decrypt-env provider:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [[ "{{provider}}" == "wireguard" ]]; then
+      echo "wireguard: env-Decryption nicht nötig (init-Container)"
+      exit 0
+    fi
+    src="{{secrets}}/vpn.{{provider}}.env.enc"
+    dst="{{runtime}}/vpn.env"
+    if [[ ! -f "$src" ]]; then
+      echo "FEHLT: $src" >&2; exit 1
+    fi
+    SOPS_AGE_KEY_FILE="{{age_key}}" sops -d "$src" | sudo tee "$dst" >/dev/null
+    sudo chmod 600 "$dst"
+
+# Räumt transient dekryptierte Secrets weg.
+_clean-runtime:
+    -sudo rm -f {{runtime}}/vpn.env
+
+_compose-cmd provider:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    overlay="docker-compose.vpn.{{provider}}.yml"
+    if [[ ! -f "$overlay" ]]; then
+      echo "Unbekannter Provider: {{provider}}" >&2; exit 1
+    fi
+    if [[ "{{provider}}" == "wireguard" ]]; then
+      echo "docker compose -f {{base}} -f $overlay"
+    else
+      echo "docker compose --env-file {{runtime}}/vpn.env -f {{base}} -f $overlay"
+    fi
+
+up provider: _prepare-runtime (_decrypt-env provider)
+    $(just _compose-cmd {{provider}}) up -d
+
+down provider:
+    $(just _compose-cmd {{provider}}) down
+
+status provider:
+    $(just _compose-cmd {{provider}}) ps
+
+logs provider service="vpn":
+    $(just _compose-cmd {{provider}}) logs -f {{service}}
+
+# Verbindungstest aus dem inventory-Container heraus.
+# Argument: ziel-host:port  (z.B. 192.168.10.5:8123)
+ping-home provider target:
+    $(just _compose-cmd {{provider}}) exec inventory \
+        sh -c "curl -sf --max-time 5 -o /dev/null -w 'http=%{http_code} time=%{time_total}s\n' http://{{target}}/ || echo unreachable"
+
+clean: _clean-runtime
+    @echo "transient secrets removed"
