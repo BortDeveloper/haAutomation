@@ -9,6 +9,9 @@
 
 services:
   inventory:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     image: inventory:dev
     container_name: inventory
     restart: unless-stopped
