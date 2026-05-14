@@ -62,6 +62,15 @@ enum SyncSource {
         #[arg(long, env = "HUE_CONFIG")]
         config: std::path::PathBuf,
     },
+    /// Shelly: mDNS-Discovery + Per-Device-Fetch (Gen1+Gen2).
+    Shelly {
+        /// Explizite IPs (kann mehrfach angegeben werden). Wenn leer: mDNS.
+        #[arg(long, value_delimiter = ',')]
+        ip: Vec<String>,
+        /// Sekunden fuer den mDNS-Scan. 0 = kein Scan.
+        #[arg(long, default_value_t = 5)]
+        discover_seconds: u64,
+    },
 }
 
 fn main() -> Result<()> {
@@ -112,6 +121,49 @@ fn main() -> Result<()> {
                 println!(
                     "CCU sync ok: {} devices total, {} upserted, {} neue firmware-snapshots",
                     ccu_devices.len(),
+                    n,
+                    new_snaps
+                );
+            }
+            SyncSource::Shelly {
+                ip,
+                discover_seconds,
+            } => {
+                let conn = db::open(&cli.db)?;
+                db::migrate(&conn)?;
+                let mut ips: Vec<String> = ip.clone();
+                if discover_seconds > 0 {
+                    println!("mDNS-Scan {} s ...", discover_seconds);
+                    let found = sync::shelly::discover(std::time::Duration::from_secs(
+                        discover_seconds,
+                    ))?;
+                    println!("  {} Shelly(s) per mDNS gefunden", found.len());
+                    ips.extend(found);
+                }
+                ips.sort();
+                ips.dedup();
+                let mut shellys: Vec<sync::shelly::ShellyDevice> = Vec::new();
+                for addr in &ips {
+                    match sync::shelly::fetch_info(addr) {
+                        Ok(d) => shellys.push(d),
+                        Err(e) => eprintln!("  WARN: {addr} -> {e:#}"),
+                    }
+                }
+                let devices = sync::shelly::map_to_devices(&shellys);
+                let n = db::upsert_devices(&conn, &devices)?;
+                let mut new_snaps = 0usize;
+                for d in &shellys {
+                    if d.firmware.is_empty() {
+                        continue;
+                    }
+                    if db::record_firmware_if_changed(&conn, "shelly", &d.mac, &d.firmware)? {
+                        new_snaps += 1;
+                    }
+                }
+                println!(
+                    "Shelly sync ok: {} IPs gescannt, {} erreichbar, {} upserted, {} neue firmware-snapshots",
+                    ips.len(),
+                    shellys.len(),
                     n,
                     new_snaps
                 );
