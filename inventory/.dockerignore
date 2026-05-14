@@ -1,0 +1,20 @@
+# Build-Output und nicht zum Image-Build gehoerige Dateien
+target/
+*.tmp
+
+# Tests / Doku werden im Image nicht benoetigt
+fixtures/
+docs/
+*.md
+README.md
+
+# Compose & Secrets werden separat gemountet, nicht ins Image gebacken
+docker/docker-compose*.yml
+docker/Caddyfile
+docker/justfile
+secrets/
+
+# Editor & VCS
+.vscode/
+.idea/
+.git/
