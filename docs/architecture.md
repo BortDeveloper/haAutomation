@@ -23,22 +23,32 @@
                       |
                   VPN tunnel
                       |
-+---------------------v-------------------------------------+
-|                  Heim-Netzwerk                            |
-|                                                            |
-|   Home Assistant  Homematic CCU  Node-RED  Zigbee2MQTT    |
-|       :8123          XML-API       :1880      MQTT        |
-+------------------------------------------------------------+
++---------------------v---------------------------------------+
+|                  Heim-Netzwerk                              |
+|                                                              |
+|   Home Assistant     Homematic CCU       Node-RED            |
+|   :8123 (REST)       /addons/xmlapi      :1880 / Supervisor  |
+|                                                              |
+|   Hue-Bridges        Shellys (20+)       Zigbee2MQTT         |
+|   :80 v1 REST        :80 Gen1/Gen2 HTTP  MQTT (Phase 5)      |
+|                      (per mDNS discovered)                   |
++--------------------------------------------------------------+
 ```
 
 ### Lesepfad
 
-1. Cron im `inventory`-Container triggert Sync-Subkommandos
-2. App ruft per HTTP gegen HA/CCU/NR/Z2M ab — alle Verbindungen laufen ueber den `vpn`-Netnamespace
-3. Daten landen in SQLite (`/var/lib/inventory/inventory.db`)
-4. Sync schreibt zusaetzlich YAML-Snapshots in `inventory/yaml/`
-5. Bei Diff: `git add` + commit + push zurueck ins Repo
-6. Web-UI liest aus SQLite
+1. Cron im `inventory`-Container triggert Sync-Subkommandos pro Source
+2. App ruft per HTTP/mDNS gegen HA, CCU, Hue-Bridges, Shellys (und kuenftig
+   Z2M/NR) ab — alle Verbindungen laufen ueber den `vpn`-Netnamespace
+3. Sync mapped auf das kanonische `Device` und upserted via Natural Key
+   (source + source_id) idempotent in SQLite (`/var/lib/inventory/inventory.db`)
+4. Bei vorhandener Firmware-Info: `firmware_snapshot`-Eintrag, nur wenn der
+   Stand sich seit dem letzten Snapshot geaendert hat
+5. Pro Source wird `inventory/yaml/<source>.yaml` deterministisch
+   (source_id-sortiert) neu geschrieben
+6. Bei YAML-Diff: `git add yaml/<source>.yaml`, `git commit -m "auto-sync <source>"`,
+   `git push` (optional via `--publish`)
+7. Web-UI liest aus SQLite
 
 ### Userpfad
 
