@@ -3,6 +3,7 @@ use clap::{Parser, Subcommand};
 use std::path::PathBuf;
 
 mod db;
+mod http;
 mod types;
 mod yaml_io;
 
@@ -20,7 +21,11 @@ struct Cli {
 #[derive(Subcommand)]
 enum Command {
     /// Startet den HTTP-Server.
-    Serve,
+    Serve {
+        /// Listen-Adresse, z.B. 0.0.0.0:8080.
+        #[arg(long, default_value = "0.0.0.0:8080", env = "INVENTORY_LISTEN")]
+        listen: String,
+    },
     /// Synchronisiert das Inventar aus einer Live-Quelle.
     Sync,
     /// Wendet ausstehende DB-Migrationen an.
@@ -30,8 +35,10 @@ enum Command {
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
-        Command::Serve => {
-            println!("TODO S4: tiny_http-Server starten");
+        Command::Serve { listen } => {
+            let server = http::bind(&listen)?;
+            println!("listening on {}", listen);
+            http::serve(server)?;
         }
         Command::Sync => {
             println!("TODO S9+: Sync gegen konfigurierte Quelle ausfuehren");
