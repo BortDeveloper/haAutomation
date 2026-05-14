@@ -1,4 +1,4 @@
-use crate::{db, views};
+use crate::{auth, db, views};
 use anyhow::{anyhow, Result};
 use rusqlite::Connection;
 use tiny_http::{Header, Method, Request, Response, Server};
@@ -7,25 +7,33 @@ pub fn bind(addr: &str) -> Result<Server> {
     Server::http(addr).map_err(|e| anyhow!("bind {}: {}", addr, e))
 }
 
-/// Blockierende Annahme-Schleife. tiny_http verarbeitet Requests sequentiell aus
-/// dem internen Queue, deshalb genuegt eine einzige Connection ohne Pool/Mutex.
-pub fn serve(server: Server, conn: Connection) -> Result<()> {
+pub fn serve(server: Server, conn: Connection, auth_cfg: auth::Config) -> Result<()> {
     for req in server.incoming_requests() {
-        if let Err(e) = handle(req, &conn) {
+        if let Err(e) = handle(req, &conn, &auth_cfg) {
             eprintln!("request handler error: {e:#}");
         }
     }
     Ok(())
 }
 
-fn handle(req: Request, conn: &Connection) -> Result<()> {
-    let response = match (req.method(), req.url()) {
-        (Method::Get, "/health") => text("ok", 200),
-        (Method::Get, "/api/devices") => {
+fn handle(req: Request, conn: &Connection, auth_cfg: &auth::Config) -> Result<()> {
+    let method = req.method().clone();
+    let url = req.url().to_string();
+    let user = auth::extract_user(&req, auth_cfg);
+
+    let response = match (&method, url.as_str(), user.as_deref()) {
+        // Public Endpoints (Healthchecks brauchen keine Auth)
+        (&Method::Get, "/health", _) => text("ok", 200),
+
+        // Alles andere: kein User -> 401
+        (_, _, None) => text("unauthorized", 401),
+
+        // Authentifizierte Routen
+        (&Method::Get, "/api/devices", Some(_)) => {
             let devices = db::list_devices(conn)?;
             json(serde_json::to_string(&devices)?, 200)
         }
-        (Method::Get, "/") => {
+        (&Method::Get, "/", Some(_)) => {
             let devices = db::list_devices(conn)?;
             html(views::devices_page(&devices), 200)
         }
@@ -72,7 +80,25 @@ mod tests {
             .join(name)
     }
 
-    fn spawn(with_fixture: bool) -> String {
+    /// Header-Name, der in Tests verwendet wird, damit nichts mit dem Default
+    /// "X-Authentik-Username" kollidiert.
+    const TEST_HEADER: &str = "X-Test-User";
+
+    fn strict() -> auth::Config {
+        auth::Config {
+            header_name: TEST_HEADER.into(),
+            bypass: false,
+        }
+    }
+
+    fn bypass() -> auth::Config {
+        auth::Config {
+            header_name: TEST_HEADER.into(),
+            bypass: true,
+        }
+    }
+
+    fn spawn(with_fixture: bool, cfg: auth::Config) -> String {
         let server = bind("127.0.0.1:0").unwrap();
         let addr = server.server_addr().to_ip().unwrap().to_string();
         let conn = Connection::open_in_memory().unwrap();
@@ -82,22 +108,24 @@ mod tests {
             db::upsert_devices(&conn, &devices).unwrap();
         }
         thread::spawn(move || {
-            let _ = serve(server, conn);
+            let _ = serve(server, conn, cfg);
         });
         addr
     }
 
+    // --- S4-Tests (unter Bypass, da Auth jetzt aktiv ist) ---
+
     #[test]
-    fn health_returns_ok() {
-        let addr = spawn(false);
+    fn health_returns_ok_under_bypass() {
+        let addr = spawn(false, bypass());
         let res = ureq::get(&format!("http://{addr}/health")).call().unwrap();
         assert_eq!(res.status(), 200);
         assert_eq!(res.into_string().unwrap(), "ok");
     }
 
     #[test]
-    fn unknown_route_returns_404() {
-        let addr = spawn(false);
+    fn unknown_route_returns_404_when_authenticated() {
+        let addr = spawn(false, bypass());
         let err = ureq::get(&format!("http://{addr}/does-not-exist"))
             .call()
             .unwrap_err();
@@ -107,9 +135,11 @@ mod tests {
         }
     }
 
+    // --- S5-Tests (unter Bypass) ---
+
     #[test]
     fn api_devices_returns_json_array_of_3() {
-        let addr = spawn(true);
+        let addr = spawn(true, bypass());
         let res = ureq::get(&format!("http://{addr}/api/devices")).call().unwrap();
         assert_eq!(res.status(), 200);
         assert_eq!(res.header("Content-Type"), Some("application/json"));
@@ -120,13 +150,52 @@ mod tests {
 
     #[test]
     fn root_returns_html_with_devices() {
-        let addr = spawn(true);
+        let addr = spawn(true, bypass());
         let res = ureq::get(&format!("http://{addr}/")).call().unwrap();
         assert_eq!(res.status(), 200);
         assert!(res.header("Content-Type").unwrap().contains("text/html"));
         let body = res.into_string().unwrap();
         assert!(body.contains("<table>"));
-        assert!(body.contains("Kueche Decke")); // aus der Fixture
+        assert!(body.contains("Kueche Decke"));
         assert!(body.contains("3 Geraete"));
+    }
+
+    // --- S7-Tests (Auth-Verhalten) ---
+
+    #[test]
+    fn root_without_header_returns_401() {
+        let addr = spawn(false, strict());
+        let err = ureq::get(&format!("http://{addr}/")).call().unwrap_err();
+        match err {
+            ureq::Error::Status(401, _) => {}
+            other => panic!("expected 401, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn api_with_header_returns_200() {
+        let addr = spawn(true, strict());
+        let res = ureq::get(&format!("http://{addr}/api/devices"))
+            .set(TEST_HEADER, "alice")
+            .call()
+            .unwrap();
+        assert_eq!(res.status(), 200);
+    }
+
+    #[test]
+    fn api_with_bypass_returns_200_without_header() {
+        let addr = spawn(true, bypass());
+        let res = ureq::get(&format!("http://{addr}/api/devices"))
+            .call()
+            .unwrap();
+        assert_eq!(res.status(), 200);
+    }
+
+    #[test]
+    fn health_is_public_even_under_strict_auth() {
+        let addr = spawn(false, strict());
+        let res = ureq::get(&format!("http://{addr}/health")).call().unwrap();
+        assert_eq!(res.status(), 200);
+        assert_eq!(res.into_string().unwrap(), "ok");
     }
 }
