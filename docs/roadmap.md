@@ -1,39 +1,45 @@
 # Roadmap
 
-14 Schritte, je ein PR mit reproduzierbarem Test-Gate. Vor "gruen" nicht
-weitergehen.
+Schritte mit Status. Phase 1 & 2 & 3 sind vollstaendig (Library + Tests).
+Die als "vertagt" markierten Live-Tests gegen reale Heim-Systeme werden
+gebuendelt am Ende von Phase 3 ausgefuehrt, sobald alle Quellen da sind.
 
-## Phase 1 — Lokales Skelett (kein Netz, kein VPN)
+Legende: ✓ erledigt + Gate gruen · ✓ (lib) Library + Mock-Tests fertig,
+Live-Smoke noch offen · ☐ offen.
 
-| Step | Inhalt | Test-Gate |
+## Phase 1 — Lokales Skelett (kein Netz, kein VPN) — ✓
+
+| Step | Inhalt | Status |
 |---|---|---|
-| S1 | Cargo-Crate `inventory`, `clap`-Subkommandos `serve | sync | migrate` | `cargo build --release` gruen, `inventory --help` zeigt Subkommandos |
-| S2 | `db.rs` mit Migrations, Tabellen `devices`, `firmware_snapshot`, `software`, `manual_meta` | Unit-Test prueft alle Tabellen in `sqlite_master` |
-| S3 | YAML-Fixture -> `upsert_devices` -> Roundtrip-Read | Test: `SELECT COUNT(*) = 3`, Felder Bytes-gleich |
-| S4 | `tiny_http`-Server, Route `/health` | `curl :8080/health` -> `200 ok` |
-| S5 | `/api/devices` (JSON), `/` (HTML-Tabelle aus `format!`) | `curl … | jq 'length == 3'`, Browser-Check |
+| S1 | Cargo-Crate `inventory`, `clap`-Subkommandos `serve / sync / migrate` | ✓ |
+| S2 | `db.rs` mit Migrations, Tabellen `devices`, `firmware_snapshot`, `software`, `manual_meta` | ✓ (3 Tests) |
+| S3 | YAML-Fixture -> `upsert_devices` -> Roundtrip-Read | ✓ (3 Tests) |
+| S4 | `tiny_http`-Server, Route `/health` | ✓ (2 Tests + Smoke) |
+| S5 | `/api/devices` (JSON), `/` (HTML-Tabelle aus `format!`) | ✓ (4 Tests + Smoke) |
 
-## Phase 2 — Containerisierung & Auth-Huelle
+## Phase 2 — Containerisierung & Auth-Huelle — ✓
 
-| Step | Inhalt | Test-Gate |
+| Step | Inhalt | Status |
 |---|---|---|
-| S6 | Dockerfile multi-stage `rust:alpine` -> `alpine:3.20` | Image < 30 MB, `docker run` -> `/health` ok |
-| S7 | Auth-Middleware: `X-Authentik-Username` Pflicht, `AUTH_BYPASS=1` fuer Dev | 3 Tests: ohne Header `401`, mit `200`, Bypass `200` |
-| S8 | `secrets.rs` shell-outet auf `sops -d`, parst K=V | Fixture-Decrypt liefert `HA_TOKEN=foo`; falscher Key -> klarer Fehler |
+| S6 | Dockerfile multi-stage `rust:alpine` -> `alpine:3.20`, ~10 MB | ✓ (Strato build + curl) |
+| S7 | Auth-Middleware: `X-Authentik-Username` Pflicht, `AUTH_BYPASS=1` fuer Dev | ✓ (4 Tests + Smoke) |
+| S8 | `secrets.rs` shell-outet auf `sops -d`, parst K=V | ✓ (5 Tests) |
 
-## Phase 3 — Sync gegen Heim-Systeme
+## Phase 3 — Sync gegen Heim-Systeme — ✓ (Lib), Live-Smoke vertagt
 
-| Step | Inhalt | Test-Gate |
+| Step | Inhalt | Status |
 |---|---|---|
-| S9 | `sync/ha.rs` + Mapping `HaEntity -> Device`, gegen Mock-Server im Test | Mock-JSON -> N erwartete Devices |
-| S10 | HA-Sync gegen echtes HA (lokal im LAN) | Reale Devices in UI, idempotenter Re-Run |
-| S11 | CCU-Sync (XML-API), Firmware in `firmware_snapshot` mit Timestamp | Re-Run ohne FW-Aenderung -> 0 neue Snapshots; FW geaendert -> 1 neuer |
-| S11b | Philips-Hue-Sync gegen mehrere Bridges (`sync hue --config`) | Mock-Bridge -> N Lights/Sensoren mit Firmware; Diff-basierte FW-Snapshots |
-| S11c | Shelly-Sync via mDNS-Discovery + Per-Device-Fetch (Gen1+Gen2) | Mock-Device -> Devices+Firmware; ohne Discovery laeuft `--ip` Liste |
-| S12a | YAML-Export pro Sync-Quelle nach `inventory/yaml/<source>.yaml` | nach Sync schreibt Datei; stable sortiert; deterministisch |
-| S12b | `git_publish.rs`: `git add/commit/push` nur bei YAML-Diff | Synth. Datenaenderung -> Commit + Push; kein Diff -> kein Commit |
+| S9 | `sync/ha.rs` + Mapping `HaEntity -> Device`, gegen Mock-Server im Test | ✓ (6 Tests) |
+| S10 | HA-Sync gegen echtes HA: CLI-Wiring `inventory sync ha` | ✓ (lib) · Live-Smoke vertagt |
+| S11 | CCU-Sync (XML-API), Firmware in `firmware_snapshot` mit Timestamp | ✓ (8 Tests, davon 4 FW-Diff) |
+| S11b | Philips-Hue-Sync gegen mehrere Bridges (`sync hue --config`) | ✓ (4 Tests) |
+| S11c | Shelly-Sync via mDNS-Discovery + Per-Device-Fetch (Gen1+Gen2) | ✓ (4 Tests, mDNS manuell) |
+| S12a | YAML-Export pro Sync-Quelle, stable sortiert, deterministisch | ✓ (4 Tests) |
+| S12b | `git_publish.rs`: `git add/commit/push` nur bei YAML-Diff | ✓ (5 Tests, incl. bare-repo push) |
 
-## Phase 4 — Strato-Deployment
+**Gesamt nach Phase 3: 52 cargo-Tests gruen.**
+
+## Phase 4 — Strato-Deployment — ☐
 
 | Step | Inhalt | Test-Gate |
 |---|---|---|

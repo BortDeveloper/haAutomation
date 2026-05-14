@@ -28,7 +28,7 @@ und einem maschinell gepflegten Inventar als Sicherheitsnetz.
 
 | ID | Anforderung |
 |---|---|
-| FR-1 | Periodische Inventarisierung aller Geraete aus HA (`/api/states` + `device_registry`), Homematic CCU (XML-API), Zigbee2MQTT (`bridge/devices`) und Node-RED (`/flows` + `npm list`). |
+| FR-1 | Periodische Inventarisierung aller Geraete aus HA (`/api/states`), Homematic CCU (XML-API), Philips-Hue-Bridges (REST v1, multi-bridge), Shellys (HTTP Gen1+Gen2, mDNS-Discovery) und perspektivisch Zigbee2MQTT (`bridge/devices`) sowie Node-RED (`/flows` + `npm list`). |
 | FR-2 | Single Source of Truth fuer das Inventar sind versionierte YAML-Dateien im Repo plus eine daraus generierte SQLite-DB. |
 | FR-3 | Web-UI zum Durchsuchen, Filtern und Facettieren des Inventars, lesend. Schreibender Pfad: PR auf YAML. |
 | FR-4 | Firmware-Aenderungen werden als zeitgestempelte Snapshots in der DB festgehalten; ein Diff fuehrt zu einem Auto-Commit + Push. |
@@ -68,6 +68,8 @@ und einem maschinell gepflegten Inventar als Sicherheitsnetz.
 | CCU | RaspberryMatic | XML-API-Addon installierbar, Standard-Pfade fuer S11 |
 | Node-RED | als HA-Addon | Flows-Pfad `/addon_configs/<slug>`, Admin-API via Supervisor-Ingress |
 | Zigbee | Z2M als HA-Addon, Broker `core-mosquitto`, Prefix `zigbee2mqtt` | Sync (S16) liest direkt vom MQTT-Topic `zigbee2mqtt/bridge/devices` |
+| Philips Hue | mehrere Bridges, REST-API v1 | Multi-Bridge-Sync mit YAML-Config (`sync hue --config`); liefert Firmware |
+| Shellys | 20+ Geraete (Gen1+Gen2 gemischt) | mDNS-Discovery + Per-Device-HTTP-Fetch; Gen2-RPC bevorzugt, Gen1-Fallback |
 | VPN initial | Tailscale | S13a = erste echte Deploy-Stufe; S13b/c bleiben Alternativen |
 | Authentik | bestehende Instanz | S14 = nur neue Application + Outpost-Provider, kein Aufsetzen |
 | Domain | bestehend, neue Subdomain | konkrete Subdomain wird in S14 festgelegt, A-Record auf Strato-IP |
