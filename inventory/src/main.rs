@@ -6,6 +6,7 @@ mod auth;
 mod db;
 mod http;
 mod secrets;
+mod sync;
 mod types;
 mod views;
 mod yaml_io;
