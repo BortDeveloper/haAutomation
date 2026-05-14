@@ -28,6 +28,9 @@ serde_yaml_ng = "0.10"
 # Error-Handling
 anyhow = "1"
 
+[dev-dependencies]
+tempfile = "3"
+
 [profile.release]
 strip = true
 lto = "thin"

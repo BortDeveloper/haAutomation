@@ -5,6 +5,7 @@ use std::path::PathBuf;
 mod auth;
 mod db;
 mod http;
+mod secrets;
 mod types;
 mod views;
 mod yaml_io;
