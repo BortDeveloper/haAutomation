@@ -1,0 +1,23 @@
+# Niemals committen
+**/age.key
+**/*.age
+**/vpn.tailscale.env
+**/vpn.netbird.env
+**/wg0.conf
+!**/*.example
+!**/*.enc
+
+# Build-Output
+target/
+*.tmp
+.DS_Store
+
+# Daten (laufzeit)
+**/data/
+**/inventory.db
+**/inventory.db-journal
+**/inventory.db-wal
+
+# IDE
+.vscode/
+.idea/
