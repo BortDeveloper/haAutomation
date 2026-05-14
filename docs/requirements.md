@@ -60,12 +60,21 @@ und einem maschinell gepflegten Inventar als Sicherheitsnetz.
 - Cloud-Provider neben VPS
 - Mehrbenutzer-Rollen jenseits "authenticated / not" (kommt erst, wenn OIDC reale Gruppen liefert)
 
-## Offene Punkte
+## Festlegungen zur Umgebung
 
-1. **HA-Installationsart:** HAOS / Supervised / Container / Core?
-2. **CCU-Modell:** CCU3 / RaspberryMatic / debmatic? — relevant fuer Backup-Methode
-3. **Node-RED-Topologie:** als HA-Addon oder separater Container/Host?
-4. **VPN-Provider fuer initialen Deploy:** Empfehlung Tailscale (schnellster Erfolg), aber finale Wahl steht aus
-5. **Authentik-Instanz:** existiert bereits oder muss erst aufgesetzt werden?
-6. **Domain:** konkrete Subdomain fuer das Inventory-UI
-7. **Z2M:** vorhanden? wenn ja, MQTT-Topic-Prefix
+| Punkt | Wert | Konsequenz fuer die Implementierung |
+|---|---|---|
+| HA-Installation | Home Assistant OS (HAOS) | Supervisor verfuegbar → NR-Sync und Backups via Supervisor-API |
+| CCU | RaspberryMatic | XML-API-Addon installierbar, Standard-Pfade fuer S11 |
+| Node-RED | als HA-Addon | Flows-Pfad `/addon_configs/<slug>`, Admin-API via Supervisor-Ingress |
+| Zigbee | Z2M als HA-Addon, Broker `core-mosquitto`, Prefix `zigbee2mqtt` | Sync (S16) liest direkt vom MQTT-Topic `zigbee2mqtt/bridge/devices` |
+| VPN initial | Tailscale | S13a = erste echte Deploy-Stufe; S13b/c bleiben Alternativen |
+| Authentik | bestehende Instanz | S14 = nur neue Application + Outpost-Provider, kein Aufsetzen |
+| Domain | bestehend, neue Subdomain | konkrete Subdomain wird in S14 festgelegt, A-Record auf VPS-IP |
+
+## Verbleibende Detailfragen (jeweils erst bei dem Step relevant)
+
+- HA Long-Lived Access Token + Supervisor-Token erzeugen — fuer S10
+- RaspberryMatic XML-API installieren falls nicht da — fuer S11
+- Authentik-URL und Admin-Zugang — fuer S14
+- Konkrete Subdomain — fuer S14
