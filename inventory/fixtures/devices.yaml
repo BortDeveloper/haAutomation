@@ -1,0 +1,26 @@
+# Test-Fixture: drei Geraete aus unterschiedlichen Quellen.
+# Wird von S3-Tests gelesen, nicht zur Laufzeit.
+
+- source: ha
+  source_id: light.kueche_decke
+  name: Kueche Decke
+  manufacturer: IKEA Tradfri
+  model: LED2003G10
+  kind: light
+  room: Kueche
+
+- source: ccu
+  source_id: "0001D3C99A1234"
+  name: Wandthermostat Wohnzimmer
+  manufacturer: eQ-3
+  model: HmIP-WTH-2
+  kind: thermostat
+  room: Wohnzimmer
+
+- source: z2m
+  source_id: "0x00158d0001234567"
+  name: Tuerkontakt Eingang
+  manufacturer: Aqara
+  model: MCCGQ11LM
+  kind: contact
+  room: Flur
