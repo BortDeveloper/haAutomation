@@ -4,6 +4,7 @@ use std::path::PathBuf;
 
 mod auth;
 mod db;
+mod git_publish;
 mod http;
 mod secrets;
 mod sync;
@@ -21,6 +22,11 @@ struct Cli {
     /// Verzeichnis fuer die YAML-Snapshots pro Source (source-of-truth fuer git).
     #[arg(long, default_value = "yaml", env = "INVENTORY_YAML_DIR")]
     yaml_dir: PathBuf,
+
+    /// Bei Sync: yaml-Diff per `git commit && git push` veroeffentlichen.
+    /// Setzt user.email/user.name im Repo voraus.
+    #[arg(long, env = "INVENTORY_PUBLISH")]
+    publish: bool,
 
     #[command(subcommand)]
     command: Command,
@@ -77,6 +83,28 @@ enum SyncSource {
     },
 }
 
+fn maybe_publish(
+    enabled: bool,
+    yaml_dir: &std::path::Path,
+    yaml_path: &std::path::Path,
+    source: &str,
+) -> Result<()> {
+    if !enabled {
+        return Ok(());
+    }
+    let r = git_publish::commit_and_push(
+        yaml_dir,
+        &[yaml_path],
+        &format!("auto-sync {source}"),
+        true,
+    )?;
+    println!(
+        "  git publish: committed={} pushed={}",
+        r.committed, r.pushed
+    );
+    Ok(())
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
@@ -108,6 +136,7 @@ fn main() -> Result<()> {
                     n,
                     p.display()
                 );
+                maybe_publish(cli.publish, &cli.yaml_dir, &p, "ha")?;
             }
             SyncSource::Ccu { url } => {
                 let conn = db::open(&cli.db)?;
@@ -132,6 +161,7 @@ fn main() -> Result<()> {
                     new_snaps,
                     p.display()
                 );
+                maybe_publish(cli.publish, &cli.yaml_dir, &p, "ccu")?;
             }
             SyncSource::Shelly {
                 ip,
@@ -177,6 +207,7 @@ fn main() -> Result<()> {
                     new_snaps,
                     p.display()
                 );
+                maybe_publish(cli.publish, &cli.yaml_dir, &p, "shelly")?;
             }
             SyncSource::Hue { config } => {
                 let conn = db::open(&cli.db)?;
@@ -214,6 +245,7 @@ fn main() -> Result<()> {
                     new_snaps,
                     p.display()
                 );
+                maybe_publish(cli.publish, &cli.yaml_dir, &p, "hue")?;
             }
         },
         Command::Migrate => {

@@ -2,6 +2,7 @@ use crate::types::Device;
 use anyhow::{Context, Result};
 use std::path::{Path, PathBuf};
 
+#[allow(dead_code)] // wird ab S15 (cron-Reload) oder fuer Reverse-Imports gebraucht
 pub fn load_devices(path: impl AsRef<Path>) -> Result<Vec<Device>> {
     let path = path.as_ref();
     let s = std::fs::read_to_string(path)
@@ -11,7 +12,7 @@ pub fn load_devices(path: impl AsRef<Path>) -> Result<Vec<Device>> {
     Ok(devices)
 }
 
-#[allow(dead_code)] // wird in S12b vom git-publish-Pfad genutzt
+#[allow(dead_code)] // generische Variante; das Sync-Schreiben nutzt write_devices_for_source
 pub fn save_devices(path: impl AsRef<Path>, devices: &[Device]) -> Result<()> {
     let path = path.as_ref();
     let s = serde_yaml_ng::to_string(devices)?;
