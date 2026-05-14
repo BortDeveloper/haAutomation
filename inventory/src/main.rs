@@ -18,6 +18,10 @@ struct Cli {
     #[arg(long, default_value = "inventory.db", env = "INVENTORY_DB")]
     db: PathBuf,
 
+    /// Verzeichnis fuer die YAML-Snapshots pro Source (source-of-truth fuer git).
+    #[arg(long, default_value = "yaml", env = "INVENTORY_YAML_DIR")]
+    yaml_dir: PathBuf,
+
     #[command(subcommand)]
     command: Command,
 }
@@ -97,10 +101,12 @@ fn main() -> Result<()> {
                 let entities = sync::ha::fetch_states(&url, &token)?;
                 let devices = sync::ha::map_to_devices(&entities);
                 let n = db::upsert_devices(&conn, &devices)?;
+                let p = yaml_io::write_devices_for_source(&cli.yaml_dir, "ha", &devices)?;
                 println!(
-                    "HA sync ok: {} entities, {} devices upserted",
+                    "HA sync ok: {} entities, {} devices upserted, yaml: {}",
                     entities.len(),
-                    n
+                    n,
+                    p.display()
                 );
             }
             SyncSource::Ccu { url } => {
@@ -118,11 +124,13 @@ fn main() -> Result<()> {
                         new_snaps += 1;
                     }
                 }
+                let p = yaml_io::write_devices_for_source(&cli.yaml_dir, "ccu", &devices)?;
                 println!(
-                    "CCU sync ok: {} devices total, {} upserted, {} neue firmware-snapshots",
+                    "CCU sync ok: {} devices total, {} upserted, {} neue firmware-snapshots, yaml: {}",
                     ccu_devices.len(),
                     n,
-                    new_snaps
+                    new_snaps,
+                    p.display()
                 );
             }
             SyncSource::Shelly {
@@ -160,12 +168,14 @@ fn main() -> Result<()> {
                         new_snaps += 1;
                     }
                 }
+                let p = yaml_io::write_devices_for_source(&cli.yaml_dir, "shelly", &devices)?;
                 println!(
-                    "Shelly sync ok: {} IPs gescannt, {} erreichbar, {} upserted, {} neue firmware-snapshots",
+                    "Shelly sync ok: {} IPs gescannt, {} erreichbar, {} upserted, {} neue firmware-snapshots, yaml: {}",
                     ips.len(),
                     shellys.len(),
                     n,
-                    new_snaps
+                    new_snaps,
+                    p.display()
                 );
             }
             SyncSource::Hue { config } => {
@@ -196,11 +206,13 @@ fn main() -> Result<()> {
                         }
                     }
                 }
+                let p = yaml_io::write_devices_for_source(&cli.yaml_dir, "hue", &devices)?;
                 println!(
-                    "Hue sync ok: {} bridges, {} devices upserted, {} neue firmware-snapshots",
+                    "Hue sync ok: {} bridges, {} devices upserted, {} neue firmware-snapshots, yaml: {}",
                     bridges.len(),
                     n,
-                    new_snaps
+                    new_snaps,
+                    p.display()
                 );
             }
         },
