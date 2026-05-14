@@ -28,6 +28,9 @@ serde_yaml_ng = "0.10"
 # XML (fuer CCU/RaspberryMatic devicelist.cgi)
 roxmltree = "0.20"
 
+# mDNS-Discovery (fuer Shelly)
+mdns-sd = "0.13"
+
 # Error-Handling
 anyhow = "1"
 
