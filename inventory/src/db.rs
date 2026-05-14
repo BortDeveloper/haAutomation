@@ -59,7 +59,6 @@ pub fn migrate(conn: &Connection) -> Result<()> {
 
 /// Fuegt Geraete ein oder aktualisiert sie (Natural Key: source + source_id).
 /// Aktualisiert last_seen und active=1 bei jedem Aufruf.
-#[allow(dead_code)] // wird ab S10 verkabelt
 pub fn upsert_devices(conn: &Connection, devices: &[Device]) -> Result<usize> {
     let tx = conn.unchecked_transaction()?;
     let mut count = 0usize;

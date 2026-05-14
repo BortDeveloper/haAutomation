@@ -8,6 +8,7 @@ use serde::Deserialize;
 pub struct HaEntity {
     pub entity_id: String,
     #[serde(default)]
+    #[allow(dead_code)] // wird ggf. spaeter fuer Aktiv-Filter genutzt
     pub state: String,
     #[serde(default)]
     pub attributes: HaAttributes,
