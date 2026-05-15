@@ -4,6 +4,7 @@
 **/vpn.tailscale.env
 **/vpn.netbird.env
 **/wg0.conf
+**/authgate.env
 !**/*.example
 !**/*.enc
 

@@ -34,6 +34,13 @@ mdns-sd = "0.13"
 # Error-Handling
 anyhow = "1"
 
+# Auth-Sidecar (Binary `authgate`): reine Rust-Crypto, kein C-Compiler noetig,
+# damit das Sidecar unabhaengig vom inventory-Binary baut und testet.
+hmac = "0.12"
+sha2 = "0.10"
+pbkdf2 = { version = "0.12", default-features = false, features = ["hmac"] }
+getrandom = "0.2"
+
 [dev-dependencies]
 tempfile = "3"
 

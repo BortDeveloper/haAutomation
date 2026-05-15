@@ -53,9 +53,16 @@
 ### Userpfad
 
 1. Browser → `inventory.<domain>` → Caddy
-2. Caddy `forward_auth` → Authentik-Outpost
+2. Caddy `forward_auth` → Auth-Provider
 3. Bei Erfolg: Caddy reicht Request mit Header `X-Authentik-Username` an Inventory durch
 4. Inventory rendert HTML/JSON aus DB
+
+**Auth-Provider:** Solange kein externes SSO bereitsteht, ist der Provider das
+eigene Sidecar `authgate` (Binary im selben Crate, `src/bin/authgate.rs`) —
+Login-Formular + zustandsloses, HMAC-signiertes Session-Cookie. Der spaetere
+Wechsel zu Authentik (S14) aendert nur das `forward_auth`-Ziel im Caddyfile;
+die Header-Schnittstelle (`X-Authentik-Username`) bleibt identisch, Inventory
+selbst bleibt unveraendert.
 
 ## Ownership-Regeln
 
@@ -85,7 +92,7 @@ Die wichtigste Designentscheidung. Jede automatisierte Funktion lebt in
      |
      | forward_auth
      v
-[ Authentik Outpost ]
+[ authgate Sidecar ]   (Behelf; spaeter: Authentik Outpost)
      |
      | nach erfolgreichem Login: setzt X-Authentik-Username header
      v
