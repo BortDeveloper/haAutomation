@@ -1,0 +1,39 @@
+# haBortfeld inventory — Reverse-Proxy mit vorgeschalteter Authentifizierung.
+#
+# Auth laeuft ueber das authgate-Sidecar (Behelfsloesung ohne externes SSO).
+# Der Wechsel zu echtem Authentik ist ein Einzeiler: die forward_auth-Zeile
+# unten auf den Authentik-Outpost zeigen lassen — sonst aendert sich nichts.
+#
+# SITE_ADDRESS steuert Adresse und TLS:
+#   :80                    -> nur HTTP  (Tailnet, Smoke-Test)
+#   inventory.example.org  -> automatisches HTTPS via Let's Encrypt
+{$SITE_ADDRESS::80} {
+	# Healthcheck bleibt public — kein forward_auth davor.
+	handle /health {
+		reverse_proxy {$INVENTORY_UPSTREAM:vpn:8080}
+	}
+
+	# authgate-Routen (Login-Formular, verify, logout) direkt durchreichen.
+	# Wuerden sie durch forward_auth laufen, gaebe es eine Redirect-Schleife.
+	handle /auth/* {
+		reverse_proxy authgate:9000
+	}
+
+	# Alles andere: erst forward_auth gegen authgate.
+	#   2xx -> Request geht ans Backend, X-Authentik-Username wird mitkopiert
+	#   302 -> Browser landet auf /auth/login
+	#   401 -> curl/API-Clients ohne gueltige Session
+	handle {
+		forward_auth authgate:9000 {
+			uri /auth/verify
+			copy_headers X-Authentik-Username
+		}
+		reverse_proxy {$INVENTORY_UPSTREAM:vpn:8080}
+	}
+
+	encode gzip
+	log {
+		output stdout
+		format console
+	}
+}

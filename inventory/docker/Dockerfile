@@ -21,8 +21,9 @@ COPY Cargo.toml Cargo.lock ./
 COPY src ./src
 COPY migrations ./migrations
 
+# Baut beide Binaries: `inventory` (Backend) und `authgate` (Auth-Sidecar).
 RUN cargo build --release --locked && \
-    strip target/release/inventory
+    strip target/release/inventory target/release/authgate
 
 # === Runtime stage ===
 FROM alpine:3.20
@@ -37,6 +38,7 @@ USER inventory
 WORKDIR /var/lib/inventory
 
 COPY --from=builder /app/target/release/inventory /usr/local/bin/inventory
+COPY --from=builder /app/target/release/authgate  /usr/local/bin/authgate
 
 ENV INVENTORY_DB=/var/lib/inventory/inventory.db \
     INVENTORY_LISTEN=0.0.0.0:8080 \

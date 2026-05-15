@@ -47,7 +47,11 @@ Live-Smoke noch offen · ☐ offen.
 | S13a | Tailscale-Overlay komplett (Auth-Key, ACL nur HA:8123, CCU:80) | `just ping-home tailscale <ha-ip>:8123` -> 200; State persistiert |
 | S13b | NetBird-Overlay (SaaS + self-hosted Switch via `NB_MANAGEMENT_URL`) | wie S13a; plus: Switch zwischen SaaS und self-hosted nur per env, kein Code |
 | S13c | WireGuard-Overlay mit sops-Init-Container fuer `wg0.conf` | wie S13a; `wg show wg0` zeigt Handshake; `wg0.conf` nie auf Host-Disk |
-| S14 | Caddy + Authentik Forward-Auth, Subdomain mit Let's-Encrypt | anonymer Request -> Login-Redirect; nach Login UI sichtbar; `X-Authentik-Username` korrekt; `curl` ohne Cookie -> 401 |
+| S13d | `authgate`: eigenstaendiges Forward-Auth-Sidecar als SSO-Behelf (Login-Formular, HMAC-signiertes Session-Cookie); `Caddyfile` mit `forward_auth` | Code + Tests stehen; Build/Test auf dem Server noch offen |
+| S14 | Caddy + Authentik Forward-Auth (loest `authgate` ab), Subdomain mit Let's-Encrypt | anonymer Request -> Login-Redirect; nach Login UI sichtbar; `X-Authentik-Username` korrekt; `curl` ohne Cookie -> 401 |
+
+`authgate` (S13d) und Authentik (S14) teilen denselben Header-Vertrag
+(`X-Authentik-Username`) — der Umstieg ist ein Einzeiler im `Caddyfile`.
 
 ## Phase 5 (optional, post-V1)
 

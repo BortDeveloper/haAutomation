@@ -29,6 +29,39 @@ services:
       AGE_KEY_FILE: /etc/inventory/age.key
       RUST_LOG: info
 
+  # Forward-Auth-Sidecar. Behelfsloesung, solange kein externes SSO
+  # (Authentik) bereitsteht. Caddy ruft es per forward_auth; bei Erfolg
+  # liefert es den X-Authentik-Username-Header. Eigenes Binary aus
+  # demselben Image — nur Entrypoint ueberschrieben.
+  authgate:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: inventory:dev
+    container_name: authgate
+    restart: unless-stopped
+    entrypoint: ["/sbin/tini", "--", "/usr/local/bin/authgate"]
+    command: ["serve"]
+    networks:
+      - app-net
+    # Secrets (AUTHGATE_SESSION_SECRET, AUTHGATE_USERS) aus authgate.env.
+    # Fehlt die Datei, startet authgate fail-closed (0 Benutzer).
+    env_file:
+      - path: ./secrets/authgate.env
+        required: false
+    environment:
+      AUTHGATE_LISTEN: "0.0.0.0:9000"
+      AUTHGATE_HEADER: X-Authentik-Username
+      AUTHGATE_SESSION_TTL: "28800"
+      # true setzt das Secure-Flag am Cookie — nur mit HTTPS (Caddy-TLS).
+      # Fuer einen reinen HTTP-Smoke-Test in authgate.env auf false setzen.
+      AUTHGATE_COOKIE_SECURE: "true"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O-", "http://127.0.0.1:9000/auth/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
   caddy:
     image: caddy:2-alpine
     container_name: caddy
@@ -42,8 +75,12 @@ services:
       - caddy-config:/config
     networks:
       - app-net
+    # SITE_ADDRESS: ":80" = nur HTTP (Tailnet/Smoke); eine Domain = auto-HTTPS.
+    environment:
+      SITE_ADDRESS: ":80"
     depends_on:
       - inventory
+      - authgate
 
 networks:
   app-net:

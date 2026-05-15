@@ -13,7 +13,7 @@ Provider dahintersteht, bestimmt das gewählte Overlay zur Compose-Laufzeit.
 | `docker-compose.vpn.netbird.yml` | Overlay: `vpn` = NetBird-Client (SaaS oder self-hosted) |
 | `docker-compose.vpn.wireguard.yml` | Overlay: `vpn` = WireGuard, mit `vpn-init` der sops-entschlüsselt |
 | `justfile` | Dispatcher: `just up <provider>`, `just down <provider>`, `just ping-home …` |
-| `Caddyfile` | (kommt in S14) Reverse-Proxy + Authentik forward_auth |
+| `Caddyfile` | Reverse-Proxy + `forward_auth` gegen das `authgate`-Sidecar |
 
 ## Secrets-Flow
 
@@ -26,6 +26,33 @@ age-Key liegt **nur auf dem Strato-Host** unter `/etc/inventory/age.key`
 | Tailscale | `secrets/vpn.tailscale.env.enc` | justfile → `/run/inventory/vpn.env` (tmpfs) → `--env-file` |
 | NetBird | `secrets/vpn.netbird.env.enc` | analog |
 | WireGuard | `secrets/vpn.wireguard/wg0.conf.enc` | `vpn-init` schreibt nach Named Volume `wg-conf` |
+
+## Auth-Sidecar `authgate`
+
+Solange kein externes SSO (Authentik) bereitsteht, uebernimmt das Sidecar
+`authgate` die Authentifizierung. Caddy ruft es per `forward_auth`; bei
+Erfolg reicht es den Header `X-Authentik-Username` ans Backend durch.
+
+**Einrichtung** (vor dem ersten `just up`):
+
+```bash
+cp ../secrets/authgate.env.example ../secrets/authgate.env
+
+# Session-Secret erzeugen
+docker compose run --rm authgate gensecret
+# -> Ausgabe als AUTHGATE_SESSION_SECRET in authgate.env eintragen
+
+# Benutzer anlegen (Passwort via Env, damit es nicht im Verlauf landet)
+docker compose run --rm -e AUTHGATE_PW='geheim' authgate hashpw admin
+# -> ausgegebene Zeile als AUTHGATE_USERS in authgate.env eintragen
+```
+
+`authgate.env` ist gitignored. Produktiv: mit sops verschluesseln
+(`authgate.env.enc`) und vor `just up` entschluesseln — analog zum
+vpn-Secrets-Muster.
+
+Wechsel zu Authentik spaeter: im `Caddyfile` nur das `forward_auth`-Ziel
+umbiegen — Inventory und Header-Vertrag bleiben unveraendert.
 
 ## Provider wechseln
 
