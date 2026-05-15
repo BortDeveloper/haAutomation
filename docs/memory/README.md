@@ -4,7 +4,7 @@ Persistenter Projekt-Kontext, den Claude Code session-uebergreifend liest.
 Die Live-Variante liegt auf der Workstation unter
 
 ```
-%USERPROFILE%\.claude\projects\C--Users-guebr-nr\memory\
+%USERPROFILE%\.claude\projects\C--Users-guebr-haBortfeld\memory\
 ```
 
 Dieser Ordner hier ist ein **Snapshot zum Backup und zur Nachvollziehbarkeit**.
@@ -19,6 +19,7 @@ Quelle der Wahrheit fuer Claudes Recall.
 | `project_habortfeld.md` | project | Designentscheidungen, Tech-Stack, Status, Out-of-Scope |
 | `project_habortfeld_home.md` | project | Physische Umgebung: HA / CCU / NR / Z2M / VPN / Authentik |
 | `reference_habortfeld_repo.md` | reference | Repo-URL, SSH-Setup auf Workstation + Strato, Schluessel-Inventar |
+| `reference_inventory_server.md` | reference | Dedizierter Tailscale-Host `inventory` (Build/Deploy); Windows-Build-Limit |
 | `user_role.md` | user | GitHub-Identitaet, Service-Landschaft, Code-Praeferenzen |
 
 ## Snapshot pflegen
@@ -26,8 +27,8 @@ Quelle der Wahrheit fuer Claudes Recall.
 Nach Aenderungen an den Live-Files:
 
 ```powershell
-$src = "$env:USERPROFILE\.claude\projects\C--Users-guebr-nr\memory"
-$dst = "C:\Users\guebr\nr\haBortfeld\docs\memory"
+$src = "$env:USERPROFILE\.claude\projects\C--Users-guebr-haBortfeld\memory"
+$dst = "C:\Users\guebr\haBortfeld\docs\memory"
 Copy-Item -Recurse -Force "$src\*.md" $dst
 ```
 

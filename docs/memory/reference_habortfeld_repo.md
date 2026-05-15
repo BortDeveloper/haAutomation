@@ -8,7 +8,7 @@ metadata:
 ---
 
 - **Repo:** https://github.com/BortDeveloper/haBortfeld (privat)
-- **Lokaler Klon:** `C:\Users\guebr\nr\haBortfeld`
+- **Lokaler Klon:** `C:\Users\guebr\haBortfeld`
 - **Default-Branch:** `main`
 - **Git-User in dem Klon:** `BortDeveloper <guebraun@gmail.com>` (lokal pro Repo gesetzt)
 
@@ -19,6 +19,7 @@ metadata:
 - `~/.ssh/config` enthaelt einen Host-Alias `github-haBortfeld`, der diesen Key nutzt.
 - Clone/Push fuer haBortfeld geht ueber: `git@github-haBortfeld:BortDeveloper/haBortfeld.git`
 - Beim Initial-Clone musste der GitHub Ed25519-Hostkey explizit nach `known_hosts` geschrieben werden — ssh-keyscan failte wegen KEX-Inkompatibilitaet von Windows OpenSSH 9.5 mit GitHub.
+- Zusaetzlicher Workstation-Key `~/.ssh/id_ed25519_inventory` (Ed25519) fuer den dedizierten `inventory`-Tailscale-Server — siehe [[reference-inventory-server]].
 
 **gh CLI:** authentifiziert als `BortDeveloper` via Keyring, Protocol = ssh.
 
