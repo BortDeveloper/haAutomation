@@ -37,6 +37,7 @@ Strato-VPS, das ueber VPN das heimische Netz inspiziert.
 - [Architektur](docs/architecture.md) — Komponenten, Datenfluss, Trust
 - [Roadmap](docs/roadmap.md) — Schrittplan S1–S14
 - [Strato-Setup](docs/strato-setup.md) — Server-Bootstrap, SSH/Keys, Operations, DR
+- [Memory-Snapshot](docs/memory/) — Claude-Memory-Backup mit Projekt-Kontext und Praeferenzen
 - [Inventory Backend](inventory/) — Rust-App
 - [Docker / VPN](inventory/docker/README.md) — Sidecar-Setup, Provider-Wechsel
 - [Secrets](inventory/secrets/) — sops+age-Layout

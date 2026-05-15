@@ -1,0 +1,4 @@
+- [haBortfeld project](project_habortfeld.md) — Smart-Home-Refactoring + Inventarisierung (HA, NR, Homematic), Rust-Backend, sops+age, Tailscale
+- [haBortfeld home setup](project_habortfeld_home.md) — physische Umgebung: HAOS + RaspberryMatic + NR-Addon + Z2M-Addon
+- [haBortfeld repo + ssh](reference_habortfeld_repo.md) — Repo-URL, SSH-Alias, Deploy-Key-Layout
+- [user role](user_role.md) — Eigentuemer betreibt eigenes Smart-Home, deployt Services auf Strato-VPS
