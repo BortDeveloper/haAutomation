@@ -1,4 +1,5 @@
 - [haAutomation project](project_hasite.md) — Smart-Home-Refactoring + Inventarisierung (HA, NR, Homematic), Rust-Backend, sops+age, Tailscale
 - [haAutomation home setup](project_hasite_home.md) — physische Umgebung: HAOS + RaspberryMatic + NR-Addon + Z2M-Addon
 - [haAutomation repo + ssh](reference_hasite_repo.md) — Repo-URL, SSH-Alias, Deploy-Key-Layout
+- [inventory server](reference_inventory_server.md) — dedizierter Tailscale-Host `inventory` als Build/Deploy-Ziel; Workstation kann den Crate nicht bauen
 - [user role](user_role.md) — Eigentuemer betreibt eigenes Smart-Home, deployt Services auf VPS-VPS
