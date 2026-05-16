@@ -4,11 +4,23 @@ Die `inventory`-App selbst weiß **nichts** über VPN. Sie joint nur den
 Netzwerk-Namespace eines Sidecar-Service mit fixem Namen `vpn`. Welcher
 Provider dahintersteht, bestimmt das gewählte Overlay zur Compose-Laufzeit.
 
+## Zwei Deployment-Modi
+
+| Modus | Wer macht TLS? | Wer macht Auth? | Wer macht VPN? | Compose |
+|---|---|---|---|---|
+| **Standalone** (Default) | Caddy (im Compose) | `authgate`-Sidecar | VPN-Sidecar (Tailscale/NetBird/WG) | `docker-compose.yml` + Overlay |
+| **Strato-Stack** | Traefik (host-weit) | Authentik (Forward-Auth) | host-weites VPN (z. B. Headscale) | `docker-compose.strato.yml` |
+
+Beide Modi nutzen **dasselbe Image** und denselben Header-Vertrag
+(`X-Authentik-Username`). Die App ist unverändert.
+
 ## Dateien
 
 | Datei | Zweck |
 |---|---|
-| `docker-compose.yml` | Base: `inventory` + `caddy`. Erwartet einen Service `vpn` aus dem Overlay. |
+| `Dockerfile` | Multi-stage Build, baut beide Binaries (`inventory` + `authgate`). HEALTHCHECK auf `/health`. |
+| `docker-compose.yml` | **Standalone**-Base: `inventory` + `authgate` + `caddy`. Erwartet einen Service `vpn` aus dem Overlay. |
+| `docker-compose.strato.yml` | **Strato-Variante**: nur `inventory`, an externes `traefik`-Netz; Hardening (read_only, cap_drop:ALL, Limits). |
 | `docker-compose.vpn.tailscale.yml` | Overlay: `vpn` = Tailscale-Client |
 | `docker-compose.vpn.netbird.yml` | Overlay: `vpn` = NetBird-Client (SaaS oder self-hosted) |
 | `docker-compose.vpn.wireguard.yml` | Overlay: `vpn` = WireGuard, mit `vpn-init` der sops-entschlüsselt |
@@ -82,3 +94,44 @@ just down tailscale
 
 Bei jedem der drei Provider muss Schritt 3 erfolgreich sein — dann ist die
 VPN-Abstraktion bewiesen.
+
+## Strato-Variante (`docker-compose.strato.yml`)
+
+Fuer Hosts, auf denen bereits **Traefik + Authentik + ein host-weites VPN**
+durch das [strato-stack](https://github.com/BortDeveloper/ansible-strato-stack)-Playbook
+laufen. Caddy und `authgate` entfallen — deren Aufgaben uebernehmen Traefik
+und Authentik.
+
+**Voraussetzungen:**
+
+- externes Docker-Netz `traefik` existiert
+- Traefik kennt das Middleware `chain-vpn@file` (Authentik + IP-Allowlist)
+- Certresolver `letsencrypt` ist konfiguriert
+
+**`.env`:**
+
+```
+# Gepinnt per Digest — niemals nur ein Tag, sonst kein reproduzierbarer Deploy.
+INVENTORY_IMAGE=ghcr.io/bortdeveloper/inventory@sha256:<digest>
+INVENTORY_DOMAIN=inventory.example.com
+```
+
+**Start:**
+
+```bash
+docker compose -f docker-compose.strato.yml --env-file .env up -d
+```
+
+Hardening: `read_only: true`, `cap_drop: [ALL]`, `no-new-privileges`, tmpfs
+fuer `/tmp`, Memory/CPU/PIDs-Limits. Vor jedem Tag-Push das Image lokal
+scannen:
+
+```bash
+docker build -f docker/Dockerfile -t inventory:dev ..
+../../scripts/trivy-scan.sh inventory:dev
+```
+
+> Die produktive Distribution (Image-Push nach GHCR-private, Pinning via
+> Digest in `versions.yml` des strato-Repos) ist Sache der Brueckenpakete
+> C (Ansible-Rolle) und D (Build-Workflow) — siehe `project_session_handoff_…`
+> in der Memory.
