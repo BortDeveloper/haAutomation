@@ -1,0 +1,86 @@
+# Inventory fuer den vps-stack.
+#
+# Dieser Compose ersetzt NICHT die Standalone-Variante (docker-compose.yml +
+# Caddy + authgate + VPN-Sidecar). Er ist fuer Hosts gedacht, auf denen
+# bereits Traefik (mit Authentik-Forward-Auth) und ein VPN-Overlay (Tailscale
+# oder NetBird) laufen — typisch: ein vom vps-stack-Playbook provisionierter
+# Server.
+#
+# Erwartete Umgebung:
+#   - externes Docker-Netz `traefik` existiert (`docker network create traefik`
+#     oder vom vps-Playbook erzeugt)
+#   - Traefik kennt das File-Provider-Middleware `chain-vpn@file` (Authentik
+#     + IP-Allowlist 100.64.0.0/10)
+#   - certresolver `letsencrypt` ist konfiguriert
+#
+# Erforderliche Variablen (in .env oder Shell-Export):
+#   INVENTORY_IMAGE   — gepinnt per Digest, z. B.
+#                       ghcr.io/bortdeveloper/inventory@sha256:<digest>
+#   INVENTORY_DOMAIN  — voll qualifiziert, z. B. inventory.example.com
+#
+# Start (Beispiel):
+#   docker compose -f docker-compose.vps.yml --env-file .env up -d
+#
+# Standalone bleibt First-Class: dafuer weiterhin docker-compose.yml + ein
+# VPN-Overlay (siehe justfile / docker-compose.vpn.*.yml).
+
+services:
+  inventory:
+    image: ${INVENTORY_IMAGE:?INVENTORY_IMAGE (Image@digest) muss gesetzt sein}
+    container_name: inventory
+    restart: unless-stopped
+
+    networks:
+      - traefik
+
+    # Persistente Daten: Named Volume in der vps-Variante (sauberer
+    # Lifecycle ueber `docker volume`; das Ansible-Playbook backupt's separat).
+    volumes:
+      - inventory-data:/var/lib/inventory
+
+    environment:
+      INVENTORY_DB: /var/lib/inventory/inventory.db
+      INVENTORY_LISTEN: "0.0.0.0:8080"
+      # Authentik setzt den User-Header bei erfolgreicher Forward-Auth.
+      AUTH_HEADER: X-Authentik-Username
+      RUST_LOG: info
+
+    # Healthcheck kommt aus dem Image (HEALTHCHECK in Dockerfile). Hier nichts
+    # ueberschreiben, sonst veraltet die Compose-Variante wenn das Image neue
+    # Routen bekommt.
+
+    # --- Container-Hardening ---------------------------------------------
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    # Ressourcenlimits — bewusst konservativ; bei Bedarf im vps-vars
+    # ueberschreiben. PIDs-Limit schuetzt vor fork bombs trotz cap_drop:ALL.
+    mem_limit: 256m
+    mem_reservation: 64m
+    pids_limit: 128
+    cpus: 0.5
+
+    # --- Traefik-Routing -------------------------------------------------
+    # VPN-only via chain-vpn@file (= Authentik + IP-Allowlist 100.64.0.0/10).
+    # Konvention identisch zu vps-stack-Rollen (forgejo, nextcloud, ...).
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik"
+      - "traefik.http.routers.inventory.rule=Host(`${INVENTORY_DOMAIN:?INVENTORY_DOMAIN muss gesetzt sein}`)"
+      - "traefik.http.routers.inventory.entrypoints=websecure"
+      - "traefik.http.routers.inventory.tls=true"
+      - "traefik.http.routers.inventory.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.inventory.middlewares=chain-vpn@file"
+      - "traefik.http.routers.inventory.service=inventory"
+      - "traefik.http.services.inventory.loadbalancer.server.port=8080"
+
+networks:
+  traefik:
+    external: true
+
+volumes:
+  inventory-data:
