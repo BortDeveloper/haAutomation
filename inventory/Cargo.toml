@@ -3,7 +3,7 @@ name = "inventory"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.75"
-description = "haBortfeld inventory backend"
+description = "home inventory backend"
 license = "MIT"
 publish = false
 
