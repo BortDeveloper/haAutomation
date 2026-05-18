@@ -1,25 +1,25 @@
-# Test-Fixture: drei Geraete aus unterschiedlichen Quellen.
-# Wird von S3-Tests gelesen, nicht zur Laufzeit.
+# Test fixture: three devices from different sources.
+# Read by S3 tests, not used at runtime.
 
 - source: ha
-  source_id: light.RoomA_decke
-  name: RoomA Decke
+  source_id: light.room_a_ceiling
+  name: Room A Ceiling
   manufacturer: IKEA Tradfri
   model: LED2003G10
   kind: light
-  room: RoomA
+  room: Room A
 
 - source: ccu
   source_id: "0001AAAAAAAAA1"
-  name: Thermostat RoomA
+  name: Wall Thermostat Room B
   manufacturer: eQ-3
   model: HmIP-WTH-2
   kind: thermostat
-  room: LivingRoom
+  room: Room B
 
 - source: z2m
   source_id: "0x00158d0001234567"
-  name: Tuerkontakt Eingang
+  name: Door Contact Entry
   manufacturer: Aqara
   model: MCCGQ11LM
   kind: contact
