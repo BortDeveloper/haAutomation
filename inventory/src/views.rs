@@ -6,7 +6,7 @@ pub fn devices_page(devices: &[Device]) -> String {
     format!(
         "<!doctype html>\n\
          <html lang=\"de\"><head><meta charset=\"utf-8\">\n\
-         <title>haBortfeld inventory</title>\n\
+         <title>home inventory</title>\n\
          <style>\n\
          body{{font-family:system-ui,sans-serif;margin:2rem;color:#222;}}\n\
          h1{{margin:0 0 .25rem;}}\n\

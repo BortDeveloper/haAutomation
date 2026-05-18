@@ -161,16 +161,16 @@ mod tests {
     use tiny_http::{Header, Response, Server};
 
     const LIGHTS_JSON: &str = r#"{
-        "1": {"name": "Wohnzimmer Decke", "modelid": "LCT016", "productname": "Hue color lamp",
+        "1": {"name": "Room B Ceiling", "modelid": "LCT016", "productname": "Hue color lamp",
               "manufacturername": "Signify Netherlands B.V.", "swversion": "1.122.2",
               "uniqueid": "00:17:88:01:08:aa:bb:cc-0b"},
-        "2": {"name": "Esstisch", "modelid": "LCT015", "productname": "Hue color lamp",
+        "2": {"name": "Dining Table", "modelid": "LCT015", "productname": "Hue color lamp",
               "manufacturername": "Signify Netherlands B.V.", "swversion": "1.122.2",
               "uniqueid": "00:17:88:01:08:dd:ee:ff-0b"}
     }"#;
 
     const SENSORS_JSON: &str = r#"{
-        "10": {"name": "Bewegung Flur", "modelid": "SML001", "productname": "Hue motion sensor",
+        "10": {"name": "Motion Hallway", "modelid": "SML001", "productname": "Hue motion sensor",
                "manufacturername": "Signify Netherlands B.V.", "swversion": "6.1.1.27575",
                "uniqueid": "00:17:88:01:09:11:22:33-02-0406", "type": "ZLLPresence"},
         "20": {"name": "Daylight", "type": "Daylight"}
@@ -210,7 +210,7 @@ mod tests {
         let addr = spawn_mock();
         let devs = fetch_lights(&addr, TOKEN).unwrap();
         assert_eq!(devs.len(), 2);
-        let first = devs.iter().find(|d| d.name == "Wohnzimmer Decke").unwrap();
+        let first = devs.iter().find(|d| d.name == "Room B Ceiling").unwrap();
         assert_eq!(first.swversion.as_deref(), Some("1.122.2"));
         assert_eq!(first.uniqueid, "00:17:88:01:08:aa:bb:cc-0b");
         assert_eq!(first.kind, HueKind::Light);
@@ -222,7 +222,7 @@ mod tests {
         let devs = fetch_sensors(&addr, TOKEN).unwrap();
         // Daylight hat keine uniqueid -> raus
         assert_eq!(devs.len(), 1);
-        assert_eq!(devs[0].name, "Bewegung Flur");
+        assert_eq!(devs[0].name, "Motion Hallway");
         assert_eq!(devs[0].kind, HueKind::Sensor);
     }
 
@@ -234,12 +234,12 @@ mod tests {
         let devices = map_to_devices(&all);
         assert_eq!(devices.len(), 3);
         assert!(devices.iter().all(|d| d.source == "hue"));
-        let bewegung = devices
+        let motion = devices
             .iter()
-            .find(|d| d.name == "Bewegung Flur")
+            .find(|d| d.name == "Motion Hallway")
             .unwrap();
-        assert_eq!(bewegung.kind.as_deref(), Some("sensor"));
-        assert_eq!(bewegung.model.as_deref(), Some("Hue motion sensor"));
+        assert_eq!(motion.kind.as_deref(), Some("sensor"));
+        assert_eq!(motion.model.as_deref(), Some("Hue motion sensor"));
     }
 
     #[test]
@@ -248,12 +248,12 @@ mod tests {
         let path = tmp.path().join("hue.yaml");
         std::fs::write(
             &path,
-            "- ip: 192.168.10.10\n  token: abc\n- ip: 192.168.10.11\n  token: def\n  name: gartenhaus\n",
+            "- ip: 10.0.0.10\n  token: abc\n- ip: 10.0.0.11\n  token: def\n  name: outdoor_a\n",
         )
         .unwrap();
         let cfg = load_config(&path).unwrap();
         assert_eq!(cfg.len(), 2);
-        assert_eq!(cfg[0].ip, "192.168.10.10");
-        assert_eq!(cfg[1].name.as_deref(), Some("gartenhaus"));
+        assert_eq!(cfg[0].ip, "10.0.0.10");
+        assert_eq!(cfg[1].name.as_deref(), Some("outdoor_a"));
     }
 }

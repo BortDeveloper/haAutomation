@@ -156,7 +156,7 @@ mod tests {
         assert!(res.header("Content-Type").unwrap().contains("text/html"));
         let body = res.into_string().unwrap();
         assert!(body.contains("<table>"));
-        assert!(body.contains("Kueche Decke"));
+        assert!(body.contains("Room A Ceiling"));
         assert!(body.contains("3 Geraete"));
     }
 

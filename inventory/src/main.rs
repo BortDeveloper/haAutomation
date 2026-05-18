@@ -13,7 +13,7 @@ mod views;
 mod yaml_io;
 
 #[derive(Parser)]
-#[command(name = "inventory", version, about = "haBortfeld inventory backend")]
+#[command(name = "inventory", version, about = "home inventory backend")]
 struct Cli {
     /// Pfad zur SQLite-Datei. Wird angelegt falls nicht vorhanden.
     #[arg(long, default_value = "inventory.db", env = "INVENTORY_DB")]
@@ -53,7 +53,7 @@ enum Command {
 enum SyncSource {
     /// Home Assistant: GET /api/states gegen eine HA-Instanz.
     Ha {
-        /// Basis-URL, z.B. http://homeassistant.local:8123.
+        /// Basis-URL, z.B. http://homeassistant.example.local:8123.
         #[arg(long, env = "HA_URL")]
         url: String,
         /// Long-Lived Access Token. Auch ueber HA_TOKEN env setzbar.
@@ -62,7 +62,7 @@ enum SyncSource {
     },
     /// CCU / RaspberryMatic: GET /addons/xmlapi/devicelist.cgi.
     Ccu {
-        /// Basis-URL der CCU, z.B. http://192.168.10.6
+        /// Basis-URL der CCU, z.B. http://10.0.0.6
         #[arg(long, env = "CCU_URL")]
         url: String,
     },

@@ -13,7 +13,7 @@ pub struct CcuDevice {
 }
 
 /// Holt die Geraeteliste der CCU.
-/// base_url ohne Pfad, z.B. "http://192.168.10.6". Pfad wird angehaengt.
+/// base_url ohne Pfad, z.B. "http://10.0.0.6". Pfad wird angehaengt.
 pub fn fetch_devicelist(base_url: &str) -> Result<Vec<CcuDevice>> {
     let url = format!(
         "{}/addons/xmlapi/devicelist.cgi",
@@ -123,7 +123,7 @@ mod tests {
         let xml = fixture();
         let devs = parse_devicelist(&xml).unwrap();
         assert_eq!(devs.len(), 4);
-        assert_eq!(devs[0].address, "0001D3C99A1234");
+        assert_eq!(devs[0].address, "0001AAAAAAAAA1");
         assert_eq!(devs[0].firmware, "2.6.4");
         assert!(devs[2].updatable);
     }
@@ -142,21 +142,21 @@ mod tests {
         assert_eq!(mapped.len(), 3); // HmIP-RCV-50 raus
         assert!(mapped.iter().all(|d| d.source == "ccu"));
         let ids: Vec<&str> = mapped.iter().map(|d| d.source_id.as_str()).collect();
-        assert!(ids.contains(&"0001D3C99A1234"));
-        assert!(ids.contains(&"MEQ0099887"));
-        assert!(ids.contains(&"OEQ1234567"));
+        assert!(ids.contains(&"0001AAAAAAAAA1"));
+        assert!(ids.contains(&"MEQ0000001"));
+        assert!(ids.contains(&"OEQ0000001"));
     }
 
     #[test]
     fn map_assigns_kind_and_manufacturer() {
         let xml = fixture();
         let mapped = map_to_devices(&parse_devicelist(&xml).unwrap());
-        let thermo = mapped.iter().find(|d| d.source_id == "0001D3C99A1234").unwrap();
+        let thermo = mapped.iter().find(|d| d.source_id == "0001AAAAAAAAA1").unwrap();
         assert_eq!(thermo.kind.as_deref(), Some("thermostat"));
         assert_eq!(thermo.manufacturer.as_deref(), Some("eQ-3"));
         assert_eq!(thermo.model.as_deref(), Some("HmIP-WTH-2"));
 
-        let schalter = mapped.iter().find(|d| d.source_id == "MEQ0099887").unwrap();
-        assert_eq!(schalter.kind.as_deref(), Some("switch"));
+        let switch_dev = mapped.iter().find(|d| d.source_id == "MEQ0000001").unwrap();
+        assert_eq!(switch_dev.kind.as_deref(), Some("switch"));
     }
 }
