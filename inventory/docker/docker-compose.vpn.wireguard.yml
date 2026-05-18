@@ -10,7 +10,9 @@
 
 services:
   vpn-init:
-    image: ghcr.io/getsops/sops:latest
+    # Digest-Pin (Architekt-R4) — getsops/sops v3.11.0, aufgeloest 2026-05-17.
+    # (ghcr.io/getsops/sops publiziert keinen :latest-Tag — feste Version.)
+    image: ghcr.io/getsops/sops:v3.11.0@sha256:6ce00ac946e1a52b2d1e5b7087441f7b6ef7bad907753104013f8bdb8f5fd891
     container_name: vpn-init
     entrypoint: ["sh", "-c"]
     command:
@@ -27,12 +29,16 @@ services:
       - wg-conf:/out
 
   vpn:
-    image: linuxserver/wireguard:latest
+    # Digest-Pin (Architekt-R4) — Tag linuxserver/wireguard:latest, aufgeloest 2026-05-17.
+    image: linuxserver/wireguard:latest@sha256:b4fdb5b5bbbdcd6c7a4433c8fe98b0b00bf8684c62542571a705543ac4a8e75c
     container_name: vpn-wireguard
     restart: unless-stopped
     depends_on:
       vpn-init:
         condition: service_completed_successfully
+    # cap_drop:ALL + gezieltes cap_add — WireGuard braucht SYS_MODULE fuer das Kernelmodul.
+    cap_drop:
+      - ALL
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
