@@ -1,0 +1,25 @@
+#!/bin/sh
+# ha-automation pre-commit-Guardrail (Closing-Brief §2.4).
+#
+# Verhindert, dass Klartext-Secrets — inkl. unverschlüsselter Zigbee-Backups —
+# committet werden. Fail-closed: ist gitleaks nicht installiert, bricht der
+# Commit ab, statt ungeprüft durchzulaufen.
+#
+# Installation:  scripts/install-hooks.sh
+set -eu
+
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "pre-commit ABBRUCH: 'gitleaks' ist nicht installiert." >&2
+  echo "  Installation: https://github.com/gitleaks/gitleaks" >&2
+  echo "  Der Guardrail ist fail-closed — ohne gitleaks kein Commit." >&2
+  exit 1
+fi
+
+repo_root=$(git rev-parse --show-toplevel)
+
+# gitleaks >= 8.19 nutzt das 'git'-Subkommando; ältere Versionen 'protect'.
+if gitleaks git --help >/dev/null 2>&1; then
+  gitleaks git --staged --redact --no-banner --config "$repo_root/.gitleaks.toml"
+else
+  gitleaks protect --staged --redact --no-banner --config "$repo_root/.gitleaks.toml"
+fi
