@@ -47,4 +47,4 @@ VPS-VPS, das ueber VPN das heimische Netz inspiziert.
 - **GitOps:** alles ausser dem age-Privatkey lebt im Repo
 - **PRs mit Test-Gate:** jeder Schritt aus der Roadmap = ein PR, mit reproduzierbarem Test
 - **Sprache:** Code & Identifier englisch, Doku deutsch
-- **Lizenz:** privat / TBD
+- **Lizenz:** MIT (siehe [LICENSE](LICENSE))
