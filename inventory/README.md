@@ -16,7 +16,7 @@ cargo build --release
 ./target/release/inventory --help
 ```
 
-Auf dem Strato-Host wird das Image gebaut, nicht das Binary direkt — siehe
+Auf dem VPS-Host wird das Image gebaut, nicht das Binary direkt — siehe
 [docker/README.md](docker/README.md) und [../docs/strato-setup.md](../docs/strato-setup.md).
 
 ## Globale Optionen

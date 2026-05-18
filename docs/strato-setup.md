@@ -1,171 +1,170 @@
-# Strato-Host Setup
+# VPS Host Setup
 
-Operative Dokumentation des Strato-VPS, auf dem das Inventory-Backend
-laeuft. Enthaelt vollstaendige Bootstrap-Anleitung zur Neuaufsetzung.
+Operational documentation for the public VPS that runs the inventory
+backend. Contains a full bootstrap guide for setting up a fresh host.
 
-## Server-Kontext
+## Server context
 
-| Eigenschaft | Wert |
+| Property | Value |
 |---|---|
-| Hostname (oeffentlich) | `paperless.guebraun.org` |
-| Rolle im Repo | "ansible-strato-stack" (managed von einem separaten Ansible-Repo gleichen Namens) |
-| Betriebssystem | Debian 12 (Kernel 6.1.x) |
-| Docker-Engine | 29.x |
-| VPN-Backbone zum Heimnetz | Tailscale (initial), Overlays fuer NetBird / WireGuard liegen vor |
-| Hostkey Ed25519 | `SHA256:y2llW7O1YaO/xOfRJMhONCoqRo7mwOf2rOi+rWqm0uA` |
+| Public hostname | `<vps-host>` (e.g. `vps.example.org`) |
+| Role in repo | managed by a separate Ansible repo |
+| Operating system | Debian 12 (kernel 6.1.x) |
+| Docker engine | 29.x |
+| VPN backbone to home net | Tailscale (initial), overlays for NetBird / WireGuard exist |
+| Host key Ed25519 | `<server-host-key-fingerprint>` |
 
-## Benutzer- und Rechte-Modell
+## User and permission model
 
-Bewusste Trennung in zwei Linux-Accounts:
+Deliberate separation into two Linux accounts:
 
-| Account | Zweck | Hat sudo? | Mitglied in `docker`? | Login mit |
+| Account | Purpose | sudo? | Member of `docker`? | Login with |
 |---|---|---|---|---|
-| `root` | Bootstrap, System-Pakete, neue User, Routing-Konfig | n/a | ja | `~/.ssh/id_rsa` (Workstation) |
-| `deploy` | Tagesbetrieb: `git pull`, `docker build`, `docker compose up/down` | nein | **ja** (994) | `~/.ssh/id_ed25519_strato` (Workstation) |
+| `root` | bootstrap, system packages, new users, routing config | n/a | yes | `~/.ssh/id_rsa` (workstation) |
+| `deploy` | day-to-day ops: `git pull`, `docker build`, `docker compose up/down` | no | **yes** (994) | `~/.ssh/id_ed25519_vps` (workstation) |
 
-**Warum getrennt?** Mit `deploy` kann der gesamte Container-Lifecycle ohne
-Root-Privilegien laufen. Systemaenderungen erfordern explizit den Wechsel
-auf `root` und sind dadurch sichtbar. Die deploy-Keys haben keinen
-Schreibzugriff auf `/etc` oder die Docker-Konfiguration.
+**Why separated?** With `deploy` the entire container lifecycle runs
+without root privileges. System changes require an explicit switch to
+`root` and are therefore visible. The deploy keys have no write access
+to `/etc` or the Docker configuration.
 
-## Schluessel-Inventar
+## Key inventory
 
-Im Projekt entstehen mehrere SSH-Keys mit jeweils klarem Scope. Diese Tabelle
-ist die Quelle der Wahrheit darueber, "welcher Key macht was":
+The project creates several SSH keys, each with a clear scope. This
+table is the source of truth for "which key does what":
 
-| Privatkey | Wo | Scope | Erlaubt |
+| Private key | Where | Scope | Allows |
 |---|---|---|---|
-| `~/.ssh/id_rsa` (Workstation) | Win | Workstation-Identitaet | Login `root@strato`; Deploy-Key fuer `ansible-strato-stack`-Repo |
-| `~/.ssh/id_ed25519_strato` (Workstation) | Win | Strato-Login-Identitaet | Login `deploy@strato` |
-| `~/.ssh/id_ed25519_haBortfeld` (Workstation) | Win | haBortfeld-Git-Identitaet | **Schreiben** auf `BortDeveloper/haBortfeld` |
-| `~/.ssh/id_ed25519_github_haBortfeld` (Strato) | Lin | Strato-Git-Identitaet | **Lesen** von `BortDeveloper/haBortfeld` |
+| `~/.ssh/id_rsa` (workstation) | Win | workstation identity | login `root@vps`; deploy key for the Ansible repo |
+| `~/.ssh/id_ed25519_vps` (workstation) | Win | VPS login identity | login `deploy@vps` |
+| `~/.ssh/id_ed25519_repo` (workstation) | Win | repo Git identity | **write** to `<github-owner>/<repo>` |
+| `~/.ssh/id_ed25519_github_repo` (VPS) | Lin | VPS Git identity | **read** from `<github-owner>/<repo>` |
 
-Jeder Key hat genau eine Aufgabe. Rotationen betreffen jeweils nur einen
-Server / ein Repo.
+Each key has exactly one job. Rotations affect only one server / one
+repo at a time.
 
-## SSH-Setup: Workstation → Strato
+## SSH setup: workstation → VPS
 
-### Lokal: Key + Config
+### Local: key + config
 
 ```bash
-ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_strato -N "" -C "deploy@strato"
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_vps -N "" -C "deploy@vps"
 ```
 
-In `~/.ssh/config` anhaengen:
+Append to `~/.ssh/config`:
 
 ```
-Host strato
-    HostName paperless.guebraun.org
+Host vps
+    HostName <vps-host>
     User deploy
-    IdentityFile ~/.ssh/id_ed25519_strato
+    IdentityFile ~/.ssh/id_ed25519_vps
     IdentitiesOnly yes
 ```
 
-### Host-Key verifizieren
+### Verify host key
 
 ```bash
-ssh-keyscan -t ed25519 paperless.guebraun.org
-# Fingerprint via:
-ssh-keygen -lf <(ssh-keyscan -t ed25519 paperless.guebraun.org 2>/dev/null)
+ssh-keyscan -t ed25519 <vps-host>
+# fingerprint via:
+ssh-keygen -lf <(ssh-keyscan -t ed25519 <vps-host> 2>/dev/null)
 ```
 
-Erwartet: `SHA256:y2llW7O1YaO/xOfRJMhONCoqRo7mwOf2rOi+rWqm0uA`.
-Dann `>> ~/.ssh/known_hosts`.
+Compare against your recorded fingerprint, then append to
+`~/.ssh/known_hosts`.
 
-### deploy-User auf Strato anlegen (als root)
+### Create the deploy user on the VPS (as root)
 
 ```bash
 useradd -m -s /bin/bash -G docker deploy
 install -d -m700 -o deploy -g deploy /home/deploy/.ssh
-echo "<inhalt von id_ed25519_strato.pub>" > /home/deploy/.ssh/authorized_keys
+echo "<contents of id_ed25519_vps.pub>" > /home/deploy/.ssh/authorized_keys
 chmod 600 /home/deploy/.ssh/authorized_keys
 chown deploy:deploy /home/deploy/.ssh/authorized_keys
 ```
 
-Pruefen:
+Check:
 
 ```bash
-ssh strato 'whoami && groups && docker ps'
+ssh vps 'whoami && groups && docker ps'
 ```
 
-Erwartet: `deploy`, Groups enthaelt `docker`, `docker ps` listet bestehende
-Container.
+Expected: `deploy`, groups include `docker`, `docker ps` lists existing
+containers.
 
-## SSH-Setup: Strato → GitHub
+## SSH setup: VPS → GitHub
 
-Strato pullt **read-only** aus `haBortfeld`. Schreibender Sync-Pfad
-(git_publish.rs in S12) bekommt spaeter einen separaten Write-Key oder
-nutzt ein PAT.
+The VPS pulls **read-only** from the repo. The writing sync path
+(`git_publish.rs`, S12) later gets its own write key or uses a PAT.
 
-### Strato-seitig: Key + ssh-Config + known_hosts
+### On the VPS: key + ssh config + known_hosts
 
 ```bash
-ssh strato bash <<'BASH'
-ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_github_haBortfeld -N "" \
-  -C "deploy@strato-haBortfeld"
+ssh vps bash <<'BASH'
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_github_repo -N "" \
+  -C "deploy@vps-repo"
 ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts
 
 cat > ~/.ssh/config <<EOF
 Host github.com
-    IdentityFile ~/.ssh/id_ed25519_github_haBortfeld
+    IdentityFile ~/.ssh/id_ed25519_github_repo
     IdentitiesOnly yes
 EOF
 chmod 600 ~/.ssh/config
 BASH
 ```
 
-### Pubkey als Deploy-Key registrieren
+### Register the pubkey as a deploy key
 
-Von der Workstation aus (gh-CLI als `BortDeveloper` authentifiziert):
+From the workstation (gh CLI authenticated as the repo owner):
 
 ```bash
-PUB=$(ssh strato 'cat ~/.ssh/id_ed25519_github_haBortfeld.pub')
-gh api repos/BortDeveloper/haBortfeld/keys \
-  -f title="strato-deploy" \
+PUB=$(ssh vps 'cat ~/.ssh/id_ed25519_github_repo.pub')
+gh api repos/<github-owner>/<repo>/keys \
+  -f title="vps-deploy" \
   -f key="$PUB" \
   -F read_only=true
 ```
 
-### Pruefen
+### Check
 
 ```bash
-ssh strato 'ssh -T git@github.com'
+ssh vps 'ssh -T git@github.com'
 ```
 
-Erwartet: `Hi BortDeveloper/haBortfeld! You've successfully authenticated...`
+Expected: `Hi <github-owner>/<repo>! You've successfully authenticated...`
 
-## Repo klonen
+## Clone the repo
 
 ```bash
-ssh strato 'git clone git@github.com:BortDeveloper/haBortfeld.git ~/haBortfeld'
+ssh vps 'git clone git@github.com:<github-owner>/<repo>.git ~/<repo>'
 ```
 
-Aktualisieren spaeter:
+Later updates:
 
 ```bash
-ssh strato 'cd ~/haBortfeld && git pull'
+ssh vps 'cd ~/<repo> && git pull'
 ```
 
-## Erster Image-Build und Test
+## First image build and test
 
 ```bash
-ssh strato 'cd ~/haBortfeld/inventory && \
+ssh vps 'cd ~/<repo>/inventory && \
   docker build -f docker/Dockerfile -t inventory:dev . | tail -5'
 ```
 
-Pruefen:
+Check:
 
 ```bash
-ssh strato 'docker image inspect inventory:dev --format "{{.Size}}"' \
+ssh vps 'docker image inspect inventory:dev --format "{{.Size}}"' \
   | awk '{printf "%.2f MB\n", $1/1048576}'
 ```
 
-Erwartet: < 30 MB (NFR-9). Aktuell ~10 MB.
+Expected: < 30 MB (NFR-9). Currently ~10 MB.
 
-End-to-End-Test:
+End-to-end test:
 
 ```bash
-ssh strato 'docker rm -f inv-test 2>/dev/null
+ssh vps 'docker rm -f inv-test 2>/dev/null
   docker run -d --name inv-test -p 127.0.0.1:18080:8080 inventory:dev
   sleep 2
   curl -s http://127.0.0.1:18080/health
@@ -174,15 +173,15 @@ ssh strato 'docker rm -f inv-test 2>/dev/null
   docker rm -f inv-test'
 ```
 
-Erwartet: `ok` und `[]`.
+Expected: `ok` and `[]`.
 
-## Operative Routinen
+## Operational routines
 
-### Komplette Update-Iteration
+### Full update iteration
 
 ```bash
-ssh strato bash -c '
-  cd ~/haBortfeld &&
+ssh vps bash -c '
+  cd ~/<repo> &&
   git pull &&
   cd inventory &&
   docker build -f docker/Dockerfile -t inventory:dev . &&
@@ -192,79 +191,78 @@ ssh strato bash -c '
 '
 ```
 
-(Compose-Aufruf wird in S13 ueber `just` vereinfacht.)
+(Compose invocation is simplified via `just` in S13.)
 
-### Logs anschauen
-
-```bash
-ssh strato 'docker logs -f inventory'
-```
-
-### Image-Cleanup
+### Watch logs
 
 ```bash
-ssh strato 'docker image prune -f'
+ssh vps 'docker logs -f inventory'
 ```
 
-### Build-Cache aufraeumen
+### Image cleanup
 
 ```bash
-ssh strato 'docker builder prune -f'
+ssh vps 'docker image prune -f'
 ```
 
-## Trust Boundaries
+### Build-cache cleanup
+
+```bash
+ssh vps 'docker builder prune -f'
+```
+
+## Trust boundaries
 
 ```
 +--------- Workstation (Windows) ---------+
 |                                          |
-|  id_rsa  ----------+ -> root@strato      |
-|  id_ed25519_strato + -> deploy@strato    |
-|  id_ed25519_haBortfeld -> github (write) |
+|  id_rsa  -----------+ -> root@vps        |
+|  id_ed25519_vps     + -> deploy@vps      |
+|  id_ed25519_repo      -> github (write)  |
 |                                          |
 +--------------------|---------------------+
                      | SSH (ed25519 hostkey)
                      v
-+--------- Strato VPS (Debian) -----------+
++--------- Public VPS (Debian) -----------+
 |                                          |
-|  root          (System, sudo)            |
-|  deploy        (Container-Lifecycle)     |
-|  id_ed25519_github_haBortfeld            |
+|  root          (system, sudo)            |
+|  deploy        (container lifecycle)     |
+|  id_ed25519_github_repo                  |
 |                  -> github (read-only)   |
 |                                          |
-|  ~deploy/haBortfeld/  <-- git pull       |
-|  /etc/inventory/age.key   (geplant)      |
+|  ~deploy/<repo>/  <-- git pull           |
+|  /etc/inventory/age.key   (planned)      |
 |                                          |
 +-------- Docker --------------------------+
 |                                          |
 |  inventory:dev   (non-root, alpine)      |
 |  vpn-tailscale   (sidecar, NET_ADMIN)    |
-|  caddy           (Reverse-Proxy + TLS)   |
+|  caddy           (reverse proxy + TLS)   |
 |                                          |
 +------------------------------------------+
 ```
 
-Niemals committen: `id_rsa`, `id_ed25519_strato`, `age.key`, alle privaten
-Keys auf Strato.
+Never commit: `id_rsa`, `id_ed25519_vps`, `age.key`, and any private
+keys living on the VPS.
 
-## Geplante Erweiterungen
+## Planned extensions
 
-Diese Punkte sind heute **noch nicht** auf dem Strato-Host vorhanden und
-kommen mit den entsprechenden Steps aus der Roadmap:
+These items are not yet present on the VPS and arrive with the
+matching roadmap steps:
 
-- `/etc/inventory/age.key` (root:deploy 0440) — fuer sops-Decryption (mit S8)
-- Tailscale-Sidecar inkl. Auth-Key (mit S13a)
-- Caddy + TLS-Cert + Authentik-Forward-Auth (mit S14)
-- DNS-A-Record fuer Subdomain (mit S14)
-- systemd-Service-Unit, die `docker compose up -d` beim Boot startet (post-V1)
-- Backup-Skript fuer SQLite + Compose-State (post-V1)
+- `/etc/inventory/age.key` (root:deploy 0440) — for sops decryption (S8)
+- Tailscale sidecar incl. auth key (S13a)
+- Caddy + TLS cert + Authentik forward-auth (S14)
+- DNS A record for the subdomain (S14)
+- systemd service unit that runs `docker compose up -d` at boot (post-V1)
+- Backup script for SQLite + compose state (post-V1)
 
-## Disaster Recovery: Neuer Strato-Host
+## Disaster recovery: new VPS host
 
-Vorausgesetzt der Provider liefert einen frischen Debian-VPS mit
-funktionierender Netzwerkanbindung und du hast Console-/SSH-Zugang als
-`root`. Bootstrap-Reihenfolge:
+Assuming the provider gives you a fresh Debian VPS with working
+networking and console / SSH access as `root`, bootstrap order:
 
-1. **System-Updates und Docker installieren**
+1. **System updates and Docker install**
 
    ```bash
    apt update && apt -y full-upgrade
@@ -279,68 +277,68 @@ funktionierender Netzwerkanbindung und du hast Console-/SSH-Zugang als
    apt -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin
    ```
 
-2. **Workstation-Pubkey fuer root einspielen** (per Provider-Console oder via Password-Auth):
+2. **Install workstation pubkey for root** (via provider console or password auth):
 
    ```bash
    mkdir -p /root/.ssh && chmod 700 /root/.ssh
-   echo "<id_rsa.pub Inhalt>" >> /root/.ssh/authorized_keys
+   echo "<id_rsa.pub contents>" >> /root/.ssh/authorized_keys
    chmod 600 /root/.ssh/authorized_keys
    ```
 
-3. **deploy-User anlegen** (siehe "deploy-User auf Strato anlegen" oben)
+3. **Create the deploy user** (see "Create the deploy user on the VPS" above)
 
-4. **Strato-side Github-Key + ssh-config** (siehe "SSH-Setup: Strato → GitHub")
+4. **VPS-side GitHub key + ssh config** (see "SSH setup: VPS → GitHub")
 
-5. **Repo klonen, Image bauen, testen** (siehe oben)
+5. **Clone repo, build image, test** (see above)
 
-6. **VPN, age.key, Caddy, Authentik** entsprechend Roadmap-Stand zum
-   Zeitpunkt der Wiederherstellung wieder aufsetzen — alle Konfigurationen
-   sind im Repo nachvollziehbar, lediglich Secrets muessen aus dem
-   Off-Repo-Backup eingespielt werden (insbesondere `/etc/inventory/age.key`).
+6. **VPN, age.key, Caddy, Authentik** per the roadmap state at recovery
+   time — all configurations are tracked in the repo, only the secrets
+   need to be restored from the off-repo backup (especially
+   `/etc/inventory/age.key`).
 
-## Anhang: Schluessel-Rotation
+## Appendix: key rotation
 
-### Workstation-Strato-Key rotieren
+### Rotate the workstation-to-VPS key
 
 ```bash
-# alten Key sichern, neuen erzeugen
-mv ~/.ssh/id_ed25519_strato{,.old}
-mv ~/.ssh/id_ed25519_strato.pub{,.old}
-ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_strato -N "" -C "deploy@strato"
+# back up old key, generate new
+mv ~/.ssh/id_ed25519_vps{,.old}
+mv ~/.ssh/id_ed25519_vps.pub{,.old}
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_vps -N "" -C "deploy@vps"
 
-# neuen Pubkey einspielen (noch mit dem alten Key authentifiziert)
-cat ~/.ssh/id_ed25519_strato.pub | ssh strato \
+# install new pubkey (still authenticated with the old key)
+cat ~/.ssh/id_ed25519_vps.pub | ssh vps \
   'tee -a ~/.ssh/authorized_keys >/dev/null'
 
-# pruefen, alten Eintrag entfernen
-ssh strato 'sed -i "/$(cat ~/.ssh/id_ed25519_strato.old.pub | cut -d" " -f2 | head -c40)/d" \
+# verify, then remove the old entry
+ssh vps 'sed -i "/$(cat ~/.ssh/id_ed25519_vps.old.pub | cut -d" " -f2 | head -c40)/d" \
   ~/.ssh/authorized_keys'
 
-# alte Files loeschen
-rm ~/.ssh/id_ed25519_strato.old*
+# delete old files
+rm ~/.ssh/id_ed25519_vps.old*
 ```
 
-### Strato-Github-Key rotieren
+### Rotate the VPS-to-GitHub key
 
 ```bash
-# neuen Key auf Strato
-ssh strato 'ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_github_haBortfeld.new \
-  -N "" -C "deploy@strato-haBortfeld"'
+# new key on the VPS
+ssh vps 'ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_github_repo.new \
+  -N "" -C "deploy@vps-repo"'
 
-# neuen Pubkey als Deploy-Key registrieren
-PUB=$(ssh strato 'cat ~/.ssh/id_ed25519_github_haBortfeld.new.pub')
-gh api repos/BortDeveloper/haBortfeld/keys \
-  -f title="strato-deploy-$(date +%Y%m%d)" -f key="$PUB" -F read_only=true
+# register the new pubkey as a deploy key
+PUB=$(ssh vps 'cat ~/.ssh/id_ed25519_github_repo.new.pub')
+gh api repos/<github-owner>/<repo>/keys \
+  -f title="vps-deploy-$(date +%Y%m%d)" -f key="$PUB" -F read_only=true
 
-# umschalten
-ssh strato '
-  mv ~/.ssh/id_ed25519_github_haBortfeld{,.old}
-  mv ~/.ssh/id_ed25519_github_haBortfeld.new ~/.ssh/id_ed25519_github_haBortfeld
-  mv ~/.ssh/id_ed25519_github_haBortfeld.new.pub ~/.ssh/id_ed25519_github_haBortfeld.pub
+# swap in
+ssh vps '
+  mv ~/.ssh/id_ed25519_github_repo{,.old}
+  mv ~/.ssh/id_ed25519_github_repo.new ~/.ssh/id_ed25519_github_repo
+  mv ~/.ssh/id_ed25519_github_repo.new.pub ~/.ssh/id_ed25519_github_repo.pub
   ssh -T git@github.com  # smoke test
 '
 
-# alten Deploy-Key am Repo loeschen (gh api)
-gh api repos/BortDeveloper/haBortfeld/keys --jq '.[] | select(.title=="strato-deploy") | .id' \
-  | xargs -I{} gh api -X DELETE repos/BortDeveloper/haBortfeld/keys/{}
+# delete the old deploy key on the repo (gh api)
+gh api repos/<github-owner>/<repo>/keys --jq '.[] | select(.title=="vps-deploy") | .id' \
+  | xargs -I{} gh api -X DELETE repos/<github-owner>/<repo>/keys/{}
 ```

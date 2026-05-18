@@ -21,7 +21,7 @@ Live-Smoke noch offen · ☐ offen.
 
 | Step | Inhalt | Status |
 |---|---|---|
-| S6 | Dockerfile multi-stage `rust:alpine` -> `alpine:3.20`, ~10 MB | ✓ (Strato build + curl) |
+| S6 | Dockerfile multi-stage `rust:alpine` -> `alpine:3.20`, ~10 MB | ✓ (VPS build + curl) |
 | S7 | Auth-Middleware: `X-Authentik-Username` Pflicht, `AUTH_BYPASS=1` fuer Dev | ✓ (4 Tests + Smoke) |
 | S8 | `secrets.rs` shell-outet auf `sops -d`, parst K=V | ✓ (5 Tests) |
 
@@ -39,7 +39,7 @@ Live-Smoke noch offen · ☐ offen.
 
 **Gesamt nach Phase 3: 52 cargo-Tests gruen.**
 
-## Phase 4 — Strato-Deployment — ☐
+## Phase 4 — VPS Deployment — ☐
 
 | Step | Inhalt | Test-Gate |
 |---|---|---|
