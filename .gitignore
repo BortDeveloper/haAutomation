@@ -5,6 +5,17 @@
 **/vpn.netbird.env
 **/wg0.conf
 **/authgate.env
+
+# Edge-Klasse-Klartext (Closing-Brief §2.1) — diese Pfade dürfen nur
+# sops-verschlüsselt (.enc) im Repo liegen, niemals im Klartext.
+**/coordinator_backup.json
+**/zigbee2mqtt/*.yaml
+**/*secrets.yaml
+**/flows_cred.json
+**/mosquitto/passwd
+**/mosquitto/acl
+**/*tokens.json
+
 !**/*.example
 !**/*.enc
 
