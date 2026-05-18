@@ -3,7 +3,7 @@
 ## Komponenten und Datenfluss
 
 ```
-+----------------------- VPS VPS --------------------------+
++----------------------- Public VPS --------------------------+
 |                                                              |
 |   +-------+    +----------+    +------------+               |
 |   | caddy |--->| inventory|--->|  SQLite    |               |
@@ -14,7 +14,7 @@
 |       |             |                |                       |
 |       |        +----v----+           |  git push             |
 |       |        |   vpn   |        +--v---------+             |
-|       |        | sidecar |        | haAutomation |             |
+|       |        | sidecar |        |  inventory |             |
 |       |        +----+----+        |   repo     |             |
 |       |             |             +------------+             |
 | auth via forward_   |                                         |
@@ -117,7 +117,7 @@ inventory/secrets/                          (im Repo, verschluesselt)
 ├── vpn.netbird.env.enc                     NB_SETUP_KEY, NB_MANAGEMENT_URL
 └── vpn.wireguard/wg0.conf.enc              komplette WG-Config
 
-/etc/inventory/age.key                      (NUR auf VPS, chmod 400)
+/etc/inventory/age.key                      (NUR auf dem VPS, chmod 400)
 ```
 
 - Entschluesselung passiert beim Container-Start, das Klartext-Material landet auf tmpfs (`/run/inventory/…`), nie auf Disk
@@ -138,7 +138,7 @@ Entwickler-Laptop                          VPS-Host
 ```
 
 Kein CI in V1 (kommt spaeter). Deployment ist erstmal manuell via `git pull`
-plus `just up`. Image wird auf dem VPS-Host gebaut, nicht aus einer
+plus `just up`. Image wird auf dem VPS gebaut, nicht aus einer
 Registry gezogen — vermeidet Registry-Komplexitaet.
 
 ## Migrations-Architektur fuer Daten

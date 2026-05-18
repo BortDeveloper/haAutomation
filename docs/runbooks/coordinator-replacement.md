@@ -3,8 +3,7 @@
 **Zweck:** Ersatz eines defekten oder zu wechselnden Zigbee-Coordinators
 (USB-Stick) **ohne** Neuanlernen aller Geräte.
 
-**Geltungsbereich:** Zigbee2MQTT als HA-Addon (siehe
-[[project-hasite-home]]), MQTT-Broker `core-mosquitto`.
+**Geltungsbereich:** Zigbee2MQTT als HA-Addon, MQTT-Broker `core-mosquitto`.
 
 > ⚠️ **Kernregel:** Der Zigbee-Network-Key (samt PAN-ID und Extended PAN-ID)
 > muss aus dem sops-Backup **wiederhergestellt werden, BEVOR** der neue
@@ -100,5 +99,5 @@ bleibt das Neuanlernen aller Geräte als letzte Option.
 ## Bezug
 
 - Closing-Brief §2.6 (Re-Provisioning-Runbook, Pflichtschritt Network-Key-Restore)
-- Security-Audit `docs/cockpit-audits/2026-05-16-security.md` (R-Z2M-KEY, CRITICAL)
+- Security-Audit Finding R-Z2M-KEY (CRITICAL) — gepflegt extern
 - `inventory/secrets/.sops.yaml`, `edge-secrets/recipients/README.md`

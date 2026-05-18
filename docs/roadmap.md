@@ -39,7 +39,7 @@ Live-Smoke noch offen · ☐ offen.
 
 **Gesamt nach Phase 3: 52 cargo-Tests gruen.**
 
-## Phase 4 — VPS-Deployment — ☐
+## Phase 4 — VPS Deployment — ☐
 
 | Step | Inhalt | Test-Gate |
 |---|---|---|

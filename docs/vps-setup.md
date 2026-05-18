@@ -1,168 +1,167 @@
-# VPS-Host Setup
+# VPS Host Setup
 
-Operative Dokumentation des VPS-VPS, auf dem das Inventory-Backend
-laeuft. Enthaelt vollstaendige Bootstrap-Anleitung zur Neuaufsetzung.
+Operational documentation for the public VPS that runs the inventory
+backend. Contains a full bootstrap guide for setting up a fresh host.
 
-## Server-Kontext
+## Server context
 
-| Eigenschaft | Wert |
+| Property | Value |
 |---|---|
-| Hostname (oeffentlich) | `vps.example.org` |
-| Rolle im Repo | "ansible-vps-stack" (managed von einem separaten Ansible-Repo gleichen Namens) |
-| Betriebssystem | Debian 12 (Kernel 6.1.x) |
-| Docker-Engine | 29.x |
-| VPN-Backbone zum Heimnetz | Tailscale (initial), Overlays fuer NetBird / WireGuard liegen vor |
-| Hostkey Ed25519 | `SHA256:y2llW7O1YaO/xOfRJMhONCoqRo7mwOf2rOi+rWqm0uA` |
+| Public hostname | `<vps-host>` (e.g. `vps.example.org`) |
+| Role in repo | managed by a separate Ansible repo |
+| Operating system | Debian 12 (kernel 6.1.x) |
+| Docker engine | 29.x |
+| VPN backbone to home net | Tailscale (initial), overlays for NetBird / WireGuard exist |
+| Host key Ed25519 | `<server-host-key-fingerprint>` |
 
-## Benutzer- und Rechte-Modell
+## User and permission model
 
-Bewusste Trennung in zwei Linux-Accounts:
+Deliberate separation into two Linux accounts:
 
-| Account | Zweck | Hat sudo? | Mitglied in `docker`? | Login mit |
+| Account | Purpose | sudo? | Member of `docker`? | Login with |
 |---|---|---|---|---|
-| `root` | Bootstrap, System-Pakete, neue User, Routing-Konfig | n/a | ja | `~/.ssh/id_rsa` (Workstation) |
-| `deploy` | Tagesbetrieb: `git pull`, `docker build`, `docker compose up/down` | nein | **ja** (994) | `~/.ssh/id_ed25519_vps` (Workstation) |
+| `root` | bootstrap, system packages, new users, routing config | n/a | yes | `~/.ssh/id_rsa` (workstation) |
+| `deploy` | day-to-day ops: `git pull`, `docker build`, `docker compose up/down` | no | **yes** (994) | `~/.ssh/id_ed25519_vps` (workstation) |
 
-**Warum getrennt?** Mit `deploy` kann der gesamte Container-Lifecycle ohne
-Root-Privilegien laufen. Systemaenderungen erfordern explizit den Wechsel
-auf `root` und sind dadurch sichtbar. Die deploy-Keys haben keinen
-Schreibzugriff auf `/etc` oder die Docker-Konfiguration.
+**Why separated?** With `deploy` the entire container lifecycle runs
+without root privileges. System changes require an explicit switch to
+`root` and are therefore visible. The deploy keys have no write access
+to `/etc` or the Docker configuration.
 
-## Schluessel-Inventar
+## Key inventory
 
-Im Projekt entstehen mehrere SSH-Keys mit jeweils klarem Scope. Diese Tabelle
-ist die Quelle der Wahrheit darueber, "welcher Key macht was":
+The project creates several SSH keys, each with a clear scope. This
+table is the source of truth for "which key does what":
 
-| Privatkey | Wo | Scope | Erlaubt |
+| Private key | Where | Scope | Allows |
 |---|---|---|---|
-| `~/.ssh/id_rsa` (Workstation) | Win | Workstation-Identitaet | Login `root@vps`; Deploy-Key fuer `ansible-vps-stack`-Repo |
-| `~/.ssh/id_ed25519_vps` (Workstation) | Win | VPS-Login-Identitaet | Login `deploy@vps` |
-| `~/.ssh/id_ed25519_haAutomation` (Workstation) | Win | haAutomation-Git-Identitaet | **Schreiben** auf `BortDeveloper/haAutomation` |
-| `~/.ssh/id_ed25519_github_haAutomation` (VPS) | Lin | VPS-Git-Identitaet | **Lesen** von `BortDeveloper/haAutomation` |
+| `~/.ssh/id_rsa` (workstation) | Win | workstation identity | login `root@vps`; deploy key for the Ansible repo |
+| `~/.ssh/id_ed25519_vps` (workstation) | Win | VPS login identity | login `deploy@vps` |
+| `~/.ssh/id_ed25519_repo` (workstation) | Win | repo Git identity | **write** to `<github-owner>/<repo>` |
+| `~/.ssh/id_ed25519_github_repo` (VPS) | Lin | VPS Git identity | **read** from `<github-owner>/<repo>` |
 
-Jeder Key hat genau eine Aufgabe. Rotationen betreffen jeweils nur einen
-Server / ein Repo.
+Each key has exactly one job. Rotations affect only one server / one
+repo at a time.
 
-## SSH-Setup: Workstation → VPS
+## SSH setup: workstation → VPS
 
-### Lokal: Key + Config
+### Local: key + config
 
 ```bash
 ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_vps -N "" -C "deploy@vps"
 ```
 
-In `~/.ssh/config` anhaengen:
+Append to `~/.ssh/config`:
 
 ```
 Host vps
-    HostName vps.example.org
+    HostName <vps-host>
     User deploy
     IdentityFile ~/.ssh/id_ed25519_vps
     IdentitiesOnly yes
 ```
 
-### Host-Key verifizieren
+### Verify host key
 
 ```bash
-ssh-keyscan -t ed25519 vps.example.org
-# Fingerprint via:
-ssh-keygen -lf <(ssh-keyscan -t ed25519 vps.example.org 2>/dev/null)
+ssh-keyscan -t ed25519 <vps-host>
+# fingerprint via:
+ssh-keygen -lf <(ssh-keyscan -t ed25519 <vps-host> 2>/dev/null)
 ```
 
-Erwartet: `SHA256:y2llW7O1YaO/xOfRJMhONCoqRo7mwOf2rOi+rWqm0uA`.
-Dann `>> ~/.ssh/known_hosts`.
+Compare against your recorded fingerprint, then append to
+`~/.ssh/known_hosts`.
 
-### deploy-User auf VPS anlegen (als root)
+### Create the deploy user on the VPS (as root)
 
 ```bash
 useradd -m -s /bin/bash -G docker deploy
 install -d -m700 -o deploy -g deploy /home/deploy/.ssh
-echo "<inhalt von id_ed25519_vps.pub>" > /home/deploy/.ssh/authorized_keys
+echo "<contents of id_ed25519_vps.pub>" > /home/deploy/.ssh/authorized_keys
 chmod 600 /home/deploy/.ssh/authorized_keys
 chown deploy:deploy /home/deploy/.ssh/authorized_keys
 ```
 
-Pruefen:
+Check:
 
 ```bash
 ssh vps 'whoami && groups && docker ps'
 ```
 
-Erwartet: `deploy`, Groups enthaelt `docker`, `docker ps` listet bestehende
-Container.
+Expected: `deploy`, groups include `docker`, `docker ps` lists existing
+containers.
 
-## SSH-Setup: VPS → GitHub
+## SSH setup: VPS → GitHub
 
-VPS pullt **read-only** aus `haAutomation`. Schreibender Sync-Pfad
-(git_publish.rs in S12) bekommt spaeter einen separaten Write-Key oder
-nutzt ein PAT.
+The VPS pulls **read-only** from the repo. The writing sync path
+(`git_publish.rs`, S12) later gets its own write key or uses a PAT.
 
-### VPS-seitig: Key + ssh-Config + known_hosts
+### On the VPS: key + ssh config + known_hosts
 
 ```bash
 ssh vps bash <<'BASH'
-ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_github_haAutomation -N "" \
-  -C "deploy@vps-haAutomation"
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_github_repo -N "" \
+  -C "deploy@vps-repo"
 ssh-keyscan -t ed25519 github.com >> ~/.ssh/known_hosts
 
 cat > ~/.ssh/config <<EOF
 Host github.com
-    IdentityFile ~/.ssh/id_ed25519_github_haAutomation
+    IdentityFile ~/.ssh/id_ed25519_github_repo
     IdentitiesOnly yes
 EOF
 chmod 600 ~/.ssh/config
 BASH
 ```
 
-### Pubkey als Deploy-Key registrieren
+### Register the pubkey as a deploy key
 
-Von der Workstation aus (gh-CLI als `BortDeveloper` authentifiziert):
+From the workstation (gh CLI authenticated as the repo owner):
 
 ```bash
-PUB=$(ssh vps 'cat ~/.ssh/id_ed25519_github_haAutomation.pub')
-gh api repos/BortDeveloper/haAutomation/keys \
+PUB=$(ssh vps 'cat ~/.ssh/id_ed25519_github_repo.pub')
+gh api repos/<github-owner>/<repo>/keys \
   -f title="vps-deploy" \
   -f key="$PUB" \
   -F read_only=true
 ```
 
-### Pruefen
+### Check
 
 ```bash
 ssh vps 'ssh -T git@github.com'
 ```
 
-Erwartet: `Hi BortDeveloper/haAutomation! You've successfully authenticated...`
+Expected: `Hi <github-owner>/<repo>! You've successfully authenticated...`
 
-## Repo klonen
+## Clone the repo
 
 ```bash
-ssh vps 'git clone git@github.com:BortDeveloper/haAutomation.git ~/haAutomation'
+ssh vps 'git clone git@github.com:<github-owner>/<repo>.git ~/<repo>'
 ```
 
-Aktualisieren spaeter:
+Later updates:
 
 ```bash
-ssh vps 'cd ~/haAutomation && git pull'
+ssh vps 'cd ~/<repo> && git pull'
 ```
 
-## Erster Image-Build und Test
+## First image build and test
 
 ```bash
-ssh vps 'cd ~/haAutomation/inventory && \
+ssh vps 'cd ~/<repo>/inventory && \
   docker build -f docker/Dockerfile -t inventory:dev . | tail -5'
 ```
 
-Pruefen:
+Check:
 
 ```bash
 ssh vps 'docker image inspect inventory:dev --format "{{.Size}}"' \
   | awk '{printf "%.2f MB\n", $1/1048576}'
 ```
 
-Erwartet: < 30 MB (NFR-9). Aktuell ~10 MB.
+Expected: < 30 MB (NFR-9). Currently ~10 MB.
 
-End-to-End-Test:
+End-to-end test:
 
 ```bash
 ssh vps 'docker rm -f inv-test 2>/dev/null
@@ -174,15 +173,15 @@ ssh vps 'docker rm -f inv-test 2>/dev/null
   docker rm -f inv-test'
 ```
 
-Erwartet: `ok` und `[]`.
+Expected: `ok` and `[]`.
 
-## Operative Routinen
+## Operational routines
 
-### Komplette Update-Iteration
+### Full update iteration
 
 ```bash
 ssh vps bash -c '
-  cd ~/haAutomation &&
+  cd ~/<repo> &&
   git pull &&
   cd inventory &&
   docker build -f docker/Dockerfile -t inventory:dev . &&
@@ -192,79 +191,78 @@ ssh vps bash -c '
 '
 ```
 
-(Compose-Aufruf wird in S13 ueber `just` vereinfacht.)
+(Compose invocation is simplified via `just` in S13.)
 
-### Logs anschauen
+### Watch logs
 
 ```bash
 ssh vps 'docker logs -f inventory'
 ```
 
-### Image-Cleanup
+### Image cleanup
 
 ```bash
 ssh vps 'docker image prune -f'
 ```
 
-### Build-Cache aufraeumen
+### Build-cache cleanup
 
 ```bash
 ssh vps 'docker builder prune -f'
 ```
 
-## Trust Boundaries
+## Trust boundaries
 
 ```
 +--------- Workstation (Windows) ---------+
 |                                          |
-|  id_rsa  ----------+ -> root@vps      |
-|  id_ed25519_vps + -> deploy@vps    |
-|  id_ed25519_haAutomation -> github (write) |
+|  id_rsa  -----------+ -> root@vps        |
+|  id_ed25519_vps     + -> deploy@vps      |
+|  id_ed25519_repo      -> github (write)  |
 |                                          |
 +--------------------|---------------------+
                      | SSH (ed25519 hostkey)
                      v
-+--------- VPS VPS (Debian) -----------+
++--------- Public VPS (Debian) -----------+
 |                                          |
-|  root          (System, sudo)            |
-|  deploy        (Container-Lifecycle)     |
-|  id_ed25519_github_haAutomation            |
+|  root          (system, sudo)            |
+|  deploy        (container lifecycle)     |
+|  id_ed25519_github_repo                  |
 |                  -> github (read-only)   |
 |                                          |
-|  ~deploy/haAutomation/  <-- git pull       |
-|  /etc/inventory/age.key   (geplant)      |
+|  ~deploy/<repo>/  <-- git pull           |
+|  /etc/inventory/age.key   (planned)      |
 |                                          |
 +-------- Docker --------------------------+
 |                                          |
 |  inventory:dev   (non-root, alpine)      |
 |  vpn-tailscale   (sidecar, NET_ADMIN)    |
-|  caddy           (Reverse-Proxy + TLS)   |
+|  caddy           (reverse proxy + TLS)   |
 |                                          |
 +------------------------------------------+
 ```
 
-Niemals committen: `id_rsa`, `id_ed25519_vps`, `age.key`, alle privaten
-Keys auf VPS.
+Never commit: `id_rsa`, `id_ed25519_vps`, `age.key`, and any private
+keys living on the VPS.
 
-## Geplante Erweiterungen
+## Planned extensions
 
-Diese Punkte sind heute **noch nicht** auf dem VPS-Host vorhanden und
-kommen mit den entsprechenden Steps aus der Roadmap:
+These items are not yet present on the VPS and arrive with the
+matching roadmap steps:
 
-- `/etc/inventory/age.key` (root:deploy 0440) — fuer sops-Decryption (mit S8)
-- Tailscale-Sidecar inkl. Auth-Key (mit S13a)
-- Caddy + TLS-Cert + Authentik-Forward-Auth (mit S14)
-- DNS-A-Record fuer Subdomain (mit S14)
-- systemd-Service-Unit, die `docker compose up -d` beim Boot startet (post-V1)
-- Backup-Skript fuer SQLite + Compose-State (post-V1)
+- `/etc/inventory/age.key` (root:deploy 0440) — for sops decryption (S8)
+- Tailscale sidecar incl. auth key (S13a)
+- Caddy + TLS cert + Authentik forward-auth (S14)
+- DNS A record for the subdomain (S14)
+- systemd service unit that runs `docker compose up -d` at boot (post-V1)
+- Backup script for SQLite + compose state (post-V1)
 
-## Disaster Recovery: Neuer VPS-Host
+## Disaster recovery: new VPS host
 
-Vorausgesetzt der Provider liefert einen frischen Debian-VPS mit
-funktionierender Netzwerkanbindung und du hast Console-/SSH-Zugang als
-`root`. Bootstrap-Reihenfolge:
+Assuming the provider gives you a fresh Debian VPS with working
+networking and console / SSH access as `root`, bootstrap order:
 
-1. **System-Updates und Docker installieren**
+1. **System updates and Docker install**
 
    ```bash
    apt update && apt -y full-upgrade
@@ -279,68 +277,68 @@ funktionierender Netzwerkanbindung und du hast Console-/SSH-Zugang als
    apt -y install docker-ce docker-ce-cli containerd.io docker-compose-plugin
    ```
 
-2. **Workstation-Pubkey fuer root einspielen** (per Provider-Console oder via Password-Auth):
+2. **Install workstation pubkey for root** (via provider console or password auth):
 
    ```bash
    mkdir -p /root/.ssh && chmod 700 /root/.ssh
-   echo "<id_rsa.pub Inhalt>" >> /root/.ssh/authorized_keys
+   echo "<id_rsa.pub contents>" >> /root/.ssh/authorized_keys
    chmod 600 /root/.ssh/authorized_keys
    ```
 
-3. **deploy-User anlegen** (siehe "deploy-User auf VPS anlegen" oben)
+3. **Create the deploy user** (see "Create the deploy user on the VPS" above)
 
-4. **VPS-side Github-Key + ssh-config** (siehe "SSH-Setup: VPS → GitHub")
+4. **VPS-side GitHub key + ssh config** (see "SSH setup: VPS → GitHub")
 
-5. **Repo klonen, Image bauen, testen** (siehe oben)
+5. **Clone repo, build image, test** (see above)
 
-6. **VPN, age.key, Caddy, Authentik** entsprechend Roadmap-Stand zum
-   Zeitpunkt der Wiederherstellung wieder aufsetzen — alle Konfigurationen
-   sind im Repo nachvollziehbar, lediglich Secrets muessen aus dem
-   Off-Repo-Backup eingespielt werden (insbesondere `/etc/inventory/age.key`).
+6. **VPN, age.key, Caddy, Authentik** per the roadmap state at recovery
+   time — all configurations are tracked in the repo, only the secrets
+   need to be restored from the off-repo backup (especially
+   `/etc/inventory/age.key`).
 
-## Anhang: Schluessel-Rotation
+## Appendix: key rotation
 
-### Workstation-VPS-Key rotieren
+### Rotate the workstation-to-VPS key
 
 ```bash
-# alten Key sichern, neuen erzeugen
+# back up old key, generate new
 mv ~/.ssh/id_ed25519_vps{,.old}
 mv ~/.ssh/id_ed25519_vps.pub{,.old}
 ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_vps -N "" -C "deploy@vps"
 
-# neuen Pubkey einspielen (noch mit dem alten Key authentifiziert)
+# install new pubkey (still authenticated with the old key)
 cat ~/.ssh/id_ed25519_vps.pub | ssh vps \
   'tee -a ~/.ssh/authorized_keys >/dev/null'
 
-# pruefen, alten Eintrag entfernen
+# verify, then remove the old entry
 ssh vps 'sed -i "/$(cat ~/.ssh/id_ed25519_vps.old.pub | cut -d" " -f2 | head -c40)/d" \
   ~/.ssh/authorized_keys'
 
-# alte Files loeschen
+# delete old files
 rm ~/.ssh/id_ed25519_vps.old*
 ```
 
-### VPS-Github-Key rotieren
+### Rotate the VPS-to-GitHub key
 
 ```bash
-# neuen Key auf VPS
-ssh vps 'ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_github_haAutomation.new \
-  -N "" -C "deploy@vps-haAutomation"'
+# new key on the VPS
+ssh vps 'ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_github_repo.new \
+  -N "" -C "deploy@vps-repo"'
 
-# neuen Pubkey als Deploy-Key registrieren
-PUB=$(ssh vps 'cat ~/.ssh/id_ed25519_github_haAutomation.new.pub')
-gh api repos/BortDeveloper/haAutomation/keys \
+# register the new pubkey as a deploy key
+PUB=$(ssh vps 'cat ~/.ssh/id_ed25519_github_repo.new.pub')
+gh api repos/<github-owner>/<repo>/keys \
   -f title="vps-deploy-$(date +%Y%m%d)" -f key="$PUB" -F read_only=true
 
-# umschalten
+# swap in
 ssh vps '
-  mv ~/.ssh/id_ed25519_github_haAutomation{,.old}
-  mv ~/.ssh/id_ed25519_github_haAutomation.new ~/.ssh/id_ed25519_github_haAutomation
-  mv ~/.ssh/id_ed25519_github_haAutomation.new.pub ~/.ssh/id_ed25519_github_haAutomation.pub
+  mv ~/.ssh/id_ed25519_github_repo{,.old}
+  mv ~/.ssh/id_ed25519_github_repo.new ~/.ssh/id_ed25519_github_repo
+  mv ~/.ssh/id_ed25519_github_repo.new.pub ~/.ssh/id_ed25519_github_repo.pub
   ssh -T git@github.com  # smoke test
 '
 
-# alten Deploy-Key am Repo loeschen (gh api)
-gh api repos/BortDeveloper/haAutomation/keys --jq '.[] | select(.title=="vps-deploy") | .id' \
-  | xargs -I{} gh api -X DELETE repos/BortDeveloper/haAutomation/keys/{}
+# delete the old deploy key on the repo (gh api)
+gh api repos/<github-owner>/<repo>/keys --jq '.[] | select(.title=="vps-deploy") | .id' \
+  | xargs -I{} gh api -X DELETE repos/<github-owner>/<repo>/keys/{}
 ```
