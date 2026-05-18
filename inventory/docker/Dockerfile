@@ -36,7 +36,7 @@ ARG BUILD_DATE=
 
 LABEL org.opencontainers.image.title="haBortfeld inventory" \
       org.opencontainers.image.description="Asset- und Prozess-Inventory fuer haBortfeld (Standalone & strato-stack)" \
-      org.opencontainers.image.source="https://github.com/BortDeveloper/haBortfeld" \
+      org.opencontainers.image.source="https://github.com/BortDeveloper/haAutomation" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.authors="bortdeveloper <guebraun@gmail.com>" \
       org.opencontainers.image.vendor="bortdeveloper" \
