@@ -9,10 +9,14 @@
 
 services:
   vpn:
-    image: netbirdio/netbird:latest
+    # Digest-Pin (Architekt-R4) — Tag netbirdio/netbird:latest, aufgeloest 2026-05-17.
+    image: netbirdio/netbird:latest@sha256:a2cc19dd02fdc3bfe54bab10cde5715265fc82f6e9d034edc1183ad57d07c22e
     container_name: vpn-netbird
     hostname: ${NB_HOSTNAME:-inventory-strato}
     restart: unless-stopped
+    # cap_drop:ALL + gezieltes cap_add — NetBird braucht zusaetzlich SYS_ADMIN.
+    cap_drop:
+      - ALL
     cap_add:
       - NET_ADMIN
       - SYS_ADMIN

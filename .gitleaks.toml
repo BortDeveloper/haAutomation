@@ -1,0 +1,38 @@
+# gitleaks-Konfiguration für ha-automation.
+#
+# Stop-Gap-Guardrail am Entwicklerplatz (Closing-Brief §2.4). Der Zielzustand
+# ist eine CI-Integration (Roadmap S19 / Phase 2 — siehe ADR-0005).
+# Aktivierung des pre-commit-Hooks: scripts/install-hooks.sh
+
+title = "ha-automation gitleaks config"
+
+[extend]
+# Baut auf den eingebauten gitleaks-Regeln auf (generische API-Keys, Tokens,
+# private Schlüssel, ...).
+useDefault = true
+
+# --- Custom-Regeln: unverschlüsselte Zigbee-/Coordinator-Backups -----------
+# Markerbasiert — schlägt an, sobald ein Zigbee-Network-Key oder ein
+# Coordinator-Backup im Klartext im Commit landet.
+
+[[rules]]
+id = "ha-zigbee-network-key"
+description = "Unverschluesselter Zigbee-Network-Key / Trust-Center-Link-Key"
+regex = '''"(network_key|trust_center_link_key)"\s*:'''
+tags = ["zigbee", "edge-secret"]
+
+[[rules]]
+id = "ha-coordinator-ieee"
+description = "Coordinator-IEEE im Klartext (Zigbee-Backup-Marker)"
+regex = '''(?i)coordinator_ieee\s*:'''
+tags = ["zigbee", "edge-secret"]
+
+# --- Allowlist -------------------------------------------------------------
+[allowlist]
+description = "Verschluesselte Dateien, Beispiele und Doku sind keine Leaks"
+paths = [
+  '''.*\.enc$''',          # sops-verschlüsselt — erwünscht im Repo
+  '''.*\.example$''',      # Platzhalter-Werte
+  '''^docs/.*''',          # Audits/ADRs/Runbooks zitieren die Marker als Text
+  '''^\.gitleaks\.toml$''', # diese Datei enthält die Marker-Regex selbst
+]
