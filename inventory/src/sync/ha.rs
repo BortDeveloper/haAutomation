@@ -98,13 +98,13 @@ mod tests {
     use tiny_http::{Header, Response, Server};
 
     const FIXTURE: &str = r#"[
-        {"entity_id": "light.RoomA", "state": "on",
-         "attributes": {"friendly_name": "RoomA Decke", "manufacturer": "IKEA Tradfri", "model": "LED2003G10"}},
-        {"entity_id": "binary_sensor.tuer_eingang", "state": "off",
-         "attributes": {"friendly_name": "Tuer Eingang"}},
-        {"entity_id": "sensor.temperatur_LivingRoom", "state": "21.5",
-         "attributes": {"friendly_name": "Temp LivingRoom", "unit_of_measurement": "C"}},
-        {"entity_id": "automation.morgens", "state": "on", "attributes": {}},
+        {"entity_id": "light.room_a", "state": "on",
+         "attributes": {"friendly_name": "Room A Ceiling", "manufacturer": "IKEA Tradfri", "model": "LED2003G10"}},
+        {"entity_id": "binary_sensor.door_entry", "state": "off",
+         "attributes": {"friendly_name": "Entry Door"}},
+        {"entity_id": "sensor.temperature_room_b", "state": "21.5",
+         "attributes": {"friendly_name": "Temp Room B", "unit_of_measurement": "C"}},
+        {"entity_id": "automation.morning", "state": "on", "attributes": {}},
         {"entity_id": "weather.home", "state": "sunny", "attributes": {}},
         {"entity_id": "sun.sun", "state": "above_horizon", "attributes": {}}
     ]"#;
@@ -149,10 +149,10 @@ mod tests {
         let addr = spawn_mock();
         let entities = fetch_states(&format!("http://{addr}"), TOKEN).unwrap();
         assert_eq!(entities.len(), 6);
-        assert_eq!(entities[0].entity_id, "light.RoomA");
+        assert_eq!(entities[0].entity_id, "light.room_a");
         assert_eq!(
             entities[0].attributes.friendly_name.as_deref(),
-            Some("RoomA Decke")
+            Some("Room A Ceiling")
         );
     }
 
@@ -179,23 +179,23 @@ mod tests {
         assert_eq!(devices.len(), 3, "got: {devices:?}");
         assert!(devices.iter().all(|d| d.source == "ha"));
         let ids: Vec<&str> = devices.iter().map(|d| d.source_id.as_str()).collect();
-        assert!(ids.contains(&"light.RoomA"));
-        assert!(ids.contains(&"binary_sensor.tuer_eingang"));
-        assert!(ids.contains(&"sensor.temperatur_LivingRoom"));
+        assert!(ids.contains(&"light.room_a"));
+        assert!(ids.contains(&"binary_sensor.door_entry"));
+        assert!(ids.contains(&"sensor.temperature_room_b"));
     }
 
     #[test]
     fn map_preserves_friendly_name_manufacturer_kind() {
         let entities: Vec<HaEntity> = serde_json::from_str(FIXTURE).unwrap();
         let devices = map_to_devices(&entities);
-        let RoomA = devices
+        let room_a = devices
             .iter()
-            .find(|d| d.source_id == "light.RoomA")
+            .find(|d| d.source_id == "light.room_a")
             .unwrap();
-        assert_eq!(RoomA.name, "RoomA Decke");
-        assert_eq!(RoomA.manufacturer.as_deref(), Some("IKEA Tradfri"));
-        assert_eq!(RoomA.model.as_deref(), Some("LED2003G10"));
-        assert_eq!(RoomA.kind.as_deref(), Some("light"));
+        assert_eq!(room_a.name, "Room A Ceiling");
+        assert_eq!(room_a.manufacturer.as_deref(), Some("IKEA Tradfri"));
+        assert_eq!(room_a.model.as_deref(), Some("LED2003G10"));
+        assert_eq!(room_a.kind.as_deref(), Some("light"));
     }
 
     #[test]
