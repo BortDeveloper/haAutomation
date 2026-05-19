@@ -98,9 +98,8 @@ VPN-Abstraktion bewiesen.
 ## VPS-Variante (`docker-compose.vps.yml`)
 
 Fuer Hosts, auf denen bereits **Traefik + Authentik + ein host-weites VPN**
-durch das [vps-stack](https://github.com/BortDeveloper/ansible-vps-stack)-Playbook
-laufen. Caddy und `authgate` entfallen — deren Aufgaben uebernehmen Traefik
-und Authentik.
+durch ein separates, Ansible-verwaltetes Stack-Playbook laufen. Caddy und
+`authgate` entfallen — deren Aufgaben uebernehmen Traefik und Authentik.
 
 **Voraussetzungen:**
 
@@ -132,6 +131,6 @@ docker build -f docker/Dockerfile -t inventory:dev ..
 ```
 
 > Die produktive Distribution (Image-Push nach GHCR-private, Pinning via
-> Digest in `versions.yml` des vps-Repos) ist Sache der Brueckenpakete
-> C (Ansible-Rolle) und D (Build-Workflow) — siehe `project_session_handoff_…`
-> in der Memory.
+> Digest in `versions.yml` des separaten Ansible-Repos) ist Sache der
+> Brueckenpakete C (Ansible-Rolle) und D (Build-Workflow) — siehe
+> `project_session_handoff_…` in der Memory.
