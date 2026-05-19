@@ -1,0 +1,50 @@
+# cargo-about configuration.
+#
+# Status: prepared for future migration. The current canonical
+# generator for `THIRD-PARTY-NOTICES.md` is the pure-shell script
+# `inventory/scripts/generate-notices.sh`, which parses `Cargo.lock`
+# directly with no toolchain dependency and is what CI runs in the
+# `license-notices` drift check.
+#
+# This file is kept in the tree for two reasons:
+#
+#   1. Mirror of the accepted-license set declared in `deny.toml`.
+#      `cargo deny check licenses` is the enforcement mechanism in
+#      CI; this list MUST stay byte-equal to the `allow` list there
+#      (minus the `Apache-2.0 WITH LLVM-exception` exception variant
+#      that cargo-about does not need separately).
+#
+#   2. Drop-in config when we later switch the generator from the
+#      shell fallback to `cargo about generate` (the upstream tool
+#      can embed full license texts and per-crate clarifications,
+#      which the shell script cannot).
+#
+# Reference: https://embarkstudios.github.io/cargo-about/
+
+# Licenses we accept without exception. Permissive only — copyleft is
+# rejected by `deny.toml` because the main project is MIT and pulling
+# in GPL-licensed transitive code would force a relicense.
+accepted = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-DFS-2016",
+    "CC0-1.0",
+    "Zlib",
+]
+
+# Do NOT silently drop build/dev dependencies: they ship as part of
+# `Cargo.lock` and are reproduced in CI builds, so their licenses are
+# relevant to compliance even if the resulting binary does not embed
+# them.
+ignore-build-dependencies = false
+ignore-dev-dependencies = false
+ignore-transitive-dependencies = false
+
+# Confidence threshold for SPDX license detection (cargo-about
+# default). Lower values risk mis-detected licenses passing through.
+[default]
+confidence-threshold = 0.8
