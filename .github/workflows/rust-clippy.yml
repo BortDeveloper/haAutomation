@@ -18,38 +18,62 @@ on:
   schedule:
     - cron: '37 1 * * 2'
 
+# Minimaler Default-Permission-Satz (SLSA Build L3).
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   rust-clippy-analyze:
     name: Run rust-clippy analyzing
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: inventory
     permissions:
       contents: read
-      security-events: write
-      actions: read # only required for a private repository by github/codeql-action/upload-sarif to get the Action run status
+      security-events: write   # SARIF-Upload nach Code-Scanning
+      actions: read            # nur für private Repos benötigt, wir lassen es explizit minimal
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: actions-rs/toolchain@16499b5e05bf2e26879000db0c1d13f7e13fa3af #@v1
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
         with:
-          profile: minimal
+          persist-credentials: false
+
+      - name: Install Rust toolchain (stable; pinned to 1.75 via rust-toolchain.toml)
+        # Migration weg von deprecated actions-rs/toolchain
+        # (Repo seit 2023 archiviert). dtolnay/rust-toolchain ist
+        # die kanonische Folge, gleicher SHA wie in ci.yml.
+        uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9  # master @ 2026-05-19
+        with:
           toolchain: stable
           components: clippy
-          override: true
 
-      - name: Install required cargo
-        run: cargo install clippy-sarif sarif-fmt
+      - name: Install required cargo helpers
+        run: cargo install clippy-sarif sarif-fmt --locked
 
-      - name: Run rust-clippy
-        run:
-          cargo clippy
-          --all-features
-          --message-format=json | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
-        continue-on-error: true
+      - name: Run rust-clippy (blocking, -D warnings)
+        # continue-on-error entfernt: clippy ist jetzt Pflicht, nicht
+        # Hinweis. SARIF wird trotzdem erzeugt, weil --message-format
+        # auf jeden Fall geschrieben wird; failure am Step propagiert
+        # nach oben und blockiert den Build.
+        run: |
+          cargo clippy \
+            --all-targets \
+            --all-features \
+            --message-format=json \
+            -- -D warnings \
+            | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
 
       - name: Upload analysis results to GitHub
-        uses: github/codeql-action/upload-sarif@v3
+        # SHA-Pin: github/codeql-action v3.35.5 = 458d36d7...
+        uses: github/codeql-action/upload-sarif@458d36d7d4f47d0dd16ca424c1d3cda0060f1360  # v3.35.5
+        # Auch wenn der vorherige Step failt, wollen wir den SARIF
+        # noch in Code-Scanning sehen.
+        if: always()
         with:
-          sarif_file: rust-clippy-results.sarif
+          sarif_file: inventory/rust-clippy-results.sarif
           wait-for-processing: true
