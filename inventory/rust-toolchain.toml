@@ -1,19 +1,20 @@
 # Toolchain pin for the inventory workspace.
 #
-# Matches inventory/Cargo.toml `rust-version = "1.85"` (MSRV).
+# Matches inventory/Cargo.toml `rust-version = "1.91"` (MSRV).
 # Pinning the toolchain in-tree prevents CI from drifting onto a
 # newer stable release whose default lint set could break the build
 # (NIST SP 800-204C §3.4 — dependency pinning).
 #
-# MSRV bumped 1.75 -> 1.85: a transitive dependency requires the
-# `edition2024` Cargo feature, which is stabilized starting with
-# Cargo 1.85. 1.85 is the minimal MSRV that unlocks edition2024
-# without pinning unnecessarily far ahead of current stable.
+# MSRV bumped 1.85 -> 1.91: `icu_collections@2.2.0`, `icu_locale_core@2.2.0`
+# and `icu_normalizer@2.2.0` (transitive deps) require rustc >= 1.86.
+# Minimal viable bump would be 1.86, but we pick 1.91 (current stable
+# per 2026-05-19) as a 5-6-point safety margin against further
+# sub-dependency drift on later builds.
 #
 # To upgrade: bump both this file and `rust-version` in Cargo.toml
 # in the same commit, then re-run `cargo build/test --locked`.
 
 [toolchain]
-channel = "1.85"
+channel = "1.91"
 components = ["rustfmt", "clippy"]
 profile = "minimal"
