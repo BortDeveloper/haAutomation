@@ -1,0 +1,43 @@
+version: 2
+
+# Wöchentliche Dependency-Updates für:
+#   - Rust-Crates des inventory-Workspaces
+#   - GitHub-Actions-Pinnings (für alle Workflows in .github/workflows/)
+#
+# Open-PR-Limit auf 5 begrenzt, damit ein CVE-Sturm die Queue nicht
+# blockiert. Schedule Mo 06:00 UTC läuft nach dem wöchentlichen
+# Security-Scan (Mo 04:00 UTC), damit die security.yml-Findings als
+# Kontext schon vorliegen.
+#
+# Quelle: OWASP A06:2021, NIST SP 800-218 PW.4.1.
+
+updates:
+  - package-ecosystem: cargo
+    directory: /inventory
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - automated
+    commit-message:
+      prefix: "chore(deps)"
+      include: scope
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: UTC
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - automated
+    commit-message:
+      prefix: "chore(ci)"
+      include: scope
