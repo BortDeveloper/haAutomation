@@ -85,3 +85,36 @@ jobs:
         uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7  # v2.3.9
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  license-notices:
+    name: THIRD-PARTY-NOTICES drift check
+    # Regenerates THIRD-PARTY-NOTICES.md from Cargo.lock and fails the
+    # build if the committed copy is stale. Pair with cargo-deny
+    # (license whitelist enforcement above) to give a complete
+    # third-party-software trail:
+    #   - cargo-deny: SPDX allowlist enforcement (deny.toml)
+    #   - this job:   structural inventory (name+version+source),
+    #                 always in sync with Cargo.lock by construction
+    # Reference: OWASP Top-10 A06:2021 (Vulnerable and Outdated
+    # Components), NIST SP 800-161r1 §SR-3 (Supply Chain Controls /
+    # provenance tracking).
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Regenerate notices from Cargo.lock
+        # Pure shell + awk, no cargo toolchain or network required.
+        # Deterministic: identical Cargo.lock → identical output.
+        run: bash inventory/scripts/generate-notices.sh > /tmp/notices.generated.md
+      - name: Diff against committed THIRD-PARTY-NOTICES.md
+        run: |
+          if ! diff -u THIRD-PARTY-NOTICES.md /tmp/notices.generated.md; then
+            echo "::error file=THIRD-PARTY-NOTICES.md::THIRD-PARTY-NOTICES.md is out of sync with inventory/Cargo.lock."
+            echo "::error::Run 'bash inventory/scripts/generate-notices.sh > THIRD-PARTY-NOTICES.md' locally and commit the result."
+            exit 1
+          fi
+          echo "THIRD-PARTY-NOTICES.md is in sync with inventory/Cargo.lock."
