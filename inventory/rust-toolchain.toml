@@ -1,0 +1,14 @@
+# Toolchain pin for the inventory workspace.
+#
+# Matches inventory/Cargo.toml `rust-version = "1.75"` (MSRV).
+# Pinning the toolchain in-tree prevents CI from drifting onto a
+# newer stable release whose default lint set could break the build
+# (NIST SP 800-204C §3.4 — dependency pinning).
+#
+# To upgrade: bump both this file and `rust-version` in Cargo.toml
+# in the same commit, then re-run `cargo build/test --locked`.
+
+[toolchain]
+channel = "1.75"
+components = ["rustfmt", "clippy"]
+profile = "minimal"
