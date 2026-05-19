@@ -13,7 +13,7 @@ dem Hardware-Token.
 | # | Recipient | Privatkey liegt auf | Pubkey-Datei (Konvention) |
 |---|---|---|---|
 | 1 | Edge-Host | HAOS, `/etc/inventory/age.key` (0400 root:root) | `edge-host-<YYYY-MM-DD>.pub` |
-| 2 | Backup-Operator | vps-stack-Host, `/etc/backup/age.key` | `backup-operator-<YYYY-MM-DD>.pub` |
+| 2 | Backup-Operator | VPS-Stack-Host, `/etc/backup/age.key` | `backup-operator-<YYYY-MM-DD>.pub` |
 | 3 | DR-Hardware-Token | offline YubiKey/PIV, physisch off-site verwahrt | `dr-token-<YYYY-MM-DD>.pub` |
 
 Dateiname: `<träger>-<YYYY-MM-DD>.pub`, eine Zeile `age1...`.

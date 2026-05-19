@@ -1,21 +1,21 @@
-# Inventory fuer den vps-stack.
+# Inventory fuer die VPS-Variante.
 #
 # Dieser Compose ersetzt NICHT die Standalone-Variante (docker-compose.yml +
 # Caddy + authgate + VPN-Sidecar). Er ist fuer Hosts gedacht, auf denen
 # bereits Traefik (mit Authentik-Forward-Auth) und ein VPN-Overlay (Tailscale
-# oder NetBird) laufen — typisch: ein vom vps-stack-Playbook provisionierter
-# Server.
+# oder NetBird) laufen — typisch: ein von einem separaten Ansible-Playbook
+# provisionierter VPS.
 #
 # Erwartete Umgebung:
 #   - externes Docker-Netz `traefik` existiert (`docker network create traefik`
-#     oder vom vps-Playbook erzeugt)
+#     oder vom Ansible-Playbook erzeugt)
 #   - Traefik kennt das File-Provider-Middleware `chain-vpn@file` (Authentik
 #     + IP-Allowlist 100.64.0.0/10)
 #   - certresolver `letsencrypt` ist konfiguriert
 #
 # Erforderliche Variablen (in .env oder Shell-Export):
 #   INVENTORY_IMAGE   — gepinnt per Digest, z. B.
-#                       ghcr.io/bortdeveloper/inventory@sha256:<digest>
+#                       ghcr.io/<owner>/inventory@sha256:<digest>
 #   INVENTORY_DOMAIN  — voll qualifiziert, z. B. inventory.example.com
 #
 # Start (Beispiel):
@@ -33,7 +33,7 @@ services:
     networks:
       - traefik
 
-    # Persistente Daten: Named Volume in der vps-Variante (sauberer
+    # Persistente Daten: Named Volume in der VPS-Variante (sauberer
     # Lifecycle ueber `docker volume`; das Ansible-Playbook backupt's separat).
     volumes:
       - inventory-data:/var/lib/inventory
@@ -57,7 +57,7 @@ services:
       - ALL
     security_opt:
       - no-new-privileges:true
-    # Ressourcenlimits — bewusst konservativ; bei Bedarf im vps-vars
+    # Ressourcenlimits — bewusst konservativ; bei Bedarf in den Ansible-vars
     # ueberschreiben. PIDs-Limit schuetzt vor fork bombs trotz cap_drop:ALL.
     mem_limit: 256m
     mem_reservation: 64m
@@ -66,7 +66,7 @@ services:
 
     # --- Traefik-Routing -------------------------------------------------
     # VPN-only via chain-vpn@file (= Authentik + IP-Allowlist 100.64.0.0/10).
-    # Konvention identisch zu vps-stack-Rollen (forgejo, nextcloud, ...).
+    # Konvention identisch zu den uebrigen Ansible-Stack-Rollen (forgejo, nextcloud, ...).
     labels:
       - "traefik.enable=true"
       - "traefik.docker.network=traefik"
