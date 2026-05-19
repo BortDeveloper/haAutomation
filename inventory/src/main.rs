@@ -13,7 +13,7 @@ mod views;
 mod yaml_io;
 
 #[derive(Parser)]
-#[command(name = "inventory", version, about = "haAutomation inventory backend")]
+#[command(name = "inventory", version, about = "home inventory backend")]
 struct Cli {
     /// Pfad zur SQLite-Datei. Wird angelegt falls nicht vorhanden.
     #[arg(long, default_value = "inventory.db", env = "INVENTORY_DB")]

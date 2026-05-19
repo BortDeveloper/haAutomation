@@ -156,7 +156,7 @@ mod tests {
         assert_eq!(thermo.manufacturer.as_deref(), Some("eQ-3"));
         assert_eq!(thermo.model.as_deref(), Some("HmIP-WTH-2"));
 
-        let schalter = mapped.iter().find(|d| d.source_id == "MEQ0000001").unwrap();
-        assert_eq!(schalter.kind.as_deref(), Some("switch"));
+        let switch_dev = mapped.iter().find(|d| d.source_id == "MEQ0000001").unwrap();
+        assert_eq!(switch_dev.kind.as_deref(), Some("switch"));
     }
 }

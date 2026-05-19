@@ -46,7 +46,7 @@ und einem maschinell gepflegten Inventar als Sicherheitsnetz.
 | NFR-3 | Backend in **Rust**, Datenbank **SQLite**. |
 | NFR-4 | VPN-Provider austauschbar zur Compose-Laufzeit: Tailscale, NetBird (SaaS oder self-hosted), WireGuard. Die App selbst kennt kein VPN. |
 | NFR-5 | OIDC-Readiness ist Pflicht. Auth-Logik laeuft in einem vorgelagerten Authentik-Outpost via Caddy `forward_auth`; die App liest nur einen vertrauenswuerdigen Header. |
-| NFR-6 | Secrets at rest verschluesselt mit `sops` + `age`. Der age-Privatkey liegt **nur** auf dem VPS-Host (`/etc/inventory/age.key`, chmod 400, root:root) und niemals im Repo. |
+| NFR-6 | Secrets at rest verschluesselt mit `sops` + `age`. Der age-Privatkey liegt **nur** auf dem VPS (`/etc/inventory/age.key`, chmod 400, root:root) und niemals im Repo. |
 | NFR-7 | GitOps: ausser dem age-Privatkey ist der gesamte System-Zustand im Repo nachvollziehbar. |
 | NFR-8 | Inkrementelle Lieferung. Jeder Schritt aus der Roadmap ist eigenstaendig testbar und rollback-faehig. |
 | NFR-9 | Image-Groesse fuer Inventory-Container < 30 MB. Cold-Start des Containers < 3 s. |
@@ -57,7 +57,7 @@ und einem maschinell gepflegten Inventar als Sicherheitsnetz.
 - Schreibender Pfad aus dem Inventory-UI zurueck in HA/CCU (z.B. Geraet konfigurieren)
 - Mobile-optimierte UI oder native App
 - Eigene Regel-Engine im Inventory-Backend
-- Cloud-Provider neben VPS
+- weitere Cloud-Provider neben dem aktuellen VPS
 - Mehrbenutzer-Rollen jenseits "authenticated / not" (kommt erst, wenn OIDC reale Gruppen liefert)
 
 ## Festlegungen zur Umgebung
@@ -72,7 +72,7 @@ und einem maschinell gepflegten Inventar als Sicherheitsnetz.
 | Shellys | 20+ Geraete (Gen1+Gen2 gemischt) | mDNS-Discovery + Per-Device-HTTP-Fetch; Gen2-RPC bevorzugt, Gen1-Fallback |
 | VPN initial | Tailscale | S13a = erste echte Deploy-Stufe; S13b/c bleiben Alternativen |
 | Authentik | bestehende Instanz | S14 = nur neue Application + Outpost-Provider, kein Aufsetzen |
-| Domain | bestehend, neue Subdomain | konkrete Subdomain wird in S14 festgelegt, A-Record auf VPS-IP |
+| Domain | bestehend, neue Subdomain | konkrete Subdomain wird in S14 festgelegt, A-Record auf die VPS-IP |
 
 ## Verbleibende Detailfragen (jeweils erst bei dem Step relevant)
 

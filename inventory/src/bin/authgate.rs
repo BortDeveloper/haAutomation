@@ -48,7 +48,7 @@ const COOKIE_VERSION: &str = "v1";
 // ============================================================ CLI
 
 #[derive(Parser)]
-#[command(name = "authgate", version, about = "haAutomation forward-auth sidecar")]
+#[command(name = "authgate", version, about = "home-inventory forward-auth sidecar")]
 struct Cli {
     #[command(subcommand)]
     cmd: Cmd,
@@ -411,7 +411,7 @@ fn login_page(rd: &str, error: Option<&str>) -> String {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>haAutomation — Anmeldung</title>
+<title>Home Inventory — Sign in</title>
 <style>
   body {{ font-family: system-ui, sans-serif; background: #1b1f24; color: #e6e6e6;
          display: flex; min-height: 100vh; margin: 0; align-items: center;
@@ -430,7 +430,7 @@ fn login_page(rd: &str, error: Option<&str>) -> String {
 </head>
 <body>
 <form method="post" action="/auth/login">
-  <h1>haAutomation Inventory</h1>
+  <h1>Home Inventory</h1>
   {err_block}
   <label for="u">Benutzer</label>
   <input id="u" name="username" autocomplete="username" autofocus required>

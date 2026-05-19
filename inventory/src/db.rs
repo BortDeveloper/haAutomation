@@ -324,11 +324,11 @@ mod tests {
         upsert_devices(&conn, &input).unwrap();
 
         // Aenderung simulieren: Raum umbenennen
-        input[0].room = Some("RoomA neu".into());
+        input[0].room = Some("Room A renamed".into());
         upsert_devices(&conn, &input).unwrap();
 
         let read = list_devices(&conn).unwrap();
-        let updated = read.iter().find(|d| d.source_id == "light.RoomA_decke").unwrap();
-        assert_eq!(updated.room.as_deref(), Some("RoomA neu"));
+        let updated = read.iter().find(|d| d.source_id == "light.room_a_ceiling").unwrap();
+        assert_eq!(updated.room.as_deref(), Some("Room A renamed"));
     }
 }
