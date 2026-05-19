@@ -49,6 +49,15 @@
 >
 > Vulnerability-Reports: [SECURITY.md](./SECURITY.md).
 
+**Third-party software**: This project depends on open source
+components. See [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md) for
+the complete, auto-generated list of dependencies, versions, and
+sources. CI enforces (a) byte-for-byte sync with `inventory/Cargo.lock`
+on every push (`.github/workflows/security.yml`, job `license-notices`)
+and (b) a permissive-license allowlist via `cargo deny`
+([`inventory/deny.toml`](./inventory/deny.toml)). Copyleft licenses
+are rejected.
+
 Single Source of Truth for a personal home-automation setup. Captures,
 documents and refactors logic spread across Home Assistant, Node-RED
 and Homematic. Provides its own Rust-based inventory backend that runs
@@ -95,7 +104,9 @@ on a public VPS and inspects the home network through a VPN tunnel.
 - **GitOps:** everything except the age private key lives in the repo
 - **PRs with test gate:** each roadmap step = one PR, with a reproducible test
 - **Language:** code & identifiers in English, docs in English
-- **License:** MIT (see [LICENSE](LICENSE))
+- **License:** MIT (see [LICENSE](LICENSE)); third-party dependencies
+  are listed in [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md)
+  (auto-generated, CI-enforced)
 
 ## Anonymization note
 

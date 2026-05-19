@@ -62,6 +62,11 @@ honored without question.
 - The CI workflows in `.github/workflows/`
 - The Docker setup in `inventory/docker/`
 - The edge-secrets tooling in `edge-secrets/`
+- Third-party dependency hygiene: see
+  [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md) for the current
+  inventory (auto-generated from `Cargo.lock`, CI-enforced via the
+  `license-notices` job) and `inventory/deny.toml` for the accepted
+  SPDX allowlist enforced by `cargo deny`.
 
 ## What is NOT in scope
 
