@@ -1,0 +1,87 @@
+# cargo-deny configuration for the inventory workspace.
+#
+# Referenz: https://embarkstudios.github.io/cargo-deny/checks/cfg.html
+# Aktiviert vom CI-Workflow .github/workflows/security.yml (cargo-deny job).
+#
+# Sicherheits-Quellen:
+#   - NIST SP 800-204C §3.2 + §3.4 (CI integrity, dependency pinning)
+#   - OWASP Top-10 A06:2021 (Vulnerable and Outdated Components)
+#   - SLSA Build L3 (pinned dependencies, vetted licenses)
+
+[graph]
+# Wir prüfen alle Target-Tripel, damit OS-spezifische Crates nicht
+# unentdeckt durchrutschen.
+all-features = false
+no-default-features = false
+
+[advisories]
+# RustSec Advisory DB. Schwellwerte:
+# - vulnerability: bekannte CVE → deny (Build muss brechen)
+# - unmaintained: Crate ohne Maintainer-Aktivität → warn
+# - yanked: Lock-File referenziert yanked-Version → deny
+# - notice: informational → warn
+db-path = "~/.cargo/advisory-db"
+db-urls = ["https://github.com/RustSec/advisory-db"]
+vulnerability = "deny"
+unmaintained = "warn"
+yanked = "deny"
+notice = "warn"
+ignore = []
+
+[licenses]
+# Whitelist permissiver Lizenzen, kompatibel mit MIT-Hauptlizenz.
+# Explizite Deny-Liste für strenge Copyleft-Lizenzen, weil das
+# Hauptprojekt unter MIT steht und GPL-Code daher nicht
+# eingebunden werden darf.
+unlicensed = "deny"
+default = "deny"
+copyleft = "deny"
+confidence-threshold = 0.93
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Unicode-DFS-2016",
+    "CC0-1.0",
+    "Zlib",
+]
+deny = [
+    "GPL-3.0",
+    "AGPL-3.0",
+]
+# Crates ohne SPDX-Tag (z.B. unicode-ident, ring) bei Bedarf
+# explizit einzelfreigeben — hier vorerst leer.
+exceptions = []
+
+[bans]
+# Doppelt eingezogene Crates auf sicherheitsrelevanten Pfaden
+# führen zu Build-Aufblähung und CVE-Triage-Lücken (zwei
+# Versionen → zwei Patch-Pfade nötig).
+multiple-versions = "warn"
+wildcards = "deny"
+highlight = "all"
+# High-impact crates: hier ist Duplizierung besonders teuer,
+# weil unterschiedliche Versionen unterschiedliche TLS-/Crypto-
+# Implementierungen mitschleppen können.
+deny = []
+skip = []
+skip-tree = []
+
+[[bans.deny]]
+name = "openssl-sys"
+# Erlaubt mehrere Versionen NICHT — durchsetzen, dass nur eine
+# OpenSSL-FFI-Variante eingezogen wird.
+[[bans.deny]]
+name = "ring"
+
+[sources]
+# Keine Git-Repo-Direktreferenzen, keine alternativen Registries.
+# Begründung: Supply-Chain-Integrität — Crate-Source muss
+# crates.io sein, sonst ist die Provenance unkontrolliert.
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []
