@@ -570,12 +570,17 @@ fn urldecode(s: &str) -> String {
     String::from_utf8_lossy(&out).into_owned()
 }
 
-/// Percent-Encoding fuer Query-Werte; `/` bleibt lesbar erhalten.
+/// Percent-Encoding fuer Query-Werte gemaess RFC 3986 §2.3 / §3.4:
+/// Es bleiben nur die *unreserved characters* (`ALPHA / DIGIT / "-" / "." /
+/// "_" / "~"`) unkodiert. Reservierte Zeichen wie `/`, `?`, `#`, `&` muessen
+/// in Query-Werten kodiert werden, sonst kann ein `?` oder `#` im
+/// urspruenglichen URI den Query-String brechen bzw. eine Pattern-Injection
+/// ermoeglichen.
 fn urlencode(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     for &b in s.as_bytes() {
         match b {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' | b'/' => {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'.' | b'_' | b'~' => {
                 out.push(b as char)
             }
             _ => out.push_str(&format!("%{b:02X}")),
