@@ -5,6 +5,11 @@ on:
   push:
     branches: [main]
 
+# Minimaler Default-Permission-Satz (SLSA Build L3 / GitHub
+# Security Hardening Guide). Jobs eskalieren bei Bedarf lokal.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -13,13 +18,19 @@ jobs:
   smoke-build:
     name: Smoke Build + Tests
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     defaults:
       run:
         working-directory: inventory
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
-      - name: Install Rust toolchain (stable)
+        with:
+          # GITHUB_TOKEN nicht im Working-Tree behalten —
+          # Folge-Steps und transitive Actions sehen es sonst.
+          persist-credentials: false
+      - name: Install Rust toolchain (stable; pinned to 1.75 via rust-toolchain.toml)
         uses: dtolnay/rust-toolchain@3c5f7ea28cd621ae0bf5283f0e981fb97b8a7af9  # master @ 2026-05-19 (stable profile)
         with:
           toolchain: stable
