@@ -26,7 +26,16 @@ vulnerability = "deny"
 unmaintained = "warn"
 yanked = "deny"
 notice = "warn"
-ignore = []
+ignore = [
+    # False positives: these advisories address the published
+    # `inventory` crate on crates.io (plugin-pattern library).
+    # Our workspace-root crate happens to share the name but is
+    # path-sourced, not a crates.io dependency. cargo-audit
+    # matches on (name, version) without source-discrimination.
+    # Tracked for a future crate-rename ADR (e.g. home-inventory).
+    "RUSTSEC-2023-0057",
+    "RUSTSEC-2023-0058",
+]
 
 [licenses]
 # Whitelist permissiver Lizenzen, kompatibel mit MIT-Hauptlizenz.
@@ -66,7 +75,10 @@ highlight = "all"
 # High-impact crates: hier ist Duplizierung besonders teuer,
 # weil unterschiedliche Versionen unterschiedliche TLS-/Crypto-
 # Implementierungen mitschleppen können.
-deny = []
+# Hinweis: konkrete Deny-Einträge folgen weiter unten als
+# [[bans.deny]] Array-of-Tables (TOML erlaubt nicht beides
+# gleichzeitig — `deny = []` würde mit dem Array-of-Tables
+# kollidieren und cargo-deny verweigert dann den Config-Parse).
 skip = []
 skip-tree = []
 
