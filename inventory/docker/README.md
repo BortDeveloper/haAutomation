@@ -9,7 +9,7 @@ Provider dahintersteht, bestimmt das gewählte Overlay zur Compose-Laufzeit.
 | Modus | Wer macht TLS? | Wer macht Auth? | Wer macht VPN? | Compose |
 |---|---|---|---|---|
 | **Standalone** (Default) | Caddy (im Compose) | `authgate`-Sidecar | VPN-Sidecar (Tailscale/NetBird/WG) | `docker-compose.yml` + Overlay |
-| **Strato-Stack** | Traefik (host-weit) | Authentik (Forward-Auth) | host-weites VPN (z. B. Headscale) | `docker-compose.strato.yml` |
+| **VPS-Stack** | Traefik (host-weit) | Authentik (Forward-Auth) | host-weites VPN (z. B. Headscale) | `docker-compose.vps.yml` |
 
 Beide Modi nutzen **dasselbe Image** und denselben Header-Vertrag
 (`X-Authentik-Username`). Die App ist unverändert.
@@ -20,7 +20,7 @@ Beide Modi nutzen **dasselbe Image** und denselben Header-Vertrag
 |---|---|
 | `Dockerfile` | Multi-stage Build, baut beide Binaries (`inventory` + `authgate`). HEALTHCHECK auf `/health`. |
 | `docker-compose.yml` | **Standalone**-Base: `inventory` + `authgate` + `caddy`. Erwartet einen Service `vpn` aus dem Overlay. |
-| `docker-compose.strato.yml` | **Strato-Variante**: nur `inventory`, an externes `traefik`-Netz; Hardening (read_only, cap_drop:ALL, Limits). |
+| `docker-compose.vps.yml` | **VPS-Variante**: nur `inventory`, an externes `traefik`-Netz; Hardening (read_only, cap_drop:ALL, Limits). |
 | `docker-compose.vpn.tailscale.yml` | Overlay: `vpn` = Tailscale-Client |
 | `docker-compose.vpn.netbird.yml` | Overlay: `vpn` = NetBird-Client (SaaS oder self-hosted) |
 | `docker-compose.vpn.wireguard.yml` | Overlay: `vpn` = WireGuard, mit `vpn-init` der sops-entschlüsselt |
@@ -30,7 +30,7 @@ Beide Modi nutzen **dasselbe Image** und denselben Header-Vertrag
 ## Secrets-Flow
 
 Alle Secrets liegen sops+age-verschlüsselt unter `inventory/secrets/`. Der
-age-Key liegt **nur auf dem Strato-Host** unter `/etc/inventory/age.key`
+age-Key liegt **nur auf dem VPS-Host** unter `/etc/inventory/age.key`
 (chmod 400, root:root) — niemals im Repo.
 
 | Provider | Quelle | Wohin |
@@ -95,12 +95,11 @@ just down tailscale
 Bei jedem der drei Provider muss Schritt 3 erfolgreich sein — dann ist die
 VPN-Abstraktion bewiesen.
 
-## Strato-Variante (`docker-compose.strato.yml`)
+## VPS-Variante (`docker-compose.vps.yml`)
 
 Fuer Hosts, auf denen bereits **Traefik + Authentik + ein host-weites VPN**
-durch das [strato-stack](https://github.com/BortDeveloper/ansible-strato-stack)-Playbook
-laufen. Caddy und `authgate` entfallen — deren Aufgaben uebernehmen Traefik
-und Authentik.
+durch ein separates, Ansible-verwaltetes Stack-Playbook laufen. Caddy und
+`authgate` entfallen — deren Aufgaben uebernehmen Traefik und Authentik.
 
 **Voraussetzungen:**
 
@@ -119,7 +118,7 @@ INVENTORY_DOMAIN=inventory.example.com
 **Start:**
 
 ```bash
-docker compose -f docker-compose.strato.yml --env-file .env up -d
+docker compose -f docker-compose.vps.yml --env-file .env up -d
 ```
 
 Hardening: `read_only: true`, `cap_drop: [ALL]`, `no-new-privileges`, tmpfs
@@ -132,6 +131,6 @@ docker build -f docker/Dockerfile -t inventory:dev ..
 ```
 
 > Die produktive Distribution (Image-Push nach GHCR-private, Pinning via
-> Digest in `versions.yml` des strato-Repos) ist Sache der Brueckenpakete
-> C (Ansible-Rolle) und D (Build-Workflow) — siehe `project_session_handoff_…`
-> in der Memory.
+> Digest in `versions.yml` des separaten Ansible-Repos) ist Sache der
+> Brueckenpakete C (Ansible-Rolle) und D (Build-Workflow) — siehe
+> `project_session_handoff_…` in der Memory.

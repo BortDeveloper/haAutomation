@@ -6,7 +6,7 @@
 
 ## Kontext
 
-Das Backend läuft auf einem Strato-VPS und inspiziert das Heimnetz über VPN.
+Das Backend läuft auf einem öffentlichen VPS und inspiziert das Heimnetz über VPN.
 Welcher VPN-Anbieter genutzt wird (Tailscale, NetBird, WireGuard) ist eine
 Betriebsentscheidung, die sich ändern kann. Provider-spezifischer Code im
 Backend würde jeden Wechsel zu einem Code-Change machen.

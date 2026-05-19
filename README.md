@@ -36,7 +36,7 @@ on a public VPS and inspects the home network through a VPN tunnel.
 - [Requirements](docs/requirements.md) — what is being built and why
 - [Architecture](docs/architecture.md) — components, data flow, trust
 - [Roadmap](docs/roadmap.md) — step plan S1–S14
-- [VPS setup](docs/strato-setup.md) — server bootstrap, SSH/keys, ops, DR
+- [VPS setup](docs/vps-setup.md) — server bootstrap, SSH/keys, ops, DR
 - [Inventory backend](inventory/) — Rust app
 - [Docker / VPN](inventory/docker/README.md) — sidecar setup, provider switch
 - [Secrets](inventory/secrets/) — sops+age layout

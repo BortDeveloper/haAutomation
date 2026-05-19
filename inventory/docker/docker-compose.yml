@@ -29,7 +29,7 @@ services:
       AGE_KEY_FILE: /etc/inventory/age.key
       RUST_LOG: info
 
-    # --- Container-Hardening (Architekt-R5, analog docker-compose.strato.yml) ---
+    # --- Container-Hardening (Architekt-R5, analog docker-compose.vps.yml) ---
     # /run/inventory: tmpfs fuer entschluesseltes Klartext-Secret-Material,
     # das beim Boot aus den .enc-Files erzeugt wird (siehe docs/architecture.md).
     read_only: true

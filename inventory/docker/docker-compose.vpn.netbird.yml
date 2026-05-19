@@ -5,14 +5,14 @@
 #   NB_SETUP_KEY       Setup-Key aus NetBird-UI
 #   NB_MANAGEMENT_URL  leer (oder weglassen) => SaaS api.netbird.io
 #                      gesetzt => self-hosted, z.B. https://nb.example.com
-#   NB_HOSTNAME        (optional, default: inventory-strato)
+#   NB_HOSTNAME        (optional, default: inventory-vps)
 
 services:
   vpn:
     # Digest-Pin (Architekt-R4) — Tag netbirdio/netbird:latest, aufgeloest 2026-05-17.
     image: netbirdio/netbird:latest@sha256:a2cc19dd02fdc3bfe54bab10cde5715265fc82f6e9d034edc1183ad57d07c22e
     container_name: vpn-netbird
-    hostname: ${NB_HOSTNAME:-inventory-strato}
+    hostname: ${NB_HOSTNAME:-inventory-vps}
     restart: unless-stopped
     # cap_drop:ALL + gezieltes cap_add — NetBird braucht zusaetzlich SYS_ADMIN.
     cap_drop:
@@ -26,7 +26,7 @@ services:
     environment:
       NB_SETUP_KEY: ${NB_SETUP_KEY:?NB_SETUP_KEY must be set}
       NB_MANAGEMENT_URL: ${NB_MANAGEMENT_URL:-}
-      NB_HOSTNAME: ${NB_HOSTNAME:-inventory-strato}
+      NB_HOSTNAME: ${NB_HOSTNAME:-inventory-vps}
     volumes:
       - netbird-state:/etc/netbird
     healthcheck:

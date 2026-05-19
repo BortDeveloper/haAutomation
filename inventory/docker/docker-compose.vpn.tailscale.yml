@@ -3,14 +3,14 @@
 # Secrets via justfile aus inventory/secrets/vpn.tailscale.env.enc dekryptiert
 # und als --env-file an docker compose übergeben. Erwartete Variablen:
 #   TS_AUTHKEY    Reusable oder Ephemeral, mit Tag tag:inventory
-#   TS_HOSTNAME   (optional, default: inventory-strato)
+#   TS_HOSTNAME   (optional, default: inventory-vps)
 
 services:
   vpn:
     # Digest-Pin (Architekt-R4) — Tag tailscale/tailscale:latest, aufgeloest 2026-05-17.
     image: tailscale/tailscale:latest@sha256:dbeff02d2337344b351afac203427218c4d0a06c43fc10a865184063498472a6
     container_name: vpn-tailscale
-    hostname: ${TS_HOSTNAME:-inventory-strato}
+    hostname: ${TS_HOSTNAME:-inventory-vps}
     restart: unless-stopped
     # cap_drop:ALL + gezieltes cap_add — nur die fuer das tun-Device noetigen Caps.
     cap_drop:
@@ -22,7 +22,7 @@ services:
       - /dev/net/tun:/dev/net/tun
     environment:
       TS_AUTHKEY: ${TS_AUTHKEY:?TS_AUTHKEY must be set}
-      TS_HOSTNAME: ${TS_HOSTNAME:-inventory-strato}
+      TS_HOSTNAME: ${TS_HOSTNAME:-inventory-vps}
       TS_STATE_DIR: /var/lib/tailscale
       TS_USERSPACE: "false"
       TS_EXTRA_ARGS: "--ssh=false --advertise-tags=tag:inventory --accept-routes"

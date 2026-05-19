@@ -16,7 +16,7 @@ Komplexität: Auth, Push-Workflow, Tag-/Digest-Verwaltung.
   (`docker build -f docker/Dockerfile`), nicht aus einer Registry gezogen.
 - Die Standalone-Compose-Variante (`docker-compose.yml`) nutzt entsprechend
   `build:` + `image: inventory:dev`.
-- Die strato-Variante (`docker-compose.strato.yml`) erwartet dagegen ein per
+- Die VPS-Variante (`docker-compose.vps.yml`) erwartet dagegen ein per
   **Digest gepinntes** Image (`INVENTORY_IMAGE=...@sha256:<digest>`) — für den
   Fall, dass doch eine Registry genutzt wird.
 
@@ -29,7 +29,7 @@ Komplexität: Auth, Push-Workflow, Tag-/Digest-Verwaltung.
 **Negativ / Kosten**
 
 - Kein zentrales, signiertes Artefakt; Reproduzierbarkeit hängt am Build-Host.
-- **Bekannte Inkonsistenz:** Standalone baut lokal, strato pinnt per Digest.
+- **Bekannte Inkonsistenz:** Standalone baut lokal, VPS-Variante pinnt per Digest.
   Die *fremden* Images (Caddy, VPN-Sidecars, sops) werden in allen Overlays
   per Digest gepinnt (Architekt-R4) — siehe `docker/`-Compose-Dateien. Die
   vollständige Auflösung Richtung Registry-Push ist mit der CI-Einführung

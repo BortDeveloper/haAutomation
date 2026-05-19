@@ -17,7 +17,7 @@ cargo build --release
 ```
 
 Auf dem VPS-Host wird das Image gebaut, nicht das Binary direkt — siehe
-[docker/README.md](docker/README.md) und [../docs/strato-setup.md](../docs/strato-setup.md).
+[docker/README.md](docker/README.md) und [../docs/vps-setup.md](../docs/vps-setup.md).
 
 ## Globale Optionen
 
