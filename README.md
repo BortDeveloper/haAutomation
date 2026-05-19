@@ -1,5 +1,7 @@
 # home-inventory — Home Automation Inventory & Refactor
 
+#UNDER CONSTRUCTION, DO NOT RELAY ANYTHING ON THIS SOFTWARE
+
 Single Source of Truth for a personal home-automation setup. Captures,
 documents and refactors logic spread across Home Assistant, Node-RED
 and Homematic. Provides its own Rust-based inventory backend that runs
