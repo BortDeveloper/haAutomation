@@ -1,0 +1,22 @@
+# cargo-audit configuration for the inventory workspace.
+#
+# Aktiviert vom CI-Workflow .github/workflows/security.yml (cargo-audit job).
+# cargo-audit liest seine Konfig NICHT aus deny.toml, sondern aus
+# `.cargo/audit.toml` (neben Cargo.toml) oder via CLI-Flags.
+# Doku: https://rustsec.github.io/rustsec/cargo-audit/
+#
+# Sicherheits-Quellen:
+#   - NIST SP 800-204C §3.2 + §3.4 (CI integrity, dependency pinning)
+#   - OWASP Top-10 A06:2021 (Vulnerable and Outdated Components)
+
+[advisories]
+ignore = [
+    # False positives: these advisories address the published
+    # `inventory` crate on crates.io (plugin-pattern library).
+    # Our workspace-root crate happens to share the name but is
+    # path-sourced, not a crates.io dependency. cargo-audit
+    # matches on (name, version) without source-discrimination.
+    # Tracked for a future crate-rename ADR (e.g. home-inventory).
+    "RUSTSEC-2023-0057",
+    "RUSTSEC-2023-0058",
+]
