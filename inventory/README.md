@@ -27,6 +27,12 @@ Auf dem VPS-Host wird das Image gebaut, nicht das Binary direkt — siehe
 | `--yaml-dir` | `INVENTORY_YAML_DIR` | `yaml` | Verzeichnis fuer die per-source YAML-Snapshots |
 | `--publish` | `INVENTORY_PUBLISH` | `false` | Nach Sync `git add/commit/push` ausfuehren |
 
+### `serve`-Optionen
+
+| Option | Env | Default | Zweck |
+|---|---|---|---|
+| `--listen <ip:port>` | `INVENTORY_LISTEN` | `127.0.0.1:8080` | Bind-Adresse. Default ist loopback-only (Audit 2026-05-20 R-HIGH-4). Fuer Tailnet-Zugriff explizit die Tailscale-IP angeben, z.B. `--listen 100.x.x.x:8080`. Niemals `0.0.0.0`, ausser hinter einem Reverse-Proxy mit Auth-Gate. |
+
 ## Sync-Quellen
 
 | Quelle | CLI | Erforderlich |
