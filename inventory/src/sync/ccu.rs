@@ -1,5 +1,6 @@
 use crate::types::Device;
 use anyhow::{anyhow, Context, Result};
+use base64::{engine::general_purpose::STANDARD as B64, Engine as _};
 
 /// Roh-Repraesentation eines CCU-Geraets aus `devicelist.cgi`.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -12,17 +13,75 @@ pub struct CcuDevice {
     pub updatable: bool,
 }
 
+/// Baut den Basic-Auth-Header-Wert "Basic <base64(user:password)>".
+/// Eigene Helper, damit der Test den Header-Wert unabhaengig vom Netzwerk
+/// pruefen kann.
+fn basic_auth_header(user: &str, password: &str) -> String {
+    let credentials = B64.encode(format!("{user}:{password}"));
+    format!("Basic {credentials}")
+}
+
 /// Holt die Geraeteliste der CCU.
-/// base_url ohne Pfad, z.B. "http://10.0.0.6". Pfad wird angehaengt.
-pub fn fetch_devicelist(base_url: &str) -> Result<Vec<CcuDevice>> {
+///
+/// `base_url` ohne Pfad, z.B. `http://ccu.example.local`. Pfad wird
+/// angehaengt.
+///
+/// `user` / `password` sind optional. Sind beide gesetzt, wird ein
+/// `Authorization: Basic …`-Header gesendet (RaspberryMatic 3.65+
+/// Default mit aktivierter Authentisierung). Sind beide leer, geht
+/// der Aufruf ohne Auth-Header raus (Status quo fuer CCUs ohne Auth).
+/// Ist nur eins gesetzt, ist das ein klarer Konfigurationsfehler und
+/// die Funktion bricht mit aussagekraeftiger Fehlermeldung ab.
+pub fn fetch_devicelist(
+    base_url: &str,
+    user: Option<&str>,
+    password: Option<&str>,
+) -> Result<Vec<CcuDevice>> {
+    // Halb-konfigurierte Auth ist ein User-Fehler: explizit ablehnen, nicht
+    // stillschweigend Auth abschalten.
+    match (user, password) {
+        (Some(u), None) if !u.is_empty() => {
+            anyhow::bail!(
+                "CCU auth misconfigured: CCU_USER is set but CCU_PASSWORD is empty. \
+                 Set both CCU_USER and CCU_PASSWORD together (or unset both for \
+                 CCUs without authentication)."
+            );
+        }
+        (None, Some(p)) if !p.is_empty() => {
+            anyhow::bail!(
+                "CCU auth misconfigured: CCU_PASSWORD is set but CCU_USER is empty. \
+                 Set both CCU_USER and CCU_PASSWORD together (or unset both for \
+                 CCUs without authentication)."
+            );
+        }
+        _ => {}
+    }
+
     let url = format!(
         "{}/addons/xmlapi/devicelist.cgi",
         base_url.trim_end_matches('/')
     );
-    let res = ureq::get(&url)
-        .call()
-        .with_context(|| format!("GET {url}"))?;
+    let mut req = ureq::get(&url);
+    if let (Some(u), Some(p)) = (user, password) {
+        if !u.is_empty() && !p.is_empty() {
+            req = req.set("Authorization", &basic_auth_header(u, p));
+        }
+    }
+    let res = req.call().with_context(|| format!("GET {url}"))?;
     let body = res.into_string().context("CCU-Response-Body lesen")?;
+
+    // RaspberryMatic XML-API antwortet HTTP 200 mit Body
+    // `<not_authenticated/>`, wenn Auth aktiv ist und kein/falscher
+    // Auth-Header anliegt. Klare Diagnose statt nichtssagendem
+    // XML-Parse-Error.
+    if body.trim().contains("<not_authenticated/>") {
+        anyhow::bail!(
+            "CCU XML-API returned <not_authenticated/>. \
+             Set CCU_USER + CCU_PASSWORD env vars (preferred over CLI args), \
+             or disable CCU authentication for the XML-API addon."
+        );
+    }
+
     parse_devicelist(&body)
 }
 

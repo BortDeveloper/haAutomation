@@ -75,9 +75,23 @@ enum SyncSource {
     },
     /// CCU / RaspberryMatic: GET /addons/xmlapi/devicelist.cgi.
     Ccu {
-        /// Basis-URL der CCU, z.B. http://10.0.0.6
+        /// Basis-URL der CCU, z.B. http://ccu.example.local
         #[arg(long, env = "CCU_URL")]
         url: String,
+
+        /// CCU username for Basic Auth (optional; env: CCU_USER).
+        /// Required if the CCU has authentication enabled
+        /// (RaspberryMatic >= 3.65 default).
+        #[arg(long, env = "CCU_USER")]
+        user: Option<String>,
+
+        /// CCU password for Basic Auth (optional; env: CCU_PASSWORD).
+        /// PREFER env var over --password CLI arg: argv persists in
+        /// shell history (~/.bash_history) and is visible in
+        /// /proc/<pid>/cmdline / `ps -ef`. The `env` attribute reads
+        /// CCU_PASSWORD; passing on CLI is for ad-hoc use only.
+        #[arg(long, env = "CCU_PASSWORD", hide_env_values = true)]
+        password: Option<String>,
     },
     /// Philips Hue: REST-Call gegen eine oder mehrere Bridges (Config-Datei).
     Hue {
@@ -189,10 +203,18 @@ fn main() -> Result<()> {
                     "ha",
                 )?;
             }
-            SyncSource::Ccu { url } => {
+            SyncSource::Ccu {
+                url,
+                user,
+                password,
+            } => {
                 let conn = db::open(&cli.db)?;
                 db::migrate(&conn)?;
-                let ccu_devices = sync::ccu::fetch_devicelist(&url)?;
+                let ccu_devices = sync::ccu::fetch_devicelist(
+                    &url,
+                    user.as_deref(),
+                    password.as_deref(),
+                )?;
                 let devices = sync::ccu::map_to_devices(&ccu_devices);
                 let n = db::upsert_devices(&conn, &devices)?;
                 let mut new_snaps = 0usize;
