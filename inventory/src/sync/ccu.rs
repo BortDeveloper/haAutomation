@@ -169,12 +169,74 @@ fn kind_of(device_type: &str) -> &'static str {
 mod tests {
     use super::*;
     use std::path::PathBuf;
+    use std::sync::{Arc, Mutex};
+    use std::thread;
+    use tiny_http::{Header, Response, Server};
 
     fn fixture() -> String {
         let p = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("fixtures")
             .join("ccu_devicelist.xml");
         std::fs::read_to_string(p).unwrap()
+    }
+
+    /// Spawnt einen Mock-CCU-Server. Liefert `(base_url, last_auth_header)`.
+    ///
+    /// Der Mock antwortet:
+    /// - HTTP 200 + Fixture-XML, wenn der Pfad stimmt;
+    /// - HTTP 404 sonst.
+    ///
+    /// Der zuletzt empfangene Authorization-Header (oder leerer String)
+    /// landet in `last_auth_header` und kann nach dem Aufruf inspiziert
+    /// werden.
+    fn spawn_mock_ok() -> (String, Arc<Mutex<String>>) {
+        let server = Server::http("127.0.0.1:0").unwrap();
+        let addr = server.server_addr().to_ip().unwrap().to_string();
+        let last_auth = Arc::new(Mutex::new(String::new()));
+        let last_auth_w = Arc::clone(&last_auth);
+        let xml = fixture();
+        thread::spawn(move || {
+            for req in server.incoming_requests() {
+                let auth = req
+                    .headers()
+                    .iter()
+                    .find(|h| {
+                        let n: &str = h.field.as_str().as_str();
+                        n.eq_ignore_ascii_case("Authorization")
+                    })
+                    .map(|h| h.value.as_str().to_string())
+                    .unwrap_or_default();
+                *last_auth_w.lock().unwrap() = auth;
+
+                let resp = if req.url() == "/addons/xmlapi/devicelist.cgi" {
+                    Response::from_string(xml.clone())
+                        .with_status_code(200)
+                        .with_header(
+                            Header::from_bytes("Content-Type", "application/xml").unwrap(),
+                        )
+                } else {
+                    Response::from_string("not found").with_status_code(404)
+                };
+                let _ = req.respond(resp);
+            }
+        });
+        (format!("http://{addr}"), last_auth)
+    }
+
+    /// Mock, der unabhaengig vom Auth-Header `<not_authenticated/>`
+    /// zurueckgibt — simuliert RaspberryMatic mit aktivem Auth-Modul.
+    fn spawn_mock_not_authenticated() -> String {
+        let server = Server::http("127.0.0.1:0").unwrap();
+        let addr = server.server_addr().to_ip().unwrap().to_string();
+        thread::spawn(move || {
+            for req in server.incoming_requests() {
+                let resp = Response::from_string("<not_authenticated/>")
+                    .with_status_code(200)
+                    .with_header(Header::from_bytes("Content-Type", "application/xml").unwrap());
+                let _ = req.respond(resp);
+            }
+        });
+        format!("http://{addr}")
     }
 
     #[test]
@@ -217,5 +279,86 @@ mod tests {
 
         let switch_dev = mapped.iter().find(|d| d.source_id == "MEQ0000001").unwrap();
         assert_eq!(switch_dev.kind.as_deref(), Some("switch"));
+    }
+
+    /// User+Password gesetzt -> Authorization: Basic <base64(user:password)>
+    /// muss am Mock-Server ankommen, und der Sync-Aufruf liefert Devices.
+    #[test]
+    fn fetch_devicelist_sends_basic_auth_when_user_and_password_set() {
+        let (base, last_auth) = spawn_mock_ok();
+        let devs = fetch_devicelist(&base, Some("Admin"), Some("s3cret")).unwrap();
+        assert_eq!(devs.len(), 4, "fixture liefert 4 Roh-Devices");
+
+        // base64("Admin:s3cret") = "QWRtaW46czNjcmV0"
+        let got = last_auth.lock().unwrap().clone();
+        assert_eq!(
+            got, "Basic QWRtaW46czNjcmV0",
+            "Authorization-Header muss Basic Auth mit base64(user:password) sein, got: {got:?}"
+        );
+    }
+
+    /// Kein User, kein Password -> kein Authorization-Header
+    /// (Backwards-Compat fuer CCUs ohne Authentisierung).
+    #[test]
+    fn fetch_devicelist_omits_auth_header_when_no_credentials() {
+        let (base, last_auth) = spawn_mock_ok();
+        let devs = fetch_devicelist(&base, None, None).unwrap();
+        assert_eq!(devs.len(), 4);
+        let got = last_auth.lock().unwrap().clone();
+        assert!(
+            got.is_empty(),
+            "ohne user/password darf kein Authorization-Header gesendet werden, got: {got:?}"
+        );
+    }
+
+    /// Nur einer der beiden -> klare Konfigurationsfehler-Meldung, kein
+    /// Netzwerk-Call. Der Aufruf darf nicht stillschweigend ohne Auth
+    /// durchgehen.
+    #[test]
+    fn fetch_devicelist_rejects_half_configured_auth() {
+        // user gesetzt, password fehlt
+        let err = fetch_devicelist("http://127.0.0.1:1", Some("Admin"), None).unwrap_err();
+        let msg = format!("{err:#}");
+        assert!(
+            msg.contains("CCU_USER is set but CCU_PASSWORD is empty"),
+            "msg should explain half-config (user only), got: {msg}"
+        );
+
+        // password gesetzt, user fehlt
+        let err = fetch_devicelist("http://127.0.0.1:1", None, Some("s3cret")).unwrap_err();
+        let msg = format!("{err:#}");
+        assert!(
+            msg.contains("CCU_PASSWORD is set but CCU_USER is empty"),
+            "msg should explain half-config (password only), got: {msg}"
+        );
+    }
+
+    /// CCU antwortet mit `<not_authenticated/>` -> klare Diagnose-
+    /// Fehlermeldung mit Hinweis auf CCU_USER/CCU_PASSWORD, statt
+    /// nichtssagendem XML-Parser-Fehler.
+    #[test]
+    fn fetch_devicelist_diagnoses_not_authenticated_response() {
+        let base = spawn_mock_not_authenticated();
+        let err = fetch_devicelist(&base, None, None).unwrap_err();
+        let msg = format!("{err:#}");
+        assert!(
+            msg.contains("<not_authenticated/>"),
+            "msg should mention the literal response, got: {msg}"
+        );
+        assert!(
+            msg.contains("CCU_USER") && msg.contains("CCU_PASSWORD"),
+            "msg should point at the env vars, got: {msg}"
+        );
+    }
+
+    /// Sanity-Check: basic_auth_header-Helper kodiert wie RFC 7617.
+    #[test]
+    fn basic_auth_header_encodes_per_rfc7617() {
+        assert_eq!(basic_auth_header("Admin", "s3cret"), "Basic QWRtaW46czNjcmV0");
+        assert_eq!(basic_auth_header("user", "pass"), "Basic dXNlcjpwYXNz");
+        // Empty password is technically valid base64-wise (user:"");
+        // the half-config guard in fetch_devicelist refuses this at the
+        // caller layer.
+        assert_eq!(basic_auth_header("u", ""), "Basic dTo=");
     }
 }
