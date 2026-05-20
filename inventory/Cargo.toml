@@ -47,7 +47,7 @@ anyhow = "1"
 # damit das Sidecar unabhaengig vom inventory-Binary baut und testet.
 hmac = "0.12"
 sha2 = "0.10"
-pbkdf2 = { version = "0.12", default-features = false, features = ["hmac"] }
+pbkdf2 = { version = "0.13", default-features = false, features = ["hmac"] }
 getrandom = "0.2"
 
 [dev-dependencies]
