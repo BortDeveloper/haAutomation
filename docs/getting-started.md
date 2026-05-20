@@ -84,7 +84,7 @@ bypass it.
 | Source | What you need |
 |---|---|
 | Home Assistant | A Long-Lived Access Token from your HA user profile (`/profile` → "Long-Lived Access Tokens"). |
-| Homematic CCU | The CCU's LAN URL, e.g. `http://ccu.example.local`. The XML-API addon does not require authentication (architectural property of RaspberryMatic). |
+| Homematic CCU | The CCU's LAN URL, e.g. `http://ccu.example.local`. If your RaspberryMatic has "Authentication" enabled (default since RaspberryMatic 3.65+), you also need a username (default: `Admin`) and the matching password. Pass them via the `CCU_USER` / `CCU_PASSWORD` env vars, not on the command line. |
 | Philips Hue (optional) | One API key per bridge. Pair via the bridge's link button + `POST http://<bridge-ip>/api -d '{"devicetype":"haAutomation"}'`. |
 | Shelly (optional) | None — mDNS-discovered at sync time. |
 
@@ -151,8 +151,17 @@ chmod 700 "$INVENTORY_YAML_DIR"
 
 # Sync each source (Hue is optional — omit --config to skip)
 ./target/release/inventory sync ha          # uses HA_URL + HA_TOKEN from env
-export CCU_URL=http://ccu.example.local  # your CCU's hostname or IP
-./target/release/inventory sync ccu --url "$CCU_URL"
+
+# CCU (Homematic) — with Basic Auth if your RaspberryMatic has
+# "Authentication" enabled (default since RaspberryMatic 3.65+):
+export CCU_URL='http://ccu.example.local'   # your CCU's hostname or IP
+export CCU_USER='Admin'                     # default RaspberryMatic admin user
+export CCU_PASSWORD='<your-ccu-password>'   # NEVER pass via --password argv
+./target/release/inventory sync ccu
+# URL/user/password come from env. CLI args also work but leak the
+# password to /proc/<pid>/cmdline, ps -ef and ~/.bash_history — prefer
+# env (same R-CRIT-1 reasoning as HA_TOKEN).
+# If the CCU has no auth, just leave CCU_USER and CCU_PASSWORD unset.
 
 # Hue: only if you configured a bridge file in Phase 2.
 # If you omit --config, the command prints an info line and exits 0.
@@ -230,6 +239,8 @@ PBKDF2-HMAC-SHA256 + signed cookie, fail-closed). See
 | `WARNUNG: AUTH_BYPASS aktiv` on every start | Expected: it is the load-bearing warning. | Either accept the warning (PoC mode) or set up `authgate` and `unset AUTH_BYPASS`. |
 | Hue pairing requires bridge button press | Standard Hue UX; pairing call only works for ~30 s after the button press. | Press the bridge link button, then immediately run the `POST /api` pairing call. |
 | CCU XML-API returns 404 | XML-API addon not installed on the CCU. | Install RaspberryMatic XML-API addon; verify with `curl http://<ccu>/addons/xmlapi/devicelist.cgi`. |
+| `sync ccu` errors with `CCU XML-API returned <not_authenticated/>` | RaspberryMatic auth is enabled but the sync ran without credentials (or with wrong ones). | Set `CCU_USER` + `CCU_PASSWORD` env vars (do **not** pass via `--password` CLI argv — it leaks to bash history / `ps -ef`). RaspberryMatic default admin user is `Admin`. |
+| `sync ccu` errors with `CCU auth misconfigured: CCU_USER is set but CCU_PASSWORD is empty` (or vice versa) | Half-configured Basic Auth. | Set both `CCU_USER` and `CCU_PASSWORD` together, or unset both for CCUs without auth. |
 
 ## What this PoC does NOT do
 
