@@ -91,6 +91,7 @@ on a public VPS and inspects the home network through a VPN tunnel.
 
 ## Quick links
 
+- [Getting started](docs/getting-started.md) — first-run PoC on a home network (security-audited walkthrough)
 - [Requirements](docs/requirements.md) — what is being built and why
 - [Architecture](docs/architecture.md) — components, data flow, trust
 - [Roadmap](docs/roadmap.md) — step plan S1–S14
