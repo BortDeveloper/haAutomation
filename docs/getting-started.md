@@ -84,7 +84,7 @@ bypass it.
 | Source | What you need |
 |---|---|
 | Home Assistant | A Long-Lived Access Token from your HA user profile (`/profile` → "Long-Lived Access Tokens"). |
-| Homematic CCU | The CCU's LAN URL, e.g. `http://homematic-ccu3.local`. The XML-API addon does not require authentication (architectural property of RaspberryMatic). |
+| Homematic CCU | The CCU's LAN URL, e.g. `http://ccu.example.local`. The XML-API addon does not require authentication (architectural property of RaspberryMatic). |
 | Philips Hue (optional) | One API key per bridge. Pair via the bridge's link button + `POST http://<bridge-ip>/api -d '{"devicetype":"haAutomation"}'`. |
 | Shelly (optional) | None — mDNS-discovered at sync time. |
 
@@ -128,7 +128,7 @@ ASVS V2.10.4; CWE-214).
 ```bash
 # Tokens via env, NOT via CLI argv
 export HA_TOKEN='<long-lived-token>'
-export HA_URL='http://homeassistant.local:8123'
+export HA_URL='http://ha.example.local:8123'  # replace with your own Home Assistant URL
 export INVENTORY_DB=~/haAutomation/local/inventory.db
 export INVENTORY_YAML_DIR=~/haAutomation/local/yaml
 
@@ -151,7 +151,8 @@ chmod 700 "$INVENTORY_YAML_DIR"
 
 # Sync each source (Hue is optional — omit --config to skip)
 ./target/release/inventory sync ha          # uses HA_URL + HA_TOKEN from env
-./target/release/inventory sync ccu --url http://homematic-ccu3.local
+export CCU_URL=http://ccu.example.local  # your CCU's hostname or IP
+./target/release/inventory sync ccu --url "$CCU_URL"
 
 # Hue: only if you configured a bridge file in Phase 2.
 # If you omit --config, the command prints an info line and exits 0.
