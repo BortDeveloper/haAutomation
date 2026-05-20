@@ -39,7 +39,7 @@ Auf dem VPS-Host wird das Image gebaut, nicht das Binary direkt — siehe
 | Quelle | CLI | Erforderlich |
 |---|---|---|
 | HA | `sync ha` | `--url`, `--token` (env `HA_URL`, `HA_TOKEN`) — Token immer via `HA_TOKEN` env, nicht als Argv-Wert (Audit R-CRIT-1) |
-| CCU/RaspberryMatic | `sync ccu` | `--url` (env `CCU_URL`) |
+| CCU/RaspberryMatic | `sync ccu` | `--url` (env `CCU_URL`); optional `--user` (env `CCU_USER`) + `--password` (env `CCU_PASSWORD`) fuer Basic Auth, falls die CCU Authentisierung verlangt (RaspberryMatic >= 3.65 Default). Passwort immer via env, nicht als Argv (Audit R-CRIT-1). |
 | Philips Hue | `sync hue` | _optional_ `--config` (YAML: `[{ip, token, name?}, ...]`) — ohne Config wird die Quelle uebersprungen |
 | Shelly | `sync shelly` | `--ip ip1,ip2` und/oder `--discover-seconds N` |
 
