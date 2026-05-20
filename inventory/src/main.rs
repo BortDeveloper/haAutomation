@@ -36,8 +36,12 @@ struct Cli {
 enum Command {
     /// Startet den HTTP-Server.
     Serve {
-        /// Listen-Adresse, z.B. 0.0.0.0:8080.
-        #[arg(long, default_value = "0.0.0.0:8080", env = "INVENTORY_LISTEN")]
+        /// Listen-Adresse, z.B. 100.x.x.x:8080 (Tailnet-IP).
+        /// Default ist loopback-only (`127.0.0.1:8080`), damit der
+        /// Dienst nicht versehentlich auf allen Interfaces lauscht
+        /// (Audit 2026-05-20 R-HIGH-4). Fuer Tailnet-Zugriff explizit
+        /// die Tailscale-IP angeben.
+        #[arg(long, default_value = "127.0.0.1:8080", env = "INVENTORY_LISTEN")]
         listen: String,
     },
     /// Synchronisiert das Inventar aus einer Live-Quelle.
@@ -313,6 +317,32 @@ mod tests {
                 Some(std::path::Path::new("/tmp/x.yml"))
             ),
             _ => panic!("expected Sync(Hue)"),
+        }
+    }
+
+    /// `serve` ohne `--listen` muss auf 127.0.0.1:8080 defaulten
+    /// (security-konformer Default, vgl. Audit 2026-05-20 R-HIGH-4).
+    #[test]
+    fn serve_listen_default_is_loopback() {
+        std::env::remove_var("INVENTORY_LISTEN");
+        let cli = Cli::try_parse_from(["inventory", "serve"]).expect("parse ok");
+        match cli.command {
+            Command::Serve { listen } => {
+                assert_eq!(listen, "127.0.0.1:8080");
+            }
+            _ => panic!("expected Serve"),
+        }
+    }
+
+    /// `serve --listen 100.64.0.1:8080` akzeptiert eine Tailnet-IP.
+    #[test]
+    fn serve_listen_accepts_explicit_address() {
+        std::env::remove_var("INVENTORY_LISTEN");
+        let cli = Cli::try_parse_from(["inventory", "serve", "--listen", "100.64.0.1:8080"])
+            .expect("parse ok");
+        match cli.command {
+            Command::Serve { listen } => assert_eq!(listen, "100.64.0.1:8080"),
+            _ => panic!("expected Serve"),
         }
     }
 }
