@@ -28,6 +28,15 @@ struct Cli {
     #[arg(long, env = "INVENTORY_PUBLISH")]
     publish: bool,
 
+    /// Bestaetigung fuer `--publish`-Modus. Erforderlich, sobald `--publish`
+    /// (bzw. `INVENTORY_PUBLISH`) aktiv ist. Wert ist die erwartete
+    /// Remote-Beschreibung (URL/Name); dient als bewusster
+    /// Operator-Konsens, damit Geraete-Inventory nicht versehentlich
+    /// an ein unbeabsichtigtes Remote gepusht wird (Audit
+    /// 2026-05-20 R-HIGH-3).
+    #[arg(long = "confirm-publish-to", env = "INVENTORY_PUBLISH_CONFIRM")]
+    confirm_publish_to: Option<String>,
+
     #[command(subcommand)]
     command: Command,
 }
@@ -92,6 +101,7 @@ enum SyncSource {
 
 fn maybe_publish(
     enabled: bool,
+    confirm_publish_to: Option<&str>,
     yaml_dir: &std::path::Path,
     yaml_path: &std::path::Path,
     source: &str,
@@ -99,6 +109,24 @@ fn maybe_publish(
     if !enabled {
         return Ok(());
     }
+    // R-HIGH-3 (Audit 2026-05-20): `INVENTORY_PUBLISH=true` darf
+    // niemals stillschweigend Geraete-Inventory an ein Remote pushen.
+    // Operator muss `--confirm-publish-to '<remote>'` setzen.
+    let confirm = match confirm_publish_to {
+        Some(s) if !s.trim().is_empty() => s.trim().to_string(),
+        _ => {
+            anyhow::bail!(
+                "INVENTORY_PUBLISH/`--publish` ist aktiv, aber `--confirm-publish-to` \
+                 (bzw. env INVENTORY_PUBLISH_CONFIRM) ist leer. \
+                 Refusing to push device inventory to remote. \
+                 Set --confirm-publish-to '<remote>' to acknowledge."
+            );
+        }
+    };
+    eprintln!(
+        "[INVENTORY] PUBLISH mode active: committing+pushing inventory yaml for source '{}' to remote '{}'",
+        source, confirm
+    );
     let r = git_publish::commit_and_push(
         yaml_dir,
         &[yaml_path],
@@ -119,6 +147,16 @@ fn main() -> Result<()> {
             let conn = db::open(&cli.db)?;
             db::migrate(&conn)?;
             let auth_cfg = auth::Config::from_env();
+            // R-CRIT-2 (Audit 2026-05-20): AUTH_BYPASS=1 deaktiviert
+            // jede Authentisierung. Stderr-Warnbanner ist Pflicht.
+            if auth_cfg.bypass {
+                eprintln!(
+                    "WARNUNG: AUTH_BYPASS aktiv. Web-UI hat KEINE Authentisierung. \
+                     Listen-Adresse: {} — stelle sicher, dass das nicht 0.0.0.0 ist, \
+                     sonst ist die Inventory-UI auf allen Interfaces erreichbar.",
+                    listen
+                );
+            }
             let server = http::bind(&listen)?;
             println!(
                 "listening on {} (db: {}, auth_header: {}, bypass: {})",
@@ -143,7 +181,13 @@ fn main() -> Result<()> {
                     n,
                     p.display()
                 );
-                maybe_publish(cli.publish, &cli.yaml_dir, &p, "ha")?;
+                maybe_publish(
+                    cli.publish,
+                    cli.confirm_publish_to.as_deref(),
+                    &cli.yaml_dir,
+                    &p,
+                    "ha",
+                )?;
             }
             SyncSource::Ccu { url } => {
                 let conn = db::open(&cli.db)?;
@@ -168,7 +212,13 @@ fn main() -> Result<()> {
                     new_snaps,
                     p.display()
                 );
-                maybe_publish(cli.publish, &cli.yaml_dir, &p, "ccu")?;
+                maybe_publish(
+                    cli.publish,
+                    cli.confirm_publish_to.as_deref(),
+                    &cli.yaml_dir,
+                    &p,
+                    "ccu",
+                )?;
             }
             SyncSource::Shelly {
                 ip,
@@ -214,7 +264,13 @@ fn main() -> Result<()> {
                     new_snaps,
                     p.display()
                 );
-                maybe_publish(cli.publish, &cli.yaml_dir, &p, "shelly")?;
+                maybe_publish(
+                    cli.publish,
+                    cli.confirm_publish_to.as_deref(),
+                    &cli.yaml_dir,
+                    &p,
+                    "shelly",
+                )?;
             }
             SyncSource::Hue { config } => {
                 // Hue ist eine optionale Sync-Quelle: ohne Config wird die
@@ -269,7 +325,13 @@ fn main() -> Result<()> {
                     new_snaps,
                     p.display()
                 );
-                maybe_publish(cli.publish, &cli.yaml_dir, &p, "hue")?;
+                maybe_publish(
+                    cli.publish,
+                    cli.confirm_publish_to.as_deref(),
+                    &cli.yaml_dir,
+                    &p,
+                    "hue",
+                )?;
             }
         },
         Command::Migrate => {
@@ -344,5 +406,48 @@ mod tests {
             Command::Serve { listen } => assert_eq!(listen, "100.64.0.1:8080"),
             _ => panic!("expected Serve"),
         }
+    }
+
+    /// `--confirm-publish-to` ist ein optionales Top-Level-Flag.
+    #[test]
+    fn confirm_publish_to_flag_parses() {
+        std::env::remove_var("INVENTORY_PUBLISH_CONFIRM");
+        std::env::remove_var("INVENTORY_PUBLISH");
+        let cli = Cli::try_parse_from([
+            "inventory",
+            "--confirm-publish-to",
+            "git@github.com:me/inventory.git",
+            "migrate",
+        ])
+        .expect("parse ok");
+        assert_eq!(
+            cli.confirm_publish_to.as_deref(),
+            Some("git@github.com:me/inventory.git")
+        );
+    }
+
+    /// maybe_publish ohne confirm muss mit klarer Fehlermeldung ablehnen.
+    #[test]
+    fn maybe_publish_refuses_without_confirm() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let yaml = tmp.path().join("hue.yml");
+        std::fs::write(&yaml, "[]").expect("write");
+        // enabled=true, kein confirm -> Fehler
+        let err = maybe_publish(true, None, tmp.path(), &yaml, "hue")
+            .expect_err("must fail without --confirm-publish-to");
+        let msg = format!("{err}");
+        assert!(
+            msg.contains("Refusing to push device inventory"),
+            "msg should explain refusal, got: {msg}"
+        );
+    }
+
+    /// maybe_publish mit publish=false ist ein No-op (auch ohne confirm).
+    #[test]
+    fn maybe_publish_noop_when_disabled() {
+        let tmp = tempfile::tempdir().expect("tempdir");
+        let yaml = tmp.path().join("hue.yml");
+        std::fs::write(&yaml, "[]").expect("write");
+        maybe_publish(false, None, tmp.path(), &yaml, "hue").expect("noop ok");
     }
 }
