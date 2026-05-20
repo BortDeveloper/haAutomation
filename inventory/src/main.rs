@@ -69,8 +69,11 @@ enum SyncSource {
     /// Philips Hue: REST-Call gegen eine oder mehrere Bridges (Config-Datei).
     Hue {
         /// YAML-Datei mit Liste [{ip, token, name?}, ...].
+        /// Optional: fehlt `--config` und ist `HUE_CONFIG` nicht gesetzt,
+        /// loggt der Befehl einen Hinweis und beendet mit Exit-Code 0
+        /// (Hue ist eine optionale Sync-Quelle).
         #[arg(long, env = "HUE_CONFIG")]
-        config: std::path::PathBuf,
+        config: Option<std::path::PathBuf>,
     },
     /// Shelly: mDNS-Discovery + Per-Device-Fetch (Gen1+Gen2).
     Shelly {
@@ -210,6 +213,23 @@ fn main() -> Result<()> {
                 maybe_publish(cli.publish, &cli.yaml_dir, &p, "shelly")?;
             }
             SyncSource::Hue { config } => {
+                // Hue ist eine optionale Sync-Quelle: ohne Config wird die
+                // Quelle still uebersprungen (kein Fehler).
+                let config = match config {
+                    Some(p) => p,
+                    None => {
+                        println!(
+                            "hue: no config provided, skipping (use --config or HUE_CONFIG to enable)"
+                        );
+                        return Ok(());
+                    }
+                };
+                if !config.exists() {
+                    anyhow::bail!(
+                        "hue config does not exist: {} (pass an existing YAML via --config or unset HUE_CONFIG to skip)",
+                        config.display()
+                    );
+                }
                 let conn = db::open(&cli.db)?;
                 db::migrate(&conn)?;
                 let bridges = sync::hue::load_config(&config)?;
@@ -255,4 +275,44 @@ fn main() -> Result<()> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use clap::Parser;
+
+    /// `sync hue` ohne `--config` darf parsen (Hue ist optional).
+    #[test]
+    fn sync_hue_without_config_parses_and_config_is_none() {
+        // Env-Var darf den Test nicht beeinflussen (clap liest sie sonst).
+        std::env::remove_var("HUE_CONFIG");
+        let cli = Cli::try_parse_from(["inventory", "sync", "hue"]).expect("parse ok");
+        match cli.command {
+            Command::Sync {
+                source: SyncSource::Hue { config },
+            } => assert!(
+                config.is_none(),
+                "expected None config when --config is absent"
+            ),
+            _ => panic!("expected Sync(Hue)"),
+        }
+    }
+
+    /// `sync hue --config <pfad>` setzt den optionalen Pfad.
+    #[test]
+    fn sync_hue_with_config_parses_path() {
+        std::env::remove_var("HUE_CONFIG");
+        let cli = Cli::try_parse_from(["inventory", "sync", "hue", "--config", "/tmp/x.yml"])
+            .expect("parse ok");
+        match cli.command {
+            Command::Sync {
+                source: SyncSource::Hue { config },
+            } => assert_eq!(
+                config.as_deref(),
+                Some(std::path::Path::new("/tmp/x.yml"))
+            ),
+            _ => panic!("expected Sync(Hue)"),
+        }
+    }
 }

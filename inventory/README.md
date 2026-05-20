@@ -33,7 +33,7 @@ Auf dem VPS-Host wird das Image gebaut, nicht das Binary direkt — siehe
 |---|---|---|
 | HA | `sync ha` | `--url`, `--token` (env `HA_URL`, `HA_TOKEN`) |
 | CCU/RaspberryMatic | `sync ccu` | `--url` (env `CCU_URL`) |
-| Philips Hue | `sync hue` | `--config` (YAML: `[{ip, token, name?}, ...]`) |
+| Philips Hue | `sync hue` | _optional_ `--config` (YAML: `[{ip, token, name?}, ...]`) — ohne Config wird die Quelle uebersprungen |
 | Shelly | `sync shelly` | `--ip ip1,ip2` und/oder `--discover-seconds N` |
 
 ## Crate-Struktur (aktuell)
