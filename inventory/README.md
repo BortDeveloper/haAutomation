@@ -26,6 +26,7 @@ Auf dem VPS-Host wird das Image gebaut, nicht das Binary direkt — siehe
 | `--db` | `INVENTORY_DB` | `inventory.db` | SQLite-Datei (wird angelegt) |
 | `--yaml-dir` | `INVENTORY_YAML_DIR` | `yaml` | Verzeichnis fuer die per-source YAML-Snapshots |
 | `--publish` | `INVENTORY_PUBLISH` | `false` | Nach Sync `git add/commit/push` ausfuehren |
+| `--confirm-publish-to <remote>` | `INVENTORY_PUBLISH_CONFIRM` | _(leer)_ | Pflicht-Bestaetigung, wenn `--publish` aktiv ist (Audit 2026-05-20 R-HIGH-3). Ohne diesen Wert bricht der Sync mit klarer Fehlermeldung ab. |
 
 ### `serve`-Optionen
 
@@ -37,7 +38,7 @@ Auf dem VPS-Host wird das Image gebaut, nicht das Binary direkt — siehe
 
 | Quelle | CLI | Erforderlich |
 |---|---|---|
-| HA | `sync ha` | `--url`, `--token` (env `HA_URL`, `HA_TOKEN`) |
+| HA | `sync ha` | `--url`, `--token` (env `HA_URL`, `HA_TOKEN`) — Token immer via `HA_TOKEN` env, nicht als Argv-Wert (Audit R-CRIT-1) |
 | CCU/RaspberryMatic | `sync ccu` | `--url` (env `CCU_URL`) |
 | Philips Hue | `sync hue` | _optional_ `--config` (YAML: `[{ip, token, name?}, ...]`) — ohne Config wird die Quelle uebersprungen |
 | Shelly | `sync shelly` | `--ip ip1,ip2` und/oder `--discover-seconds N` |
