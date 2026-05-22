@@ -26,14 +26,21 @@ Auf dem VPS-Host wird das Image gebaut, nicht das Binary direkt — siehe
 | `--db` | `INVENTORY_DB` | `inventory.db` | SQLite-Datei (wird angelegt) |
 | `--yaml-dir` | `INVENTORY_YAML_DIR` | `yaml` | Verzeichnis fuer die per-source YAML-Snapshots |
 | `--publish` | `INVENTORY_PUBLISH` | `false` | Nach Sync `git add/commit/push` ausfuehren |
+| `--confirm-publish-to <remote>` | `INVENTORY_PUBLISH_CONFIRM` | _(leer)_ | Pflicht-Bestaetigung, wenn `--publish` aktiv ist (Audit 2026-05-20 R-HIGH-3). Ohne diesen Wert bricht der Sync mit klarer Fehlermeldung ab. |
+
+### `serve`-Optionen
+
+| Option | Env | Default | Zweck |
+|---|---|---|---|
+| `--listen <ip:port>` | `INVENTORY_LISTEN` | `127.0.0.1:8080` | Bind-Adresse. Default ist loopback-only (Audit 2026-05-20 R-HIGH-4). Fuer Tailnet-Zugriff explizit die Tailscale-IP angeben, z.B. `--listen 100.x.x.x:8080`. Niemals `0.0.0.0`, ausser hinter einem Reverse-Proxy mit Auth-Gate. |
 
 ## Sync-Quellen
 
 | Quelle | CLI | Erforderlich |
 |---|---|---|
-| HA | `sync ha` | `--url`, `--token` (env `HA_URL`, `HA_TOKEN`) |
-| CCU/RaspberryMatic | `sync ccu` | `--url` (env `CCU_URL`) |
-| Philips Hue | `sync hue` | `--config` (YAML: `[{ip, token, name?}, ...]`) |
+| HA | `sync ha` | `--url`, `--token` (env `HA_URL`, `HA_TOKEN`) — Token immer via `HA_TOKEN` env, nicht als Argv-Wert (Audit R-CRIT-1) |
+| CCU/RaspberryMatic | `sync ccu` | `--url` (env `CCU_URL`); optional `--user` (env `CCU_USER`) + `--password` (env `CCU_PASSWORD`) fuer Basic Auth, falls die CCU Authentisierung verlangt (RaspberryMatic >= 3.65 Default). Passwort immer via env, nicht als Argv (Audit R-CRIT-1). |
+| Philips Hue | `sync hue` | _optional_ `--config` (YAML: `[{ip, token, name?}, ...]`) — ohne Config wird die Quelle uebersprungen |
 | Shelly | `sync shelly` | `--ip ip1,ip2` und/oder `--discover-seconds N` |
 
 ## Crate-Struktur (aktuell)

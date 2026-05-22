@@ -31,6 +31,12 @@ serde_yaml_ng = "0.10"
 # XML (fuer CCU/RaspberryMatic devicelist.cgi)
 roxmltree = "0.20"
 
+# Basic-Auth-Header-Encoding fuer CCU (RaspberryMatic 3.65+ Default mit
+# aktivierter Authentisierung). Bereits transitiv vorhanden (ueber den
+# TLS-Stack); hier explizit als direkte Dependency gefuehrt, damit der
+# Build nicht stillschweigend zerbricht, wenn die Transitivkette wechselt.
+base64 = "0.22"
+
 # mDNS-Discovery (fuer Shelly)
 mdns-sd = "0.13"
 
