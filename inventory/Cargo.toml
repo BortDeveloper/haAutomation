@@ -29,7 +29,13 @@ serde_json = "1"
 serde_yaml_ng = "0.10"
 
 # XML (fuer CCU/RaspberryMatic devicelist.cgi)
-roxmltree = "0.20"
+roxmltree = "0.21"
+
+# Basic-Auth-Header-Encoding fuer CCU (RaspberryMatic 3.65+ Default mit
+# aktivierter Authentisierung). Bereits transitiv vorhanden (ueber den
+# TLS-Stack); hier explizit als direkte Dependency gefuehrt, damit der
+# Build nicht stillschweigend zerbricht, wenn die Transitivkette wechselt.
+base64 = "0.22"
 
 # mDNS-Discovery (fuer Shelly)
 mdns-sd = "0.13"
@@ -39,10 +45,10 @@ anyhow = "1"
 
 # Auth-Sidecar (Binary `authgate`): reine Rust-Crypto, kein C-Compiler noetig,
 # damit das Sidecar unabhaengig vom inventory-Binary baut und testet.
-hmac = "0.12"
+hmac = "0.13"
 sha2 = "0.10"
 pbkdf2 = { version = "0.12", default-features = false, features = ["hmac"] }
-getrandom = "0.2"
+getrandom = "0.4"
 
 [dev-dependencies]
 tempfile = "3"
