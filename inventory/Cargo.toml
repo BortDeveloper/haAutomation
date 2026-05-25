@@ -38,7 +38,7 @@ roxmltree = "0.21"
 base64 = "0.22"
 
 # mDNS-Discovery (fuer Shelly)
-mdns-sd = "0.13"
+mdns-sd = "0.20"
 
 # Error-Handling
 anyhow = "1"
