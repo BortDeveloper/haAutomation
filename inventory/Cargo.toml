@@ -21,7 +21,7 @@ tiny_http = "0.12"
 ureq = { version = "2", default-features = false, features = ["tls"] }
 
 # Datenbank
-rusqlite = { version = "0.31", features = ["bundled"] }
+rusqlite = { version = "0.39", features = ["bundled"] }
 
 # Serialisierung
 serde = { version = "1", features = ["derive"] }
