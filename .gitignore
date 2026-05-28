@@ -30,6 +30,11 @@ target/
 **/inventory.db-journal
 **/inventory.db-wal
 
+# Lokales Test-/Dev-Verzeichnis (Doku: docs/getting-started.md, Phase 2-3):
+# enthaelt persoenliche URLs, Tokens, lokale DB. Niemals committen —
+# `.env.example` und `smoke-test.sh` liegen daneben unter inventory/.
+**/local/
+
 # IDE
 .vscode/
 .idea/
