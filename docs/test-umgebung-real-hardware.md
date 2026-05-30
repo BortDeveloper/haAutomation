@@ -681,6 +681,54 @@ INVENTORY_CCU_URL=http://<raspberrymatic-ip>
 INVENTORY_SHELLY_DISCOVER_SECONDS=10
 ```
 
+### 8.7 Node-RED als HA-Add-on (fuer ADR-0009-Sync-Pfad)
+
+Das Inventory-Backend liest Node-RED-Flows ueber den HA-Supervisor-Ingress
+(siehe [ADR-0009](decisions/0009-nodered-sync-source.md)). Die Test-Umgebung
+braucht daher eine lauffaehige Node-RED-Instanz, ein paar Demo-Flows und einen
+zur Ingress-Konfig passenden Pfad.
+
+1. **Add-on installieren**: HA-UI → Einstellungen → Add-ons → Add-on-Store
+   → „Node-RED" (Maintained-Variante von dceejay).
+2. **Konfig anpassen** (Reiter „Konfiguration"):
+   ```yaml
+   credential_secret: <starkes-passwort-aus-passwort-manager>
+   http_node_auth: {}            # keine separate Node-Auth, Ingress + HA-LLAT genuegt
+   ssl: false                    # Ingress reicht; eigene SSL nicht noetig
+   require_ssl: false
+   ```
+   Hintergrund: `credential_secret` verschluesselt die `flows_cred.json`-
+   Datei und muss vor dem ersten Start gesetzt sein, sonst legt Node-RED
+   einen zufaelligen an, der bei Restore mit alten Backups Probleme macht.
+3. **Add-on starten**, „In Sidebar anzeigen" aktivieren. Beim ersten Klick
+   auf das Sidebar-Icon laedt HA den Editor ueber den Supervisor-Ingress.
+4. **Demo-Flows einrichten** (Minimum fuer den Sync-Smoke):
+   - 1x `inject`-Node (Cron alle 5 min, payload=true)
+   - 1x `ccu-set-value`-Node (verbunden mit dem in §5.2 angelernten
+     HM-Funk-Schaltaktor, ueber eine `ccu-connection`-Config gegen die
+     Test-CCU)
+   - 1x `debug`-Node am Ausgang
+   - „Deploy" klicken; nach 5 min sollte der Aktor schalten.
+5. **Ingress-Pfad ermitteln** (fuer `NODERED_INGRESS_PATH` in
+   `inventory/local/test-setup.env`):
+   - Browser-DevTools (F12) → Network-Tab → im Node-RED-Sidebar einen
+     beliebigen Klick machen.
+   - URL der `flows`/`settings`-Requests notieren. Format ist meist:
+     `https://<ha>:8123/api/hassio_ingress/<session-token>/flows`.
+   - **Achtung**: Der `<session-token>`-Teil rotiert pro Login-Session.
+     Fuer den Backend-Sync ist die stabilere Variante `addressable: true` im
+     Add-on-Optionsblatt (sofern verfuegbar) plus interner Hostname
+     `core-node-red:1880` — *nicht* aus dem VPN erreichbar. Solange der
+     Backend-Smoke nur lokal laeuft, kann der Session-Token einmalig
+     uebernommen werden; fuer dauerhaften Cron-Sync ist ein
+     Token-Rotation-Skript noetig (Backlog Iter-2).
+6. **Long-Lived-Access-Token wiederverwenden**: Node-RED-Sync nutzt
+   denselben `HA_TOKEN` wie HA-Sync (vgl. §8.6). Keinen zweiten Token
+   erstellen.
+
+> 💡 **Erst-Smoke-Test:** Nach Schritt 1–5 ist die Verifikations-Zeile #15
+> ausfuehrbar (siehe §10).
+
 ---
 
 ## 9. Netzwerk-Empfehlungen
@@ -752,8 +800,10 @@ Test-Umgebung steht fuer die naechste Sprint-Iteration.
 | 12| Backend-Sync CCU       | `inventory sync ccu --url http://<ccu>` → Exit-Code 0, SQLite hat ≥ 1 Device                |
 | 13| Backend-Sync HA        | `inventory sync ha --url https://<ha>:8123 --token <TOKEN>` → Exit-Code 0                   |
 | 14| Backend-Sync Shelly    | `inventory sync shelly --discover-seconds 10` → Exit-Code 0, ≥ 1 Shelly im YAML             |
+| 15| Node-RED-API           | `curl -H "Authorization: Bearer $HA_TOKEN" "$HA_URL/$NODERED_INGRESS_PATH/flows"` liefert JSON-Array mit ≥ 1 Demo-Flow |
+| 16| Backend-Sync Node-RED  | `inventory sync nodered` → Exit-Code 0, `local/yaml/nodered.yaml` enthaelt Demo-Flow, alle Credential-Felder maskiert (`***masked***`) |
 
-Wenn 1–14 gruen: Hardware-Test-Umgebung ist produktiv.
+Wenn 1–16 gruen: Hardware-Test-Umgebung ist produktiv.
 
 ---
 

@@ -38,6 +38,7 @@ Status-Werte: `proposed` · `accepted` · `superseded by ADR-NNNN` · `deprecate
 | [0006](0006-image-build-on-host-statt-registry.md) | Image-Build auf dem Zielhost statt Registry-Pull | accepted |
 | [0007](0007-eu-ki-vo-nicht-anwendbar.md) | EU-KI-VO: nicht anwendbar (Negativ-ADR) | accepted |
 | [0008](0008-eu-data-act-mapping.md) | EU Data Act: Anwendbarkeit + Artikel-Mapping | accepted |
+| [0009](0009-nodered-sync-source.md) | Node-RED als Sync-Source via HA-Supervisor-Ingress | accepted |
 
 ## Offene / vertagte Punkte (kein ADR)
 

@@ -6,6 +6,7 @@
 #   1. `inventory migrate`               (SQLite anlegen)
 #   2. `inventory sync ha`               (sofern HA_URL+HA_TOKEN gesetzt)
 #   3. `inventory sync ccu`              (sofern CCU_URL gesetzt)
+#   4. `inventory sync nodered`          (sofern HA_URL+HA_TOKEN+NODERED_INGRESS_PATH gesetzt)
 #
 # aus. Die Binary muss vorher gebaut sein:
 #   cargo build --release --locked --bin inventory
@@ -14,7 +15,7 @@
 #   0   alle aktivierten Quellen erfolgreich
 #   1   Config-Fehler / fehlende Pflichtwerte
 #   2   Binary nicht gefunden
-#   3+  Sync-Fehler (HA oder CCU)
+#   3+  Sync-Fehler (HA, CCU oder Node-RED)
 
 set -euo pipefail
 
@@ -63,17 +64,18 @@ unset INVENTORY_PUBLISH_CONFIRM || true
 mkdir -p "$(dirname "${INVENTORY_DB:-./local/inventory.db}")"
 mkdir -p "${INVENTORY_YAML_DIR:-./local/yaml}"
 
-echo "=== 1/3: DB-Migrationen ==="
+echo "=== 1/4: DB-Migrationen ==="
 "$BIN" migrate
 echo
 
 RC_HA=0
 RC_CCU=0
+RC_NODERED=0
 DID_ANY=0
 
 if [ -n "${HA_URL:-}" ] && [ -n "${HA_TOKEN:-}" ]; then
     DID_ANY=1
-    echo "=== 2/3: Home Assistant Sync ($HA_URL) ==="
+    echo "=== 2/4: Home Assistant Sync ($HA_URL) ==="
     if "$BIN" sync ha; then
         echo "  -> HA sync OK"
     else
@@ -82,13 +84,13 @@ if [ -n "${HA_URL:-}" ] && [ -n "${HA_TOKEN:-}" ]; then
     fi
     echo
 else
-    echo "=== 2/3: HA Sync SKIPPED (HA_URL oder HA_TOKEN leer) ==="
+    echo "=== 2/4: HA Sync SKIPPED (HA_URL oder HA_TOKEN leer) ==="
     echo
 fi
 
 if [ -n "${CCU_URL:-}" ]; then
     DID_ANY=1
-    echo "=== 3/3: CCU Sync ($CCU_URL) ==="
+    echo "=== 3/4: CCU Sync ($CCU_URL) ==="
     if "$BIN" sync ccu; then
         echo "  -> CCU sync OK"
     else
@@ -97,12 +99,27 @@ if [ -n "${CCU_URL:-}" ]; then
     fi
     echo
 else
-    echo "=== 3/3: CCU Sync SKIPPED (CCU_URL leer) ==="
+    echo "=== 3/4: CCU Sync SKIPPED (CCU_URL leer) ==="
+    echo
+fi
+
+if [ -n "${HA_URL:-}" ] && [ -n "${HA_TOKEN:-}" ] && [ -n "${NODERED_INGRESS_PATH:-}" ]; then
+    DID_ANY=1
+    echo "=== 4/4: Node-RED Sync (${HA_URL}/${NODERED_INGRESS_PATH}/flows) ==="
+    if "$BIN" sync nodered; then
+        echo "  -> Node-RED sync OK"
+    else
+        RC_NODERED=$?
+        echo "  -> Node-RED sync FAILED (exit $RC_NODERED)"
+    fi
+    echo
+else
+    echo "=== 4/4: Node-RED Sync SKIPPED (HA_URL/HA_TOKEN/NODERED_INGRESS_PATH unvollstaendig) ==="
     echo
 fi
 
 if [ "$DID_ANY" = "0" ]; then
-    echo "ERROR: weder HA noch CCU konfiguriert — nichts zu testen."
+    echo "ERROR: weder HA noch CCU noch Node-RED konfiguriert — nichts zu testen."
     echo "  -> $ENV_FILE: mindestens HA_URL+HA_TOKEN oder CCU_URL setzen."
     exit 1
 fi
@@ -112,7 +129,7 @@ echo "  DB:   ${INVENTORY_DB}"
 echo "  YAML: ${INVENTORY_YAML_DIR}/"
 ls -la "${INVENTORY_YAML_DIR}/" 2>/dev/null || true
 echo
-if [ "$RC_HA" -ne 0 ] || [ "$RC_CCU" -ne 0 ]; then
+if [ "$RC_HA" -ne 0 ] || [ "$RC_CCU" -ne 0 ] || [ "$RC_NODERED" -ne 0 ]; then
     echo "Mindestens ein Sync hat versagt — siehe Output oben."
     exit 3
 fi

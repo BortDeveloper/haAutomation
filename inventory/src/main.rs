@@ -111,6 +111,23 @@ enum SyncSource {
         #[arg(long, default_value_t = 5)]
         discover_seconds: u64,
     },
+    /// Node-RED: GET /flows via HA-Supervisor-Ingress (ADR-0009).
+    /// YAML-only, keine SQLite-Tabellen in Iter-1.
+    Nodered {
+        /// HA-Basis-URL (gleich wie `sync ha --url`), z.B.
+        /// https://homeassistant.example.local:8123. Default kommt aus HA_URL.
+        #[arg(long, env = "HA_URL")]
+        url: String,
+        /// HA Long-Lived Access Token (gleich wie `sync ha --token`).
+        #[arg(long, env = "HA_TOKEN", hide_env_values = true)]
+        token: String,
+        /// Ingress-Pfad zwischen `{HA_URL}/` und `/flows`, z.B.
+        /// "api/hassio_ingress/<session>" oder ein add-on-spezifischer
+        /// Reverse-Proxy-Pfad. Konkrete Form bei Implementierung gegen die
+        /// laufende Test-HA verifiziert.
+        #[arg(long, env = "NODERED_INGRESS_PATH")]
+        ingress_path: String,
+    },
 }
 
 fn maybe_publish(
@@ -355,6 +372,33 @@ fn main() -> Result<()> {
                     "hue",
                 )?;
             }
+            SyncSource::Nodered {
+                url,
+                token,
+                ingress_path,
+            } => {
+                // ADR-0009 Iter-1: YAML-only, keine SQLite. DB-Open nur fuer
+                // Konsistenz mit den anderen Subkommandos (z.B. spaeterer
+                // serve-Lauf erwartet eine migrierte DB).
+                let conn = db::open(&cli.db)?;
+                db::migrate(&conn)?;
+                let mut flows = sync::nodered::fetch_flows(&url, &ingress_path, &token)?;
+                let flow_count = flows.as_array().map(|a| a.len()).unwrap_or(0);
+                sync::nodered::sanitize(&mut flows);
+                let p = sync::nodered::write_flows_yaml(&cli.yaml_dir, &flows)?;
+                println!(
+                    "Node-RED sync ok: {} flows/nodes, sanitized, yaml: {}",
+                    flow_count,
+                    p.display()
+                );
+                maybe_publish(
+                    cli.publish,
+                    cli.confirm_publish_to.as_deref(),
+                    &cli.yaml_dir,
+                    &p,
+                    "nodered",
+                )?;
+            }
         },
         Command::Migrate => {
             let conn = db::open(&cli.db)?;
@@ -471,5 +515,74 @@ mod tests {
         let yaml = tmp.path().join("hue.yml");
         std::fs::write(&yaml, "[]").expect("write");
         maybe_publish(false, None, tmp.path(), &yaml, "hue").expect("noop ok");
+    }
+
+    /// `sync nodered --url ... --token ... --ingress-path ...` parst sauber.
+    #[test]
+    fn sync_nodered_parses_required_args() {
+        for var in [
+            "HA_URL",
+            "HA_TOKEN",
+            "NODERED_INGRESS_PATH",
+            "INVENTORY_DB",
+            "INVENTORY_YAML_DIR",
+        ] {
+            std::env::remove_var(var);
+        }
+        let cli = Cli::try_parse_from([
+            "inventory",
+            "sync",
+            "nodered",
+            "--url",
+            "https://ha.example.local:8123",
+            "--token",
+            "secret-llat",
+            "--ingress-path",
+            "api/hassio_ingress/abc",
+        ])
+        .expect("parse ok");
+        match cli.command {
+            Command::Sync {
+                source:
+                    SyncSource::Nodered {
+                        url,
+                        token,
+                        ingress_path,
+                    },
+            } => {
+                assert_eq!(url, "https://ha.example.local:8123");
+                assert_eq!(token, "secret-llat");
+                assert_eq!(ingress_path, "api/hassio_ingress/abc");
+            }
+            _ => panic!("expected Sync(Nodered)"),
+        }
+    }
+
+    /// HA_URL + HA_TOKEN sind mit `sync ha` geteilt — env-Wiederverwendung
+    /// muss funktionieren.
+    #[test]
+    fn sync_nodered_reads_ha_env_vars() {
+        std::env::set_var("HA_URL", "http://ha.local:8123");
+        std::env::set_var("HA_TOKEN", "from-env-llat");
+        std::env::set_var("NODERED_INGRESS_PATH", "nodered");
+        let cli = Cli::try_parse_from(["inventory", "sync", "nodered"]).expect("parse ok");
+        match cli.command {
+            Command::Sync {
+                source:
+                    SyncSource::Nodered {
+                        url,
+                        token,
+                        ingress_path,
+                    },
+            } => {
+                assert_eq!(url, "http://ha.local:8123");
+                assert_eq!(token, "from-env-llat");
+                assert_eq!(ingress_path, "nodered");
+            }
+            _ => panic!("expected Sync(Nodered)"),
+        }
+        std::env::remove_var("HA_URL");
+        std::env::remove_var("HA_TOKEN");
+        std::env::remove_var("NODERED_INGRESS_PATH");
     }
 }

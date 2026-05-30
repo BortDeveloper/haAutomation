@@ -1,0 +1,83 @@
+[
+  {
+    "id": "tab-test-1",
+    "type": "tab",
+    "label": "Test Flow",
+    "disabled": false,
+    "info": "Minimaler Smoke-Test-Flow fuer inventory sync nodered."
+  },
+  {
+    "id": "ccu-conn-1",
+    "type": "ccu-connection",
+    "name": "Test CCU",
+    "host": "10.0.0.20",
+    "regaPort": "8181",
+    "rfdPort": "2001",
+    "hmipPort": "2010",
+    "username": "Admin",
+    "password": "supersecret-do-not-leak",
+    "credential_secret": "inline-secret-key-abc123"
+  },
+  {
+    "id": "inject-1",
+    "type": "inject",
+    "z": "tab-test-1",
+    "name": "Every 5min",
+    "props": [{ "p": "payload" }],
+    "repeat": "300",
+    "crontab": "",
+    "once": false,
+    "topic": "",
+    "payload": "true",
+    "payloadType": "bool",
+    "x": 120,
+    "y": 80,
+    "wires": [["ccu-set-1"]]
+  },
+  {
+    "id": "ccu-set-1",
+    "type": "ccu-set-value",
+    "z": "tab-test-1",
+    "name": "Switch Test-Light",
+    "ccuConfig": "ccu-conn-1",
+    "iface": "BidCos-RF",
+    "address": "MEQ0123456:1",
+    "valueKey": "STATE",
+    "x": 320,
+    "y": 80,
+    "wires": [["debug-1"]]
+  },
+  {
+    "id": "debug-1",
+    "type": "debug",
+    "z": "tab-test-1",
+    "name": "switch-result",
+    "active": true,
+    "tosidebar": true,
+    "complete": "payload",
+    "x": 540,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "mqtt-broker-1",
+    "type": "mqtt-broker",
+    "name": "Test Mosquitto",
+    "broker": "10.0.0.30",
+    "port": "1883",
+    "clientid": "nodered-test",
+    "credentials": {
+      "user": "homeassistant",
+      "password": "ha-mqtt-pass-xyz789"
+    }
+  },
+  {
+    "id": "ha-api-token-1",
+    "type": "server",
+    "name": "HA Test",
+    "version": 5,
+    "addon": true,
+    "rejectUnauthorizedCerts": true,
+    "api_key": "eyJ0eXAi.long.long.long.token.fake"
+  }
+]
