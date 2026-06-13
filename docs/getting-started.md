@@ -25,7 +25,7 @@ the MEDIUM/LOW items are tracked as follow-up issues).
 ## Prerequisites
 
 - Linux build host reachable over Tailscale (or SSH tunnel)
-- Rust 1.91 (matches `inventory/rust-toolchain.toml` / `Cargo.toml`
+- Rust 1.95 (matches `inventory/rust-toolchain.toml` / `Cargo.toml`
   `rust-version`)
 - Home Assistant with admin access (for a Long-Lived Access Token)
 - Optional: Homematic CCU / RaspberryMatic with XML-API addon enabled
@@ -53,7 +53,7 @@ apt install -y build-essential pkg-config libssl-dev libsqlite3-dev git curl
 curl --proto '=https' --tlsv1.2 -sSf -o /tmp/rustup-init.sh https://sh.rustup.rs
 # Optional but recommended: inspect the script before running it
 less /tmp/rustup-init.sh
-sh /tmp/rustup-init.sh -y --default-toolchain 1.91
+sh /tmp/rustup-init.sh -y --default-toolchain 1.95
 rm /tmp/rustup-init.sh
 source "$HOME/.cargo/env"
 ```

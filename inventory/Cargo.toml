@@ -5,7 +5,7 @@
 name = "inventory"
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.91"
+rust-version = "1.95"
 description = "home inventory backend"
 license = "MIT"
 publish = false

@@ -58,14 +58,14 @@ sudo apt install -y build-essential pkg-config git curl ca-certificates
 
 ## Schritt 3 — Rust-Toolchain via rustup installieren
 
-Die im Repo gepinnte Toolchain ist **1.91** (`inventory/rust-toolchain.toml`).
+Die im Repo gepinnte Toolchain ist **1.95** (`inventory/rust-toolchain.toml`).
 Das `apt`-`rustc` ist zu alt — daher rustup verwenden. rustup lädt die
 korrekte Version beim ersten `cargo`-Aufruf im Repo automatisch nach.
 
 ```sh
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 . "$HOME/.cargo/env"
-rustc --version    # Bootstrap-Version; im Repo wird automatisch 1.91 genutzt
+rustc --version    # Bootstrap-Version; im Repo wird automatisch 1.95 genutzt
 ```
 
 ## Schritt 4 — Repo read-only auschecken
@@ -197,4 +197,4 @@ cd inventory && cargo build --release --locked --bin inventory
 - `inventory/test-setup.env.example` — Konfigurations-Vorlage
 - `docs/getting-started.md` — First-Run-PoC (sicherheitsgeprüfter Durchlauf)
 - `docs/test-umgebung-real-hardware.md` — Aufbau der realen Test-Umgebung
-- `inventory/rust-toolchain.toml` — gepinnte Toolchain (1.91)
+- `inventory/rust-toolchain.toml` — gepinnte Toolchain (1.95)
