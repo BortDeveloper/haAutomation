@@ -25,7 +25,7 @@
 
 use anyhow::{anyhow, Result};
 use clap::{Parser, Subcommand};
-use hmac::{Hmac, Mac};
+use hmac::{Hmac, KeyInit, Mac};
 use pbkdf2::pbkdf2_hmac_array;
 use sha2::Sha256;
 use std::io::Read;

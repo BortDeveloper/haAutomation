@@ -45,14 +45,14 @@ anyhow = "1"
 
 # Auth-Sidecar (Binary `authgate`): reine Rust-Crypto, kein C-Compiler noetig,
 # damit das Sidecar unabhaengig vom inventory-Binary baut und testet.
-# Versions-Pinning: hmac 0.13 und getrandom 0.4 sind API-inkompatibel mit
-# sha2 0.10 (digest-Version-Mismatch) bzw. unserem random_bytes()-Call. Bis
-# sha2 0.11 stable ist und die Dep-Kette upgradet werden kann, bleiben wir
-# auf den 0.12er/0.2er-Tracks. Dependabot-Hochstufungen darauf bitte
-# zurueckhalten — vgl. authgate.rs-Fix 2026-05-30.
-hmac = "0.12"
-sha2 = "0.10"
-pbkdf2 = { version = "0.12", default-features = false, features = ["hmac"] }
+# RustCrypto digest-0.11-Familie: hmac 0.13 / sha2 0.11 / pbkdf2 0.13 muessen
+# gemeinsam wandern (gemeinsame digest-Version). getrandom bleibt bewusst auf
+# 0.2 — 0.3/0.4 sind API-inkompatibel mit unserem random_bytes()-Call
+# (getrandom::getrandom), das ist eine separate, noch zurueckgehaltene
+# Migration.
+hmac = "0.13"
+sha2 = "0.11"
+pbkdf2 = { version = "0.13", default-features = false, features = ["hmac"] }
 getrandom = "0.2"
 
 [dev-dependencies]
