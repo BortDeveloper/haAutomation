@@ -51,7 +51,7 @@ anyhow = "1"
 # auf den 0.12er/0.2er-Tracks. Dependabot-Hochstufungen darauf bitte
 # zurueckhalten — vgl. authgate.rs-Fix 2026-05-30.
 hmac = "0.12"
-sha2 = "0.10"
+sha2 = "0.11"
 pbkdf2 = { version = "0.12", default-features = false, features = ["hmac"] }
 getrandom = "0.2"
 
