@@ -28,9 +28,9 @@ CI will block the merge if you forget.
 
 ## Summary
 
-- Total entries in `Cargo.lock`: 158
+- Total entries in `Cargo.lock`: 168
 - Workspace crates (this repo): 1
-- **Third-party dependencies**: 157
+- **Third-party dependencies**: 167
 
 ## Accepted licenses
 
@@ -107,7 +107,7 @@ Any dependency under a non-listed license will fail
 | 52 | id-arena | 2.3.0 | crates.io | https://crates.io/crates/id-arena/2.3.0 |
 | 53 | idna | 1.1.0 | crates.io | https://crates.io/crates/idna/1.1.0 |
 | 54 | idna_adapter | 1.2.2 | crates.io | https://crates.io/crates/idna_adapter/1.2.2 |
-| 55 | if-addrs | 0.13.4 | crates.io | https://crates.io/crates/if-addrs/0.13.4 |
+| 55 | if-addrs | 0.15.0 | crates.io | https://crates.io/crates/if-addrs/0.15.0 |
 | 56 | indexmap | 2.14.0 | crates.io | https://crates.io/crates/indexmap/2.14.0 |
 | 57 | inventory | 0.1.0 | _workspace (this repo)_ | n/a |
 | 58 | is_terminal_polyfill | 1.70.2 | crates.io | https://crates.io/crates/is_terminal_polyfill/1.70.2 |
@@ -119,7 +119,7 @@ Any dependency under a non-listed license will fail
 | 64 | litemap | 0.8.2 | crates.io | https://crates.io/crates/litemap/0.8.2 |
 | 65 | lock_api | 0.4.14 | crates.io | https://crates.io/crates/lock_api/0.4.14 |
 | 66 | log | 0.4.29 | crates.io | https://crates.io/crates/log/0.4.29 |
-| 67 | mdns-sd | 0.13.11 | crates.io | https://crates.io/crates/mdns-sd/0.13.11 |
+| 67 | mdns-sd | 0.20.0 | crates.io | https://crates.io/crates/mdns-sd/0.20.0 |
 | 68 | memchr | 2.8.0 | crates.io | https://crates.io/crates/memchr/2.8.0 |
 | 69 | mio | 1.2.0 | crates.io | https://crates.io/crates/mio/1.2.0 |
 | 70 | once_cell | 1.21.4 | crates.io | https://crates.io/crates/once_cell/1.21.4 |
@@ -145,72 +145,82 @@ Any dependency under a non-listed license will fail
 | 90 | serde | 1.0.228 | crates.io | https://crates.io/crates/serde/1.0.228 |
 | 91 | serde_core | 1.0.228 | crates.io | https://crates.io/crates/serde_core/1.0.228 |
 | 92 | serde_derive | 1.0.228 | crates.io | https://crates.io/crates/serde_derive/1.0.228 |
-| 93 | serde_json | 1.0.149 | crates.io | https://crates.io/crates/serde_json/1.0.149 |
+| 93 | serde_json | 1.0.150 | crates.io | https://crates.io/crates/serde_json/1.0.150 |
 | 94 | serde_yaml_ng | 0.10.0 | crates.io | https://crates.io/crates/serde_yaml_ng/0.10.0 |
 | 95 | sha2 | 0.10.9 | crates.io | https://crates.io/crates/sha2/0.10.9 |
 | 96 | shlex | 1.3.0 | crates.io | https://crates.io/crates/shlex/1.3.0 |
 | 97 | smallvec | 1.15.1 | crates.io | https://crates.io/crates/smallvec/1.15.1 |
-| 98 | socket2 | 0.5.10 | crates.io | https://crates.io/crates/socket2/0.5.10 |
-| 99 | spin | 0.9.8 | crates.io | https://crates.io/crates/spin/0.9.8 |
-| 100 | stable_deref_trait | 1.2.1 | crates.io | https://crates.io/crates/stable_deref_trait/1.2.1 |
-| 101 | strsim | 0.11.1 | crates.io | https://crates.io/crates/strsim/0.11.1 |
-| 102 | subtle | 2.6.1 | crates.io | https://crates.io/crates/subtle/2.6.1 |
-| 103 | syn | 2.0.117 | crates.io | https://crates.io/crates/syn/2.0.117 |
-| 104 | synstructure | 0.13.2 | crates.io | https://crates.io/crates/synstructure/0.13.2 |
-| 105 | tempfile | 3.27.0 | crates.io | https://crates.io/crates/tempfile/3.27.0 |
-| 106 | tiny_http | 0.12.0 | crates.io | https://crates.io/crates/tiny_http/0.12.0 |
-| 107 | tinystr | 0.8.3 | crates.io | https://crates.io/crates/tinystr/0.8.3 |
-| 108 | typenum | 1.20.0 | crates.io | https://crates.io/crates/typenum/1.20.0 |
-| 109 | unicode-ident | 1.0.24 | crates.io | https://crates.io/crates/unicode-ident/1.0.24 |
-| 110 | unicode-xid | 0.2.6 | crates.io | https://crates.io/crates/unicode-xid/0.2.6 |
-| 111 | unsafe-libyaml | 0.2.11 | crates.io | https://crates.io/crates/unsafe-libyaml/0.2.11 |
-| 112 | untrusted | 0.9.0 | crates.io | https://crates.io/crates/untrusted/0.9.0 |
-| 113 | ureq | 2.12.1 | crates.io | https://crates.io/crates/ureq/2.12.1 |
-| 114 | url | 2.5.8 | crates.io | https://crates.io/crates/url/2.5.8 |
-| 115 | utf8_iter | 1.0.4 | crates.io | https://crates.io/crates/utf8_iter/1.0.4 |
-| 116 | utf8parse | 0.2.2 | crates.io | https://crates.io/crates/utf8parse/0.2.2 |
-| 117 | vcpkg | 0.2.15 | crates.io | https://crates.io/crates/vcpkg/0.2.15 |
-| 118 | version_check | 0.9.5 | crates.io | https://crates.io/crates/version_check/0.9.5 |
-| 119 | wasi | 0.11.1+wasi-snapshot-preview1 | crates.io | https://crates.io/crates/wasi/0.11.1+wasi-snapshot-preview1 |
-| 120 | wasip2 | 1.0.3+wasi-0.2.9 | crates.io | https://crates.io/crates/wasip2/1.0.3+wasi-0.2.9 |
-| 121 | wasip3 | 0.4.0+wasi-0.3.0-rc-2026-01-06 | crates.io | https://crates.io/crates/wasip3/0.4.0+wasi-0.3.0-rc-2026-01-06 |
-| 122 | wasm-encoder | 0.244.0 | crates.io | https://crates.io/crates/wasm-encoder/0.244.0 |
-| 123 | wasm-metadata | 0.244.0 | crates.io | https://crates.io/crates/wasm-metadata/0.244.0 |
-| 124 | wasmparser | 0.244.0 | crates.io | https://crates.io/crates/wasmparser/0.244.0 |
-| 125 | webpki-roots | 0.26.11 | crates.io | https://crates.io/crates/webpki-roots/0.26.11 |
-| 126 | webpki-roots | 1.0.7 | crates.io | https://crates.io/crates/webpki-roots/1.0.7 |
-| 127 | windows-link | 0.2.1 | crates.io | https://crates.io/crates/windows-link/0.2.1 |
-| 128 | windows-sys | 0.52.0 | crates.io | https://crates.io/crates/windows-sys/0.52.0 |
-| 129 | windows-sys | 0.59.0 | crates.io | https://crates.io/crates/windows-sys/0.59.0 |
-| 130 | windows-sys | 0.61.2 | crates.io | https://crates.io/crates/windows-sys/0.61.2 |
-| 131 | windows-targets | 0.52.6 | crates.io | https://crates.io/crates/windows-targets/0.52.6 |
-| 132 | windows_aarch64_gnullvm | 0.52.6 | crates.io | https://crates.io/crates/windows_aarch64_gnullvm/0.52.6 |
-| 133 | windows_aarch64_msvc | 0.52.6 | crates.io | https://crates.io/crates/windows_aarch64_msvc/0.52.6 |
-| 134 | windows_i686_gnu | 0.52.6 | crates.io | https://crates.io/crates/windows_i686_gnu/0.52.6 |
-| 135 | windows_i686_gnullvm | 0.52.6 | crates.io | https://crates.io/crates/windows_i686_gnullvm/0.52.6 |
-| 136 | windows_i686_msvc | 0.52.6 | crates.io | https://crates.io/crates/windows_i686_msvc/0.52.6 |
-| 137 | windows_x86_64_gnu | 0.52.6 | crates.io | https://crates.io/crates/windows_x86_64_gnu/0.52.6 |
-| 138 | windows_x86_64_gnullvm | 0.52.6 | crates.io | https://crates.io/crates/windows_x86_64_gnullvm/0.52.6 |
-| 139 | windows_x86_64_msvc | 0.52.6 | crates.io | https://crates.io/crates/windows_x86_64_msvc/0.52.6 |
-| 140 | wit-bindgen | 0.51.0 | crates.io | https://crates.io/crates/wit-bindgen/0.51.0 |
-| 141 | wit-bindgen | 0.57.1 | crates.io | https://crates.io/crates/wit-bindgen/0.57.1 |
-| 142 | wit-bindgen-core | 0.51.0 | crates.io | https://crates.io/crates/wit-bindgen-core/0.51.0 |
-| 143 | wit-bindgen-rust | 0.51.0 | crates.io | https://crates.io/crates/wit-bindgen-rust/0.51.0 |
-| 144 | wit-bindgen-rust-macro | 0.51.0 | crates.io | https://crates.io/crates/wit-bindgen-rust-macro/0.51.0 |
-| 145 | wit-component | 0.244.0 | crates.io | https://crates.io/crates/wit-component/0.244.0 |
-| 146 | wit-parser | 0.244.0 | crates.io | https://crates.io/crates/wit-parser/0.244.0 |
-| 147 | writeable | 0.6.3 | crates.io | https://crates.io/crates/writeable/0.6.3 |
-| 148 | yoke | 0.8.2 | crates.io | https://crates.io/crates/yoke/0.8.2 |
-| 149 | yoke-derive | 0.8.2 | crates.io | https://crates.io/crates/yoke-derive/0.8.2 |
-| 150 | zerocopy | 0.8.48 | crates.io | https://crates.io/crates/zerocopy/0.8.48 |
-| 151 | zerocopy-derive | 0.8.48 | crates.io | https://crates.io/crates/zerocopy-derive/0.8.48 |
-| 152 | zerofrom | 0.1.8 | crates.io | https://crates.io/crates/zerofrom/0.1.8 |
-| 153 | zerofrom-derive | 0.1.7 | crates.io | https://crates.io/crates/zerofrom-derive/0.1.7 |
-| 154 | zeroize | 1.8.2 | crates.io | https://crates.io/crates/zeroize/1.8.2 |
-| 155 | zerotrie | 0.2.4 | crates.io | https://crates.io/crates/zerotrie/0.2.4 |
-| 156 | zerovec | 0.11.6 | crates.io | https://crates.io/crates/zerovec/0.11.6 |
-| 157 | zerovec-derive | 0.11.3 | crates.io | https://crates.io/crates/zerovec-derive/0.11.3 |
-| 158 | zmij | 1.0.21 | crates.io | https://crates.io/crates/zmij/1.0.21 |
+| 98 | socket-pktinfo | 0.3.2 | crates.io | https://crates.io/crates/socket-pktinfo/0.3.2 |
+| 99 | socket2 | 0.6.4 | crates.io | https://crates.io/crates/socket2/0.6.4 |
+| 100 | spin | 0.9.8 | crates.io | https://crates.io/crates/spin/0.9.8 |
+| 101 | stable_deref_trait | 1.2.1 | crates.io | https://crates.io/crates/stable_deref_trait/1.2.1 |
+| 102 | strsim | 0.11.1 | crates.io | https://crates.io/crates/strsim/0.11.1 |
+| 103 | subtle | 2.6.1 | crates.io | https://crates.io/crates/subtle/2.6.1 |
+| 104 | syn | 2.0.117 | crates.io | https://crates.io/crates/syn/2.0.117 |
+| 105 | synstructure | 0.13.2 | crates.io | https://crates.io/crates/synstructure/0.13.2 |
+| 106 | tempfile | 3.27.0 | crates.io | https://crates.io/crates/tempfile/3.27.0 |
+| 107 | tiny_http | 0.12.0 | crates.io | https://crates.io/crates/tiny_http/0.12.0 |
+| 108 | tinystr | 0.8.3 | crates.io | https://crates.io/crates/tinystr/0.8.3 |
+| 109 | typenum | 1.20.0 | crates.io | https://crates.io/crates/typenum/1.20.0 |
+| 110 | unicode-ident | 1.0.24 | crates.io | https://crates.io/crates/unicode-ident/1.0.24 |
+| 111 | unicode-xid | 0.2.6 | crates.io | https://crates.io/crates/unicode-xid/0.2.6 |
+| 112 | unsafe-libyaml | 0.2.11 | crates.io | https://crates.io/crates/unsafe-libyaml/0.2.11 |
+| 113 | untrusted | 0.9.0 | crates.io | https://crates.io/crates/untrusted/0.9.0 |
+| 114 | ureq | 2.12.1 | crates.io | https://crates.io/crates/ureq/2.12.1 |
+| 115 | url | 2.5.8 | crates.io | https://crates.io/crates/url/2.5.8 |
+| 116 | utf8_iter | 1.0.4 | crates.io | https://crates.io/crates/utf8_iter/1.0.4 |
+| 117 | utf8parse | 0.2.2 | crates.io | https://crates.io/crates/utf8parse/0.2.2 |
+| 118 | vcpkg | 0.2.15 | crates.io | https://crates.io/crates/vcpkg/0.2.15 |
+| 119 | version_check | 0.9.5 | crates.io | https://crates.io/crates/version_check/0.9.5 |
+| 120 | wasi | 0.11.1+wasi-snapshot-preview1 | crates.io | https://crates.io/crates/wasi/0.11.1+wasi-snapshot-preview1 |
+| 121 | wasip2 | 1.0.3+wasi-0.2.9 | crates.io | https://crates.io/crates/wasip2/1.0.3+wasi-0.2.9 |
+| 122 | wasip3 | 0.4.0+wasi-0.3.0-rc-2026-01-06 | crates.io | https://crates.io/crates/wasip3/0.4.0+wasi-0.3.0-rc-2026-01-06 |
+| 123 | wasm-encoder | 0.244.0 | crates.io | https://crates.io/crates/wasm-encoder/0.244.0 |
+| 124 | wasm-metadata | 0.244.0 | crates.io | https://crates.io/crates/wasm-metadata/0.244.0 |
+| 125 | wasmparser | 0.244.0 | crates.io | https://crates.io/crates/wasmparser/0.244.0 |
+| 126 | webpki-roots | 0.26.11 | crates.io | https://crates.io/crates/webpki-roots/0.26.11 |
+| 127 | webpki-roots | 1.0.7 | crates.io | https://crates.io/crates/webpki-roots/1.0.7 |
+| 128 | windows-link | 0.2.1 | crates.io | https://crates.io/crates/windows-link/0.2.1 |
+| 129 | windows-sys | 0.52.0 | crates.io | https://crates.io/crates/windows-sys/0.52.0 |
+| 130 | windows-sys | 0.60.2 | crates.io | https://crates.io/crates/windows-sys/0.60.2 |
+| 131 | windows-sys | 0.61.2 | crates.io | https://crates.io/crates/windows-sys/0.61.2 |
+| 132 | windows-targets | 0.52.6 | crates.io | https://crates.io/crates/windows-targets/0.52.6 |
+| 133 | windows-targets | 0.53.5 | crates.io | https://crates.io/crates/windows-targets/0.53.5 |
+| 134 | windows_aarch64_gnullvm | 0.52.6 | crates.io | https://crates.io/crates/windows_aarch64_gnullvm/0.52.6 |
+| 135 | windows_aarch64_gnullvm | 0.53.1 | crates.io | https://crates.io/crates/windows_aarch64_gnullvm/0.53.1 |
+| 136 | windows_aarch64_msvc | 0.52.6 | crates.io | https://crates.io/crates/windows_aarch64_msvc/0.52.6 |
+| 137 | windows_aarch64_msvc | 0.53.1 | crates.io | https://crates.io/crates/windows_aarch64_msvc/0.53.1 |
+| 138 | windows_i686_gnu | 0.52.6 | crates.io | https://crates.io/crates/windows_i686_gnu/0.52.6 |
+| 139 | windows_i686_gnu | 0.53.1 | crates.io | https://crates.io/crates/windows_i686_gnu/0.53.1 |
+| 140 | windows_i686_gnullvm | 0.52.6 | crates.io | https://crates.io/crates/windows_i686_gnullvm/0.52.6 |
+| 141 | windows_i686_gnullvm | 0.53.1 | crates.io | https://crates.io/crates/windows_i686_gnullvm/0.53.1 |
+| 142 | windows_i686_msvc | 0.52.6 | crates.io | https://crates.io/crates/windows_i686_msvc/0.52.6 |
+| 143 | windows_i686_msvc | 0.53.1 | crates.io | https://crates.io/crates/windows_i686_msvc/0.53.1 |
+| 144 | windows_x86_64_gnu | 0.52.6 | crates.io | https://crates.io/crates/windows_x86_64_gnu/0.52.6 |
+| 145 | windows_x86_64_gnu | 0.53.1 | crates.io | https://crates.io/crates/windows_x86_64_gnu/0.53.1 |
+| 146 | windows_x86_64_gnullvm | 0.52.6 | crates.io | https://crates.io/crates/windows_x86_64_gnullvm/0.52.6 |
+| 147 | windows_x86_64_gnullvm | 0.53.1 | crates.io | https://crates.io/crates/windows_x86_64_gnullvm/0.53.1 |
+| 148 | windows_x86_64_msvc | 0.52.6 | crates.io | https://crates.io/crates/windows_x86_64_msvc/0.52.6 |
+| 149 | windows_x86_64_msvc | 0.53.1 | crates.io | https://crates.io/crates/windows_x86_64_msvc/0.53.1 |
+| 150 | wit-bindgen | 0.51.0 | crates.io | https://crates.io/crates/wit-bindgen/0.51.0 |
+| 151 | wit-bindgen | 0.57.1 | crates.io | https://crates.io/crates/wit-bindgen/0.57.1 |
+| 152 | wit-bindgen-core | 0.51.0 | crates.io | https://crates.io/crates/wit-bindgen-core/0.51.0 |
+| 153 | wit-bindgen-rust | 0.51.0 | crates.io | https://crates.io/crates/wit-bindgen-rust/0.51.0 |
+| 154 | wit-bindgen-rust-macro | 0.51.0 | crates.io | https://crates.io/crates/wit-bindgen-rust-macro/0.51.0 |
+| 155 | wit-component | 0.244.0 | crates.io | https://crates.io/crates/wit-component/0.244.0 |
+| 156 | wit-parser | 0.244.0 | crates.io | https://crates.io/crates/wit-parser/0.244.0 |
+| 157 | writeable | 0.6.3 | crates.io | https://crates.io/crates/writeable/0.6.3 |
+| 158 | yoke | 0.8.2 | crates.io | https://crates.io/crates/yoke/0.8.2 |
+| 159 | yoke-derive | 0.8.2 | crates.io | https://crates.io/crates/yoke-derive/0.8.2 |
+| 160 | zerocopy | 0.8.48 | crates.io | https://crates.io/crates/zerocopy/0.8.48 |
+| 161 | zerocopy-derive | 0.8.48 | crates.io | https://crates.io/crates/zerocopy-derive/0.8.48 |
+| 162 | zerofrom | 0.1.8 | crates.io | https://crates.io/crates/zerofrom/0.1.8 |
+| 163 | zerofrom-derive | 0.1.7 | crates.io | https://crates.io/crates/zerofrom-derive/0.1.7 |
+| 164 | zeroize | 1.8.2 | crates.io | https://crates.io/crates/zeroize/1.8.2 |
+| 165 | zerotrie | 0.2.4 | crates.io | https://crates.io/crates/zerotrie/0.2.4 |
+| 166 | zerovec | 0.11.6 | crates.io | https://crates.io/crates/zerovec/0.11.6 |
+| 167 | zerovec-derive | 0.11.3 | crates.io | https://crates.io/crates/zerovec-derive/0.11.3 |
+| 168 | zmij | 1.0.21 | crates.io | https://crates.io/crates/zmij/1.0.21 |
 
 ---
 
