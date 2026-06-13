@@ -70,8 +70,8 @@ sudo apt install -y build-essential pkg-config git curl ca-certificates
 
 ## Schritt 4 — Rust-Toolchain via rustup
 
-Das `apt`-`rustc` ist zu alt (Cargo.toml verlangt `rust-version = 1.91`).
-Die Toolchain ist via `inventory/rust-toolchain.toml` auf **1.91** gepinnt —
+Das `apt`-`rustc` ist zu alt (Cargo.toml verlangt `rust-version = 1.95`).
+Die Toolchain ist via `inventory/rust-toolchain.toml` auf **1.95** gepinnt —
 rustup lädt sie beim ersten `cargo`-Aufruf im Repo automatisch nach.
 
 ```sh
@@ -156,6 +156,6 @@ bewusste** Migration, kein Beifang.
 
 - Memory `reference_inventory_server.md` — Host-Koordinaten, SSH-Key
 - `docs/runbooks/raspberry-pi-install.md` — analoge ARM-/Sync-Variante
-- `inventory/rust-toolchain.toml` — gepinnte Toolchain (1.91)
+- `inventory/rust-toolchain.toml` — gepinnte Toolchain (1.95)
 - `inventory/scripts/generate-notices.sh` — Notices-Generator
 - `.github/workflows/security.yml` — CI-Drift-Check (Job `license-notices`)
