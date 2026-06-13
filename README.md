@@ -92,6 +92,7 @@ on a public VPS and inspects the home network through a VPN tunnel.
 ## Quick links
 
 - [Getting started](docs/getting-started.md) — first-run PoC on a home network (security-audited walkthrough)
+- [Raspberry Pi install](docs/runbooks/raspberry-pi-install.md) — step-by-step: prepare a Pi, build the suite, run the HA sync
 - [Requirements](docs/requirements.md) — what is being built and why
 - [Architecture](docs/architecture.md) — components, data flow, trust
 - [Roadmap](docs/roadmap.md) — step plan S1–S14
