@@ -31,7 +31,7 @@ Dateiname: `<träger>-<YYYY-MM-DD>.pub`, eine Zeile `age1...`.
 
 1. Auf jedem Host/Token den Key erzeugen, **nur den Public-Teil** als
    `<träger>-<YYYY-MM-DD>.pub` hierher committen.
-2. Die drei `age1...`-Werte in `inventory/secrets/.sops.yaml` unter **allen**
+2. Die drei `age1...`-Werte in `home-inventory/secrets/.sops.yaml` unter **allen**
    `creation_rules` eintragen.
 3. `sops updatekeys` auf alle `.enc`-Dateien anwenden.
 4. PR mit dem sichtbaren Diff.

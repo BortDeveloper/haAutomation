@@ -15,7 +15,7 @@ of Truth" mit GitOps-Anspruch (NFR-7) angelegt.
 
 Duale Datenhaltung mit klarer Rangordnung:
 
-- **YAML-Snapshots im Repo (`inventory/yaml/<source>.yaml`) sind die Source of
+- **YAML-Snapshots im Repo (`home-inventory/yaml/<source>.yaml`) sind die Source of
   Truth.** Sie werden nach jedem Sync deterministisch (nach `source_id`)
   sortiert neu geschrieben; bei Diff erfolgt `git commit`/`git push`.
 - **SQLite (`/var/lib/inventory/inventory.db`) ist Cache und Index.** Die

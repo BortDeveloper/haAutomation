@@ -52,10 +52,10 @@
 **Third-party software**: This project depends on open source
 components. See [THIRD-PARTY-NOTICES.md](./THIRD-PARTY-NOTICES.md) for
 the complete, auto-generated list of dependencies, versions, and
-sources. CI enforces (a) byte-for-byte sync with `inventory/Cargo.lock`
+sources. CI enforces (a) byte-for-byte sync with `home-inventory/Cargo.lock`
 on every push (`.github/workflows/security.yml`, job `license-notices`)
 and (b) a permissive-license allowlist via `cargo deny`
-([`inventory/deny.toml`](./inventory/deny.toml)). Copyleft licenses
+([`home-inventory/deny.toml`](./inventory/deny.toml)). Copyleft licenses
 are rejected.
 
 Single Source of Truth for a personal home-automation setup. Captures,
@@ -77,17 +77,17 @@ on a public VPS and inspects the home network through a VPN tunnel.
 | Philips Hue (multi-bridge) | dimmable lights + sensors, via v1 REST | covered by inventory |
 | Shellys (20+, mDNS) | switches / rollers / sensors, Gen1+Gen2 HTTP | covered by inventory |
 | Zigbee2MQTT (HA addon) | Zigbee devices over MQTT (phase-5 sync) | `nodered/` (planned) |
-| Inventory backend (Rust) | collects devices/firmware/software, web UI | `inventory/` |
+| Inventory backend (Rust) | collects devices/firmware/software, web UI | `home-inventory/` |
 | Docs & mapping | as-is state, ownership, ADRs | `docs/` |
 
 ## Sync sources (active)
 
 | Source | CLI | Provides | Firmware tracking |
 |---|---|---|---|
-| Home Assistant | `inventory sync ha --url --token` | devices via `/api/states` (14 domains filtered) | no (HA API) |
-| Homematic CCU | `inventory sync ccu --url` | devices via `xmlapi/devicelist.cgi` | yes, diff-based |
-| Philips Hue | `inventory sync hue --config <yaml>` | lights + sensors, multiple bridges | yes, diff-based |
-| Shelly | `inventory sync shelly [--ip ...] [--discover-seconds N]` | Gen1+Gen2 via HTTP, mDNS auto-discovery | yes, diff-based |
+| Home Assistant | `home-inventory sync ha --url --token` | devices via `/api/states` (14 domains filtered) | no (HA API) |
+| Homematic CCU | `home-inventory sync ccu --url` | devices via `xmlapi/devicelist.cgi` | yes, diff-based |
+| Philips Hue | `home-inventory sync hue --config <yaml>` | lights + sensors, multiple bridges | yes, diff-based |
+| Shelly | `home-inventory sync shelly [--ip ...] [--discover-seconds N]` | Gen1+Gen2 via HTTP, mDNS auto-discovery | yes, diff-based |
 
 ## Quick links
 
@@ -97,9 +97,9 @@ on a public VPS and inspects the home network through a VPN tunnel.
 - [Architecture](docs/architecture.md) — components, data flow, trust
 - [Roadmap](docs/roadmap.md) — step plan S1–S14
 - [VPS setup](docs/vps-setup.md) — server bootstrap, SSH/keys, ops, DR
-- [Inventory backend](inventory/) — Rust app
-- [Docker / VPN](inventory/docker/README.md) — sidecar setup, provider switch
-- [Secrets](inventory/secrets/) — sops+age layout
+- [Inventory backend](home-inventory/) — Rust app
+- [Docker / VPN](home-inventory/docker/README.md) — sidecar setup, provider switch
+- [Secrets](home-inventory/secrets/) — sops+age layout
 
 ## Conventions
 

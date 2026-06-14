@@ -11,7 +11,7 @@ Live-Smoke noch offen · ☐ offen.
 
 | Step | Inhalt | Status |
 |---|---|---|
-| S1 | Cargo-Crate `inventory`, `clap`-Subkommandos `serve / sync / migrate` | ✓ |
+| S1 | Cargo-Crate `home-inventory`, `clap`-Subkommandos `serve / sync / migrate` | ✓ |
 | S2 | `db.rs` mit Migrations, Tabellen `devices`, `firmware_snapshot`, `software`, `manual_meta` | ✓ (3 Tests) |
 | S3 | YAML-Fixture -> `upsert_devices` -> Roundtrip-Read | ✓ (3 Tests) |
 | S4 | `tiny_http`-Server, Route `/health` | ✓ (2 Tests + Smoke) |
@@ -30,7 +30,7 @@ Live-Smoke noch offen · ☐ offen.
 | Step | Inhalt | Status |
 |---|---|---|
 | S9 | `sync/ha.rs` + Mapping `HaEntity -> Device`, gegen Mock-Server im Test | ✓ (6 Tests) |
-| S10 | HA-Sync gegen echtes HA: CLI-Wiring `inventory sync ha` | ✓ (lib) · Live-Smoke vertagt |
+| S10 | HA-Sync gegen echtes HA: CLI-Wiring `home-inventory sync ha` | ✓ (lib) · Live-Smoke vertagt |
 | S11 | CCU-Sync (XML-API), Firmware in `firmware_snapshot` mit Timestamp | ✓ (8 Tests, davon 4 FW-Diff) |
 | S11b | Philips-Hue-Sync gegen mehrere Bridges (`sync hue --config`) | ✓ (4 Tests) |
 | S11c | Shelly-Sync via mDNS-Discovery + Per-Device-Fetch (Gen1+Gen2) | ✓ (4 Tests, mDNS manuell) |

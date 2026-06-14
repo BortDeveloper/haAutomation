@@ -14,14 +14,14 @@ Disziplin).
 operativen Systemen mit dokumentiertem Pre-State, Test, Rollback-Pfad.
 
 > ⚠️ **Kernregel:** Vor *jeder* Flow-Änderung in Produktion gibt es einen
-> committeten Pre-Snapshot (`inventory sync nodered` + Git-Tag). Ohne den ist
+> committeten Pre-Snapshot (`home-inventory sync nodered` + Git-Tag). Ohne den ist
 > der Rollback-Pfad nicht garantiert reproduzierbar.
 
 ## Voraussetzungen
 
 - [ ] Test-HA + Test-Node-RED-Add-on stehen (siehe
       [docs/test-umgebung-real-hardware.md](../test-umgebung-real-hardware.md)).
-- [ ] `inventory`-Binary gebaut, `smoke-test.sh` läuft grün gegen **beide**
+- [ ] `home-inventory`-Binary gebaut, `smoke-test.sh` läuft grün gegen **beide**
       HAs (Test und Produktion) — separate `local/`-env-Dateien.
 - [ ] Repo ist clean. Eine Branch ist ok, aber kein offener Dirty-Tree.
 - [ ] Optional, empfohlen: vorausgehende Analyse-Session mit Audit-Log-Eintrag
@@ -38,9 +38,9 @@ operativen Systemen mit dokumentiertem Pre-State, Test, Rollback-Pfad.
 
 2. **Git-Snapshot** des aktuellen Sync-Stands:
    ```sh
-   cd inventory
+   cd home-inventory
    INVENTORY_DB=./inventory.db INVENTORY_YAML_DIR=./yaml \
-     ./target/release/inventory sync nodered
+     ./target/release/home-inventory sync nodered
    cd ..
    git add yaml/nodered.yaml
    git commit -m "snapshot(nodered): pre-change YYYY-MM-DD"
@@ -69,7 +69,7 @@ operativen Systemen mit dokumentiertem Pre-State, Test, Rollback-Pfad.
 Sync gegen die Test-HA, dann gegen den Pre-Snapshot diffen:
 
 ```sh
-cd inventory
+cd home-inventory
 # gegen Test-HA syncen (eigene env mit HA_URL=test-ha + NODERED_INGRESS_PATH)
 ./smoke-test.sh
 diff yaml/nodered.yaml local/yaml/nodered.yaml | less
@@ -79,7 +79,7 @@ Erwartung:
 - Diff zeigt **genau** die geplante Änderung, nicht mehr und nicht weniger.
 - Maskierte Felder bleiben `***masked***` — auftauchen von Klartext bedeutet
   ein neues Custom-Node-Schema, das die Sanitizer-Heuristik nicht greift
-  (→ vor dem Produktiv-Deploy in `inventory/src/sync/nodered.rs`
+  (→ vor dem Produktiv-Deploy in `home-inventory/src/sync/nodered.rs`
   `is_sensitive_key` ergänzen oder Allow-List nachpflegen).
 - Sortier-Reihenfolge (`id`-alphabetisch) bleibt stabil — Diff zeigt
   inhaltliche Änderung, keine Reordering-Noise.
@@ -94,7 +94,7 @@ Wurde in Schritt 3 ein neues Custom-Node-Schema entdeckt UND der Sanitizer
 erweitert: vor dem Produktiv-Deploy die Tests grün halten:
 
 ```sh
-cargo test --bin inventory sync::nodered
+cargo test --bin home-inventory sync::nodered
 ```
 
 Erwartet: 13/13 Tests grün. Wenn ein Test fehlschlägt, ist der Sanitizer in
@@ -129,10 +129,10 @@ nicht nur den geänderten. Vorbedingung: Schritt 1 (Pre-Snapshot) ist sicher.
 ## Schritt 6 — Post-Snapshot + Commit
 
 ```sh
-cd inventory
+cd home-inventory
 # gegen Produktiv-HA
 INVENTORY_DB=./inventory.db INVENTORY_YAML_DIR=./yaml \
-  ./target/release/inventory sync nodered
+  ./target/release/home-inventory sync nodered
 cd ..
 git add yaml/nodered.yaml
 git commit -m "feat(nodered): <kurze Aenderungsbeschreibung>
@@ -184,6 +184,6 @@ auf den Backup-Zeitpunkt zurückgesetzt werden): HA-Backup voll restore.
 - [ADR-0009](../decisions/0009-nodered-sync-source.md) — Sync-Source +
   Maskierungs-Heuristik
 - [docs/test-umgebung-real-hardware.md](../test-umgebung-real-hardware.md) — Aufbau Test-HA
-- `inventory/smoke-test.sh` — Verifikations-Smoke
-- `inventory/src/sync/nodered.rs` — `sanitize()` und `is_sensitive_key`
+- `home-inventory/smoke-test.sh` — Verifikations-Smoke
+- `home-inventory/src/sync/nodered.rs` — `sanitize()` und `is_sensitive_key`
 - ISO/IEC 27001:2022 A.8.32 — Change Management

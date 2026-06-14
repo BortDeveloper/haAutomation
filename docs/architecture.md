@@ -44,7 +44,7 @@
    (source + source_id) idempotent in SQLite (`/var/lib/inventory/inventory.db`)
 4. Bei vorhandener Firmware-Info: `firmware_snapshot`-Eintrag, nur wenn der
    Stand sich seit dem letzten Snapshot geaendert hat
-5. Pro Source wird `inventory/yaml/<source>.yaml` deterministisch
+5. Pro Source wird `home-inventory/yaml/<source>.yaml` deterministisch
    (source_id-sortiert) neu geschrieben
 6. Bei YAML-Diff: `git add yaml/<source>.yaml`, `git commit -m "auto-sync <source>"`,
    `git push` (optional via `--publish`)
@@ -110,7 +110,7 @@ Die wichtigste Designentscheidung. Jede automatisierte Funktion lebt in
 ## Secrets-Architektur
 
 ```
-inventory/secrets/                          (im Repo, verschluesselt)
+home-inventory/secrets/                          (im Repo, verschluesselt)
 ├── .sops.yaml                              listet age-recipients (pubkeys)
 ├── common.env.enc                          HA_TOKEN, CCU_USER, CCU_PASS, …
 ├── vpn.tailscale.env.enc                   TS_AUTHKEY
@@ -143,6 +143,6 @@ Registry gezogen — vermeidet Registry-Komplexitaet.
 
 ## Migrations-Architektur fuer Daten
 
-- SQLite-Schema in `inventory/migrations/NNN_name.sql`, eines pro Schema-Version
+- SQLite-Schema in `home-inventory/migrations/NNN_name.sql`, eines pro Schema-Version
 - App fuehrt fehlende Migrations beim Start aus, idempotent
 - Manuelle Daten (`manual.yaml`) sind **nie** von Migrations betroffen — sie sind das Source-of-Truth, DB ist nur Cache

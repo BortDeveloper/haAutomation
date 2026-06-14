@@ -13,8 +13,8 @@
 #   - just  (https://github.com/casey/just)
 #   - sops  (für tailscale/netbird env decryption)
 #   - age-Key in /etc/inventory/age.key (chmod 400, root:root)
-#   - Datei inventory/secrets/vpn.<provider>.env.enc (für ts/nb)
-#     oder    inventory/secrets/vpn.wireguard/wg0.conf.enc (für wg)
+#   - Datei home-inventory/secrets/vpn.<provider>.env.enc (für ts/nb)
+#     oder    home-inventory/secrets/vpn.wireguard/wg0.conf.enc (für wg)
 
 set shell := ["bash", "-cu"]
 

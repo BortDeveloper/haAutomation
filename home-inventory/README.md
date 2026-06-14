@@ -4,16 +4,16 @@ Synchroner, framework-armer Rust-Code. Eine ausfuehrbare Datei mit drei
 Subkommandos:
 
 ```
-inventory serve     # HTTP-Server (S4/S5/S7)
-inventory sync ha   |  ccu  |  hue  |  shelly      # Sync-Quellen
-inventory migrate   # DB-Migrationen
+home-inventory serve     # HTTP-Server (S4/S5/S7)
+home-inventory sync ha   |  ccu  |  hue  |  shelly      # Sync-Quellen
+home-inventory migrate   # DB-Migrationen
 ```
 
 ## Build & Run
 
 ```bash
 cargo build --release
-./target/release/inventory --help
+./target/release/home-inventory --help
 ```
 
 Auf dem VPS-Host wird das Image gebaut, nicht das Binary direkt — siehe

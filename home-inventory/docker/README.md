@@ -1,4 +1,4 @@
-# inventory/docker — VPN-Sidecar-Setup
+# home-inventory/docker — VPN-Sidecar-Setup
 
 Die `inventory`-App selbst weiß **nichts** über VPN. Sie joint nur den
 Netzwerk-Namespace eines Sidecar-Service mit fixem Namen `vpn`. Welcher
@@ -29,7 +29,7 @@ Beide Modi nutzen **dasselbe Image** und denselben Header-Vertrag
 
 ## Secrets-Flow
 
-Alle Secrets liegen sops+age-verschlüsselt unter `inventory/secrets/`. Der
+Alle Secrets liegen sops+age-verschlüsselt unter `home-inventory/secrets/`. Der
 age-Key liegt **nur auf dem VPS-Host** unter `/etc/inventory/age.key`
 (chmod 400, root:root) — niemals im Repo.
 
