@@ -387,7 +387,7 @@ dependencies = [
  "anyhow",
  "base64",
  "clap",
- "getrandom 0.2.17",
+ "getrandom 0.4.2",
  "hmac",
  "mdns-sd",
  "pbkdf2",
