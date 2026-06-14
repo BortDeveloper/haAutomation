@@ -46,13 +46,17 @@ anyhow = "1"
 # Auth-Sidecar (Binary `authgate`): reine Rust-Crypto, kein C-Compiler noetig,
 # damit das Sidecar unabhaengig vom inventory-Binary baut und testet.
 # RustCrypto digest-0.11-Familie: hmac 0.13 / sha2 0.11 / pbkdf2 0.13 muessen
-# gemeinsam wandern (gemeinsame digest-Version). getrandom bleibt bewusst auf
-# 0.2 — 0.3/0.4 sind API-inkompatibel mit unserem random_bytes()-Call
-# (getrandom::getrandom), das ist eine separate, noch zurueckgehaltene
-# Migration.
+# gemeinsam wandern (gemeinsame digest-Version).
 hmac = "0.13"
 sha2 = "0.11"
 pbkdf2 = { version = "0.13", default-features = false, features = ["hmac"] }
+# getrandom bleibt DAUERHAFT auf 0.2 — nicht als TODO, sondern strukturell:
+# ring 0.17 (ueber ureq -> rustls -> ring) verlangt getrandom "^0.2.10". Ein
+# Bump unseres direkten Deps auf 0.3/0.4 wuerde 0.2 NICHT ersetzen (ring zieht
+# es weiter), sondern nur eine zweite getrandom-Major in den Baum bringen
+# (auch im Release-Build). Erst wenn ring/rustls upstream auf getrandom 0.3+
+# wechseln, lohnt der Umstieg — dann in authgate.rs random_bytes():
+# getrandom::getrandom() -> getrandom::fill().
 getrandom = "0.2"
 
 [dev-dependencies]
