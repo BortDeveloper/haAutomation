@@ -13,7 +13,7 @@ version: 2
 
 updates:
   - package-ecosystem: cargo
-    directory: /inventory
+    directory: /home-inventory
     schedule:
       interval: weekly
       day: monday

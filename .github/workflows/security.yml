@@ -24,7 +24,7 @@ jobs:
       contents: read
     defaults:
       run:
-        working-directory: inventory
+        working-directory: home-inventory
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
@@ -37,7 +37,7 @@ jobs:
       - name: Cache Cargo registry + target
         uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4  # v2.9.1
         with:
-          workspaces: inventory
+          workspaces: home-inventory
       - name: Install cargo-audit
         run: cargo install cargo-audit --locked
       - name: Run cargo audit
@@ -50,7 +50,7 @@ jobs:
       contents: read
     defaults:
       run:
-        working-directory: inventory
+        working-directory: home-inventory
     steps:
       - name: Checkout
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10  # v6.0.3
@@ -63,7 +63,7 @@ jobs:
       - name: Cache Cargo registry + target
         uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4  # v2.9.1
         with:
-          workspaces: inventory
+          workspaces: home-inventory
       - name: Install cargo-deny
         run: cargo install cargo-deny --locked
       - name: Run cargo deny check
@@ -109,12 +109,12 @@ jobs:
       - name: Regenerate notices from Cargo.lock
         # Pure shell + awk, no cargo toolchain or network required.
         # Deterministic: identical Cargo.lock → identical output.
-        run: bash inventory/scripts/generate-notices.sh > /tmp/notices.generated.md
+        run: bash home-inventory/scripts/generate-notices.sh > /tmp/notices.generated.md
       - name: Diff against committed THIRD-PARTY-NOTICES.md
         run: |
           if ! diff -u THIRD-PARTY-NOTICES.md /tmp/notices.generated.md; then
-            echo "::error file=THIRD-PARTY-NOTICES.md::THIRD-PARTY-NOTICES.md is out of sync with inventory/Cargo.lock."
-            echo "::error::Run 'bash inventory/scripts/generate-notices.sh > THIRD-PARTY-NOTICES.md' locally and commit the result."
+            echo "::error file=THIRD-PARTY-NOTICES.md::THIRD-PARTY-NOTICES.md is out of sync with home-inventory/Cargo.lock."
+            echo "::error::Run 'bash home-inventory/scripts/generate-notices.sh > THIRD-PARTY-NOTICES.md' locally and commit the result."
             exit 1
           fi
-          echo "THIRD-PARTY-NOTICES.md is in sync with inventory/Cargo.lock."
+          echo "THIRD-PARTY-NOTICES.md is in sync with home-inventory/Cargo.lock."

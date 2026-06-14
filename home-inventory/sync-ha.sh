@@ -7,13 +7,13 @@
 # normalisiert HA_URL defensiv — es fixt den frueher beobachteten
 # Doppel-Praefix-Bug ("http://http://...") aus handgeschriebenen Runnern.
 #
-# Die eigentliche Logik liegt in der Binary (`inventory sync ha`,
+# Die eigentliche Logik liegt in der Binary (`home-inventory sync ha`,
 # src/sync/ha.rs). Dieses Script ruft sie nur korrekt auf — es schreibt
 # selbst NICHT in DB/YAML, damit die Owner-Logik der Binary die einzige
 # Schreib-Stelle bleibt.
 #
 # Verwendung:
-#   1. cargo build --release --locked --bin inventory
+#   1. cargo build --release --locked --bin home-inventory
 #   2. cp test-setup.env.example local/test-setup.env  (falls noch nicht da)
 #   3. local/test-setup.env: HA_URL + HA_TOKEN setzen, chmod 600
 #   4. ./sync-ha.sh
@@ -36,7 +36,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 cd "$HERE"
 
 ENV_FILE="local/test-setup.env"
-BIN="./target/release/inventory"
+BIN="./target/release/home-inventory"
 # Windows .exe-Suffix tolerieren (Git Bash / MSYS)
 if [ ! -x "$BIN" ] && [ -x "$BIN.exe" ]; then
     BIN="$BIN.exe"
@@ -44,7 +44,7 @@ fi
 
 if [ ! -x "$BIN" ]; then
     echo "ERROR: $BIN nicht gefunden / nicht ausfuehrbar."
-    echo "  -> cargo build --release --locked --bin inventory"
+    echo "  -> cargo build --release --locked --bin home-inventory"
     exit 2
 fi
 

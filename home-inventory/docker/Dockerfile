@@ -23,7 +23,7 @@ COPY migrations ./migrations
 
 # Baut beide Binaries: `inventory` (Backend) und `authgate` (Auth-Sidecar).
 RUN cargo build --release --locked && \
-    strip target/release/inventory target/release/authgate
+    strip target/release/home-inventory target/release/authgate
 
 # === Runtime stage ===
 FROM alpine:3.20
@@ -53,7 +53,7 @@ RUN apk add --no-cache ca-certificates tini && \
 USER inventory
 WORKDIR /var/lib/inventory
 
-COPY --from=builder /app/target/release/inventory /usr/local/bin/inventory
+COPY --from=builder /app/target/release/home-inventory /usr/local/bin/inventory
 COPY --from=builder /app/target/release/authgate  /usr/local/bin/authgate
 
 ENV INVENTORY_DB=/var/lib/inventory/inventory.db \
