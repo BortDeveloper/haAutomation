@@ -1,7 +1,7 @@
 # Runbook: Linux-Build-Host (`inventory`) aufsetzen
 
 **Zweck:** Einen Linux-Host als **Build- und Test-Ziel** für den
-`inventory`-Crate provisionieren. Er bildet die CI-Umgebung nach und
+`home-inventory`-Crate provisionieren. Er bildet die CI-Umgebung nach und
 dient als Host für Arbeiten, die die Windows-Workstation nicht bauen
 kann (Dependency-Migrationen, `cargo test`, `Cargo.lock`-Regen).
 
@@ -71,7 +71,7 @@ sudo apt install -y build-essential pkg-config git curl ca-certificates
 ## Schritt 4 — Rust-Toolchain via rustup
 
 Das `apt`-`rustc` ist zu alt (Cargo.toml verlangt `rust-version = 1.95`).
-Die Toolchain ist via `inventory/rust-toolchain.toml` auf **1.95** gepinnt —
+Die Toolchain ist via `home-inventory/rust-toolchain.toml` auf **1.95** gepinnt —
 rustup lädt sie beim ersten `cargo`-Aufruf im Repo automatisch nach.
 
 ```sh
@@ -86,7 +86,7 @@ Das Repo ist öffentlich → HTTPS-Clone ist read-only, ohne Credentials:
 ```sh
 cd ~
 git clone https://github.com/BortDeveloper/haAutomation.git
-cd haAutomation/inventory
+cd haAutomation/home-inventory
 ```
 
 > Schreibender Sync-Pfad (`git_publish`) braucht später einen separaten
@@ -95,12 +95,12 @@ cd haAutomation/inventory
 ## Schritt 6 — Build verifizieren
 
 ```sh
-cargo build --release --locked --bin inventory
+cargo build --release --locked --bin home-inventory
 ```
 
 - `--locked` erzwingt exakt die `Cargo.lock`-Versionen (reproduzierbar,
   identisch zur CI).
-- Erfolgskontrolle: `./target/release/inventory --help`.
+- Erfolgskontrolle: `./target/release/home-inventory --help`.
 
 ## Schritt 7 — Volle Test-Suite (für Dependency-Migrationen)
 
@@ -128,7 +128,7 @@ cargo update -p <crate> --precise <version>
 cargo build --locked && cargo test --workspace --locked
 # 3. THIRD-PARTY-NOTICES.md regenerieren (Pflicht — CI-Drift-Check)
 cd ..  # Repo-Root
-bash inventory/scripts/generate-notices.sh > THIRD-PARTY-NOTICES.md
+bash home-inventory/scripts/generate-notices.sh > THIRD-PARTY-NOTICES.md
 # 4. Cargo.lock + Notices + Code-Aenderung in einem Branch committen
 ```
 
@@ -141,12 +141,12 @@ bash inventory/scripts/generate-notices.sh > THIRD-PARTY-NOTICES.md
 
 ```sh
 cd ~/haAutomation && git fetch origin && git checkout <branch>
-cd inventory && cargo build --release --locked
+cd home-inventory && cargo build --release --locked
 ```
 
 ## Pin-Hinweis (nicht versehentlich lösen)
 
-`hmac` (0.12) und `getrandom` (0.2) sind in `inventory/Cargo.toml`
+`hmac` (0.12) und `getrandom` (0.2) sind in `home-inventory/Cargo.toml`
 **bewusst gepinnt**. Beim `cargo update` darauf achten, dass diese
 nicht ungewollt mitgezogen werden — der Bump auf die RustCrypto-
 `digest`-0.11-Familie (sha2 0.11 / hmac 0.13) ist eine **koordinierte,
@@ -156,6 +156,6 @@ bewusste** Migration, kein Beifang.
 
 - Memory `reference_inventory_server.md` — Host-Koordinaten, SSH-Key
 - `docs/runbooks/raspberry-pi-install.md` — analoge ARM-/Sync-Variante
-- `inventory/rust-toolchain.toml` — gepinnte Toolchain (1.95)
-- `inventory/scripts/generate-notices.sh` — Notices-Generator
+- `home-inventory/rust-toolchain.toml` — gepinnte Toolchain (1.95)
+- `home-inventory/scripts/generate-notices.sh` — Notices-Generator
 - `.github/workflows/security.yml` — CI-Drift-Check (Job `license-notices`)

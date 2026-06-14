@@ -11,7 +11,7 @@
 ## Kontext
 
 Das Inventory-Backend deckt heute vier Sync-Sources ab: HA, CCU, Hue, Shelly
-(`inventory/src/sync/{ha,ccu,hue,shelly}.rs`). **Node-RED** — bei diesem User
+(`home-inventory/src/sync/{ha,ccu,hue,shelly}.rs`). **Node-RED** — bei diesem User
 der zentrale Logik-Layer (HA-Add-on plus historisch eine zweite Node-RED-
 Instanz auf der CCU, die als „Schmerzpunkt" markiert ist) — ist nicht erfasst.
 Damit fehlt:
@@ -34,25 +34,25 @@ Add-on-eigene Port `1880` per Default **nicht** nach außen exponiert wird.
 | Variante | Pfad | Auth | Bewertung |
 |---|---|---|---|
 | **A) Direkt auf `:1880`** | `http://<ha-host>:1880/flows` | Node-RED-eigener `adminAuth`-Bearer | erfordert Port-Exposition + zweites Credential-Set; widerspricht der Default-Add-on-Härtung |
-| **B) Über HA-Supervisor-Ingress** | `{HA_URL}/api/hassio_ingress/<session>/flows` (oder vergleichbarer Proxy-Pfad) | HA-Long-Lived-Access-Token (LLAT, Bearer) | konsistent mit `inventory sync ha`; nutzt bestehende Token-Pflege; keine zusätzliche Exposition |
+| **B) Über HA-Supervisor-Ingress** | `{HA_URL}/api/hassio_ingress/<session>/flows` (oder vergleichbarer Proxy-Pfad) | HA-Long-Lived-Access-Token (LLAT, Bearer) | konsistent mit `home-inventory sync ha`; nutzt bestehende Token-Pflege; keine zusätzliche Exposition |
 
 ## Entscheidung
 
 **Variante B**: Das Inventory-Backend greift auf die Node-RED-Admin-API
 **ausschließlich über den HA-Supervisor-Ingress** zu, authentifiziert mit dem
-**HA-Long-Lived-Access-Token**, der bereits für `inventory sync ha` existiert.
+**HA-Long-Lived-Access-Token**, der bereits für `home-inventory sync ha` existiert.
 
 Konkret:
 
-- **Neues Modul** `inventory/src/sync/nodered.rs` analog zu `ha.rs`.
-- **Subkommando** `inventory sync nodered` parallel zu `sync ha|ccu|hue|shelly`.
+- **Neues Modul** `home-inventory/src/sync/nodered.rs` analog zu `ha.rs`.
+- **Subkommando** `home-inventory sync nodered` parallel zu `sync ha|ccu|hue|shelly`.
 - **Endpoint-Konstruktion**: `{HA_URL}/<ingress-path>/flows` — die exakte
   Path-Form (Session-Token vs. statischer Reverse-Proxy-Route) wird bei der
   Implementierung (Task #3 im Cockpit-Backlog) gegen die laufende Test-HA
   verifiziert. Beide Varianten sind via HA-LLAT autorisiert; die Entscheidung
   hat keinen architektonischen Hebel und gehört nicht in dieses ADR.
 - **Persistenz Iteration 1**: **YAML-Snapshot only** unter
-  `inventory/yaml/nodered.yaml` als Source of Truth (gemäß
+  `home-inventory/yaml/nodered.yaml` als Source of Truth (gemäß
   [ADR-0002](0002-sqlite-cache-yaml-source-of-truth.md)). **Keine SQLite-
   Tabellen** in dieser Iteration. Begründung: das vorhandene `devices`-Schema
   (source, source_id, name, manufacturer, model, kind, room) modelliert
@@ -70,7 +70,7 @@ Konkret:
   Mehrfach-Sync ohne Flow-Änderung lässt `git status` clean — analog zu
   `write_devices_for_source` in `yaml_io.rs`.
 - **Secrets-Pfad**: HA-LLAT wird **nicht** dupliziert. Es bleibt in
-  `local/test-setup.env` als `HA_TOKEN` (Test) bzw. `inventory/secrets/ha.sops.yaml`
+  `local/test-setup.env` als `HA_TOKEN` (Test) bzw. `home-inventory/secrets/ha.sops.yaml`
   (Produktion, abhängig von ADR-0004 — H.1-STOPP weiterhin aktiv).
 - **Inline-Credential-Maskierung**: Flow-JSON enthält bei diesem User
   dokumentiert **Inline-Klartext-Credentials** in CCU-Connection-Nodes
@@ -108,7 +108,7 @@ Konkret:
 - **Maskierung ist Best-Effort**: Regex-basierte Schlüssel-Erkennung greift
   konventionelle Felder ab, **nicht** Custom-Node-Schemata mit ungewöhnlichen
   Namen. Folge-Task (separat): Allow-List für bekannte sichere Felder + Audit-
-  Mode (`inventory sync nodered --audit` listet alle nicht-gematchten Felder
+  Mode (`home-inventory sync nodered --audit` listet alle nicht-gematchten Felder
   zur Review).
 
 ## Abgrenzung — was dieses ADR nicht entscheidet

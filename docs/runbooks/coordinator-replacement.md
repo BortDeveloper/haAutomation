@@ -16,7 +16,7 @@
 
 - [ ] Das verschlüsselte Coordinator-Backup liegt vor:
       `coordinator_backup.json.enc` (sops, Edge-Klasse — siehe
-      `inventory/secrets/.sops.yaml`).
+      `home-inventory/secrets/.sops.yaml`).
 - [ ] age-Privatkey eines der drei Recipients ist verfügbar
       (Edge-Host, Backup-Operator oder DR-Hardware-Token —
       `edge-secrets/recipients/README.md`).
@@ -100,4 +100,4 @@ bleibt das Neuanlernen aller Geräte als letzte Option.
 
 - Closing-Brief §2.6 (Re-Provisioning-Runbook, Pflichtschritt Network-Key-Restore)
 - Security-Audit Finding R-Z2M-KEY (CRITICAL) — gepflegt extern
-- `inventory/secrets/.sops.yaml`, `edge-secrets/recipients/README.md`
+- `home-inventory/secrets/.sops.yaml`, `edge-secrets/recipients/README.md`

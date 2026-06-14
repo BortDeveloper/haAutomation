@@ -32,7 +32,7 @@ target/
 
 # Lokales Test-/Dev-Verzeichnis (Doku: docs/getting-started.md, Phase 2-3):
 # enthaelt persoenliche URLs, Tokens, lokale DB. Niemals committen —
-# `.env.example` und `smoke-test.sh` liegen daneben unter inventory/.
+# `.env.example` und `smoke-test.sh` liegen daneben unter home-inventory/.
 **/local/
 
 # IDE

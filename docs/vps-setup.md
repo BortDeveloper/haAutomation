@@ -148,7 +148,7 @@ ssh vps 'cd ~/<repo> && git pull'
 ## First image build and test
 
 ```bash
-ssh vps 'cd ~/<repo>/inventory && \
+ssh vps 'cd ~/<repo>/home-inventory && \
   docker build -f docker/Dockerfile -t inventory:dev . | tail -5'
 ```
 
@@ -183,7 +183,7 @@ Expected: `ok` and `[]`.
 ssh vps bash -c '
   cd ~/<repo> &&
   git pull &&
-  cd inventory &&
+  cd home-inventory &&
   docker build -f docker/Dockerfile -t inventory:dev . &&
   docker compose -f docker/docker-compose.yml \
                  -f docker/docker-compose.vpn.tailscale.yml \

@@ -58,7 +58,7 @@ sudo apt install -y build-essential pkg-config git curl ca-certificates
 
 ## Schritt 3 — Rust-Toolchain via rustup installieren
 
-Die im Repo gepinnte Toolchain ist **1.95** (`inventory/rust-toolchain.toml`).
+Die im Repo gepinnte Toolchain ist **1.95** (`home-inventory/rust-toolchain.toml`).
 Das `apt`-`rustc` ist zu alt — daher rustup verwenden. rustup lädt die
 korrekte Version beim ersten `cargo`-Aufruf im Repo automatisch nach.
 
@@ -76,15 +76,15 @@ keine Credentials/Keys:
 ```sh
 cd ~
 git clone https://github.com/BortDeveloper/haAutomation.git
-cd haAutomation/inventory
+cd haAutomation/home-inventory
 ```
 
-> Alle folgenden Befehle laufen im Verzeichnis `~/haAutomation/inventory`.
+> Alle folgenden Befehle laufen im Verzeichnis `~/haAutomation/home-inventory`.
 
 ## Schritt 5 — Inventory-Binary bauen
 
 ```sh
-cargo build --release --locked --bin inventory
+cargo build --release --locked --bin home-inventory
 ```
 
 - `--locked` erzwingt exakt die `Cargo.lock`-Versionen (reproduzierbar).
@@ -97,7 +97,7 @@ cargo build --release --locked --bin inventory
 Erfolgskontrolle:
 
 ```sh
-./target/release/inventory --help
+./target/release/home-inventory --help
 ```
 
 ## Schritt 6 — Konfiguration anlegen
@@ -139,7 +139,7 @@ HA_TOKEN=<llat-aus-schritt-7>
 ```
 
 Das Script lädt `local/test-setup.env`, normalisiert `HA_URL`, legt die
-SQLite-DB an (`migrate`) und führt `inventory sync ha` aus. Die Binary holt
+SQLite-DB an (`migrate`) und führt `home-inventory sync ha` aus. Die Binary holt
 `/api/states`, filtert auf Geräte-Domains und schreibt das Ergebnis als
 **SQLite-Upsert + YAML-Snapshot**.
 
@@ -164,7 +164,7 @@ ls -la local/inventory.db            # SQLite-Cache liegt vor
 Optional die Web-UI lokal starten (read-only ansehen):
 
 ```sh
-AUTH_BYPASS=1 ./target/release/inventory serve --addr 127.0.0.1:8080
+AUTH_BYPASS=1 ./target/release/home-inventory serve --addr 127.0.0.1:8080
 # dann im Browser des Pi / per SSH-Tunnel: http://127.0.0.1:8080
 ```
 
@@ -188,13 +188,13 @@ AUTH_BYPASS=1 ./target/release/inventory serve --addr 127.0.0.1:8080
 ```sh
 cd ~/haAutomation
 git pull --ff-only
-cd inventory && cargo build --release --locked --bin inventory
+cd home-inventory && cargo build --release --locked --bin home-inventory
 ```
 
 ## Bezug
 
-- `inventory/sync-ha.sh` — der fokussierte HA-Runner (Schritt 8)
-- `inventory/test-setup.env.example` — Konfigurations-Vorlage
+- `home-inventory/sync-ha.sh` — der fokussierte HA-Runner (Schritt 8)
+- `home-inventory/test-setup.env.example` — Konfigurations-Vorlage
 - `docs/getting-started.md` — First-Run-PoC (sicherheitsgeprüfter Durchlauf)
 - `docs/test-umgebung-real-hardware.md` — Aufbau der realen Test-Umgebung
-- `inventory/rust-toolchain.toml` — gepinnte Toolchain (1.95)
+- `home-inventory/rust-toolchain.toml` — gepinnte Toolchain (1.95)

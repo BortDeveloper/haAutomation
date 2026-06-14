@@ -32,7 +32,7 @@ und einem maschinell gepflegten Inventar als Sicherheitsnetz.
 | FR-2 | Single Source of Truth fuer das Inventar sind versionierte YAML-Dateien im Repo plus eine daraus generierte SQLite-DB. |
 | FR-3 | Web-UI zum Durchsuchen, Filtern und Facettieren des Inventars, lesend. Schreibender Pfad: PR auf YAML. |
 | FR-4 | Firmware-Aenderungen werden als zeitgestempelte Snapshots in der DB festgehalten; ein Diff fuehrt zu einem Auto-Commit + Push. |
-| FR-5 | Manuelle Metadaten (Anschaffungsdatum, Standort, Garantie, Handbuch-URL) leben in `inventory/manual.yaml` und werden mit dem auto-erfassten Inventar verknuepft. |
+| FR-5 | Manuelle Metadaten (Anschaffungsdatum, Standort, Garantie, Handbuch-URL) leben in `home-inventory/manual.yaml` und werden mit dem auto-erfassten Inventar verknuepft. |
 | FR-6 | Ownership-Regeln (CCU vs. HA vs. Node-RED) sind dokumentiert und werden bei der Migration konsequent angewandt. |
 | FR-7 | Refaktorierung bestehender Automationen pro Domaene (Licht, Heizung, Anwesenheit, …) jeweils als eigener PR mit Vorher-/Nachher-Mapping. |
 | FR-8 | Backups: CCU-Programme und Node-RED-Flows werden naechtlich als Snapshot ins Repo committet. |

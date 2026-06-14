@@ -6,7 +6,7 @@
 > Backend) neu aufbauen muessen.
 > **Scope**: physische Test-Datenquellen — CCU, HomeMatic-Aktoren,
 > Shelly-Geraete, Home Assistant, MQTT-Broker. **Nicht** im Scope:
-> der Inventory-Backend-Code selbst (vgl. `inventory/` im Repo).
+> der Inventory-Backend-Code selbst (vgl. `home-inventory/` im Repo).
 > **Verbindlichkeits-Anker**:
 > - BSI IT-Grundschutz **IND.2.1** (IoT-Geraete — Sicherer Betrieb)
 >   fuer die Netzwerk-Trennungs-Empfehlung (siehe Sektion 8).
@@ -42,10 +42,10 @@ Umgebung, in der das Rust-Inventory-Backend gegen **echte
 Geraetequellen** synchronisieren kann:
 
 - **CCU (HomeMatic-Zentrale)** als XML-RPC-/XML-API-Quelle
-  (`inventory sync ccu`)
-- **Home Assistant** als REST-API-Quelle (`inventory sync ha`)
+  (`home-inventory sync ccu`)
+- **Home Assistant** als REST-API-Quelle (`home-inventory sync ha`)
 - **Shelly-Geraete** als HTTP-Quelle Gen1/Gen2 plus mDNS-Discovery
-  (`inventory sync shelly`)
+  (`home-inventory sync shelly`)
 - **MQTT-Broker** als Telemetrie-Bus (vorbereitend; aktuell
   ueberwiegend von Home Assistant verbraucht, nicht direkt vom
   Inventory-Backend)
@@ -60,7 +60,7 @@ Geraetequellen** synchronisieren kann:
   beim Aufbau auffallen, werden in Sektion 13 als TODO notiert und
   in eine spaetere Security-Sprint-Iteration ueberfuehrt.
 - Sie modifiziert **nicht** den Rust-Backend-Code unter
-  `inventory/`. Nur Daten-Bereitstellung.
+  `home-inventory/`. Nur Daten-Bereitstellung.
 
 ### 1.3 Cockpit-Kontext (warum diese Datei jetzt entsteht)
 
@@ -139,11 +139,11 @@ selbst zu aendern.
 
 | Pfad | Protokoll | Konsument                                     |
 | ---- | --------- | --------------------------------------------- |
-| CCU XML-API (`/addons/xmlapi/devicelist.cgi`) | HTTP        | `inventory sync ccu`                |
+| CCU XML-API (`/addons/xmlapi/devicelist.cgi`) | HTTP        | `home-inventory sync ccu`                |
 | CCU XML-RPC (:2010 HmIP, :2001 BidCos) | XML-RPC     | (perspektivisch, nicht aktiv genutzt) |
-| Home Assistant `/api/states`           | HTTPS REST  | `inventory sync ha`                  |
-| Shelly Gen1 `/status`, `/settings`     | HTTP        | `inventory sync shelly`              |
-| Shelly Gen2 `/rpc/Shelly.GetStatus`    | HTTP RPC    | `inventory sync shelly`              |
+| Home Assistant `/api/states`           | HTTPS REST  | `home-inventory sync ha`                  |
+| Shelly Gen1 `/status`, `/settings`     | HTTP        | `home-inventory sync shelly`              |
+| Shelly Gen2 `/rpc/Shelly.GetStatus`    | HTTP RPC    | `home-inventory sync shelly`              |
 | Shelly Telemetry (Gen1+Gen2)           | MQTT        | Home Assistant (UI) — nicht Backend  |
 | Mosquitto                              | MQTT 3.1.1  | HA-MQTT-Integration                  |
 
@@ -154,8 +154,8 @@ Quelle der Pfade: `README.md` Sektion „Sync sources" und
 
 | Welt              | Lebt wo                     | Aufgabe                          |
 | ----------------- | --------------------------- | -------------------------------- |
-| **Backend-Code**  | `inventory/` im Repo        | Rust-Logik, CI, Test-Fixtures    |
-| **Test-Fixtures** | `inventory/fixtures/*.xml`  | Offline-Snapshots (CCU XML)      |
+| **Backend-Code**  | `home-inventory/` im Repo        | Rust-Logik, CI, Test-Fixtures    |
+| **Test-Fixtures** | `home-inventory/fixtures/*.xml`  | Offline-Snapshots (CCU XML)      |
 | **Test-Umgebung** | physisch im Heim-LAN        | erzeugt **echte** Datenquellen   |
 
 Die Test-Umgebung ist die **Ergaenzung zu** den Fixtures, nicht ihr
@@ -311,7 +311,7 @@ Der User-Auftrag nennt drei Optionen:
   „Sicherheit" → „Sicherheits-Modus" auf „Sicher" (aktiviert HTTPS-
   Pflicht, deaktiviert telnet/rsh-Bypass).
 - **Admin-Passwort** nicht im Klartext im Repo speichern. Spaeter
-  in `inventory/secrets/` per sops verschluesselt (Anker: ADR-0004,
+  in `home-inventory/secrets/` per sops verschluesselt (Anker: ADR-0004,
   noch nicht implementiert — vorerst lokal im Passwort-Manager).
 - **Backup-Strategie**: Systemsteuerung → „Sicherheit" → „Backup"
   → woechentlicher Auto-Export auf USB-Stick **oder** auf
@@ -327,13 +327,13 @@ spart spaeter den Wechsel.
 
 | Endpunkt                                  | Methode  | Verwendet von               |
 | ----------------------------------------- | -------- | --------------------------- |
-| `http://<ccu>/addons/xmlapi/devicelist.cgi` | GET    | `inventory sync ccu`        |
+| `http://<ccu>/addons/xmlapi/devicelist.cgi` | GET    | `home-inventory sync ccu`        |
 | `http://<ccu>/addons/xmlapi/statelist.cgi` | GET    | (Future: Zustandsabfragen)  |
 | `http://<ccu>:2010/` (HmIP XML-RPC)       | XML-RPC | (perspektivisch)            |
 | `http://<ccu>:2001/` (BidCos XML-RPC)     | XML-RPC | (perspektivisch)            |
 
 Der Backend-Sync nutzt aktuell ausschliesslich die XML-API
-(`devicelist.cgi`) — siehe `inventory/fixtures/ccu_devicelist.xml`
+(`devicelist.cgi`) — siehe `home-inventory/fixtures/ccu_devicelist.xml`
 als Format-Referenz.
 
 ---
@@ -399,18 +399,18 @@ Wenn mehrere Aktoren gleichzeitig angelernt werden:
 Nach dem Anlernen sollte mindestens vorhanden sein:
 
 - **Minimum**: 1 HM-Funk-Schaltaktor + 1 HmIP-Schaltaktor = 2 CCU-
-  Geraete. Diese reichen, um den Sync-Pfad `inventory sync ccu`
+  Geraete. Diese reichen, um den Sync-Pfad `home-inventory sync ccu`
   end-to-end zu pruefen (XML-API liefert dann 2 `<device>`-Eintraege).
 - **Komfort**: + 1 HmIP-Rollladen + 1 HmIP-Heizkoerper-Thermostat
   + 1 HM-Funk-Dimmer = 5 Geraete. Diese decken die wichtigsten
   Channel-Typen ab (`SHUTTER_TRANSMITTER`, `CLIMATECONTROL_*`,
   `DIMMER`).
 
-Die `inventory/fixtures/ccu_devicelist.xml`-Datei kann nach
+Die `home-inventory/fixtures/ccu_devicelist.xml`-Datei kann nach
 erfolgreichem Anlern-Vorgang aktualisiert werden:
 
 ```bash
-curl -o inventory/fixtures/ccu_devicelist.xml \
+curl -o home-inventory/fixtures/ccu_devicelist.xml \
   "http://<ccu-ip>/addons/xmlapi/devicelist.cgi"
 ```
 
@@ -430,7 +430,7 @@ Hinweis, dass die Datei real-getrieben aktualisierbar ist.)
 | **Gen2 / Plus** | Shelly Plus 1, Plus 1PM, Plus 2PM, Plus i4 | JSON-RPC `/rpc/Shelly.GetStatus` |
 | **Gen3 / Pro**  | Shelly Pro 1/2/3/4 (Hutschiene)        | JSON-RPC (Gen2-API-kompatibel) |
 
-Das Backend (`inventory sync shelly`) deckt **Gen1 + Gen2** ab.
+Das Backend (`home-inventory sync shelly`) deckt **Gen1 + Gen2** ab.
 Gen3 ist API-kompatibel zu Gen2 und funktioniert ohne Code-Aenderung;
 ein expliziter Test ist trotzdem sinnvoll.
 
@@ -479,13 +479,13 @@ Gen1-Geraete haben weniger Optionen, das Prinzip ist identisch.
 
 | Endpunkt                          | Gen | Verwendet von             |
 | --------------------------------- | --- | ------------------------- |
-| `GET /status`                     | 1   | `inventory sync shelly`   |
-| `GET /settings`                   | 1   | `inventory sync shelly`   |
-| `POST /rpc/Shelly.GetStatus`      | 2   | `inventory sync shelly`   |
-| `POST /rpc/Shelly.GetDeviceInfo`  | 2   | `inventory sync shelly`   |
+| `GET /status`                     | 1   | `home-inventory sync shelly`   |
+| `GET /settings`                   | 1   | `home-inventory sync shelly`   |
+| `POST /rpc/Shelly.GetStatus`      | 2   | `home-inventory sync shelly`   |
+| `POST /rpc/Shelly.GetDeviceInfo`  | 2   | `home-inventory sync shelly`   |
 
 Das Backend macht **mDNS-Discovery** ueber das LAN, wenn
-`inventory sync shelly --discover-seconds 10` aufgerufen wird —
+`home-inventory sync shelly --discover-seconds 10` aufgerufen wird —
 d. h. Shelly-Geraete muessen im **selben Layer-2-Segment** wie der
 VPN-Endpoint sein. Bei VLAN-Trennung (Sektion 9): mDNS-Reflector
 auf dem Switch oder Avahi-Bridge konfigurieren, sonst keine
@@ -659,19 +659,19 @@ In dieser Reihenfolge:
 
 ### 8.6 Long-Lived Access Token fuer das Backend
 
-Der Rust-Backend-Sync `inventory sync ha` braucht einen
+Der Rust-Backend-Sync `home-inventory sync ha` braucht einen
 Long-Lived-Token:
 
 1. HA-UI → User-Profil (links unten Avatar) → ganz unten „Long-Lived
    Access Tokens" → „Token erstellen".
 2. Name: `inventory-backend-test`.
 3. Token **einmalig anzeigen** und **sofort** im Passwort-Manager
-   ablegen. Spaeter in `inventory/secrets/` per sops verschluesselt
+   ablegen. Spaeter in `home-inventory/secrets/` per sops verschluesselt
    (ADR-0004, noch nicht implementiert).
 4. **Niemals** den Token in einem Repo-Commit ablegen — gitleaks-
    Hook (ADR-0004, geplant) wuerde das blocken.
 
-Backend-Config-Beispiel (Repo-Pfad `inventory/test-setup.env.example`
+Backend-Config-Beispiel (Repo-Pfad `home-inventory/test-setup.env.example`
 ist die Soll-Vorlage):
 
 ```ini
@@ -710,7 +710,7 @@ zur Ingress-Konfig passenden Pfad.
    - 1x `debug`-Node am Ausgang
    - „Deploy" klicken; nach 5 min sollte der Aktor schalten.
 5. **Ingress-Pfad ermitteln** (fuer `NODERED_INGRESS_PATH` in
-   `inventory/local/test-setup.env`):
+   `home-inventory/local/test-setup.env`):
    - Browser-DevTools (F12) → Network-Tab → im Node-RED-Sidebar einen
      beliebigen Klick machen.
    - URL der `flows`/`settings`-Requests notieren. Format ist meist:
@@ -754,7 +754,7 @@ fuer IoT-Geraete. Praktisch:
   IoT darf raus ins Internet **nur** fuer Firmware-Updates (besser:
   gar nicht — Update-Routing ueber Proxy / nur manuell).
 - **mDNS-Reflector** zwischen VLANs (`avahi-reflector` oder
-  UniFi-Builtin), damit `inventory sync shelly --discover` ueber
+  UniFi-Builtin), damit `home-inventory sync shelly --discover` ueber
   die VLAN-Grenze hinweg funktioniert.
 
 **Hinweis-Charakter**: VLAN-Setup ist fuer das Funktionieren der
@@ -797,11 +797,11 @@ Test-Umgebung steht fuer die naechste Sprint-Iteration.
 | 9 | MQTT-Broker            | `mosquitto_sub -h <broker> -t '#' -v -u <user> -P <pass>` zeigt Shelly-Nachrichten          |
 | 10| HA REST-API            | `curl -H "Authorization: Bearer <TOKEN>" https://<ha>:8123/api/states` liefert JSON-Array   |
 | 11| VPN-Tunnel             | Von VPS aus: `curl http://<ccu>/addons/xmlapi/devicelist.cgi` funktioniert wie aus Heim-LAN |
-| 12| Backend-Sync CCU       | `inventory sync ccu --url http://<ccu>` → Exit-Code 0, SQLite hat ≥ 1 Device                |
-| 13| Backend-Sync HA        | `inventory sync ha --url https://<ha>:8123 --token <TOKEN>` → Exit-Code 0                   |
-| 14| Backend-Sync Shelly    | `inventory sync shelly --discover-seconds 10` → Exit-Code 0, ≥ 1 Shelly im YAML             |
+| 12| Backend-Sync CCU       | `home-inventory sync ccu --url http://<ccu>` → Exit-Code 0, SQLite hat ≥ 1 Device                |
+| 13| Backend-Sync HA        | `home-inventory sync ha --url https://<ha>:8123 --token <TOKEN>` → Exit-Code 0                   |
+| 14| Backend-Sync Shelly    | `home-inventory sync shelly --discover-seconds 10` → Exit-Code 0, ≥ 1 Shelly im YAML             |
 | 15| Node-RED-API           | `curl -H "Authorization: Bearer $HA_TOKEN" "$HA_URL/$NODERED_INGRESS_PATH/flows"` liefert JSON-Array mit ≥ 1 Demo-Flow |
-| 16| Backend-Sync Node-RED  | `inventory sync nodered` → Exit-Code 0, `local/yaml/nodered.yaml` enthaelt Demo-Flow, alle Credential-Felder maskiert (`***masked***`) |
+| 16| Backend-Sync Node-RED  | `home-inventory sync nodered` → Exit-Code 0, `local/yaml/nodered.yaml` enthaelt Demo-Flow, alle Credential-Felder maskiert (`***masked***`) |
 
 Wenn 1–16 gruen: Hardware-Test-Umgebung ist produktiv.
 
@@ -816,10 +816,10 @@ schreibt nach **SQLite** + **YAML**. Pro Source ein YAML.
 
 | Sub-Kommando             | Endpunkt                                          | YAML-Datei                 |
 | ------------------------ | ------------------------------------------------- | -------------------------- |
-| `inventory sync ccu`     | `http://<ccu>/addons/xmlapi/devicelist.cgi`       | `inventory/yaml/ccu.yaml`  |
-| `inventory sync ha`      | `https://<ha>:8123/api/states`                    | `inventory/yaml/ha.yaml`   |
-| `inventory sync hue`     | `http://<hue-bridge>/api/<key>/lights` + sensors  | `inventory/yaml/hue.yaml`  |
-| `inventory sync shelly`  | mDNS + Gen1/Gen2 HTTP                             | `inventory/yaml/shelly.yaml` |
+| `home-inventory sync ccu`     | `http://<ccu>/addons/xmlapi/devicelist.cgi`       | `home-inventory/yaml/ccu.yaml`  |
+| `home-inventory sync ha`      | `https://<ha>:8123/api/states`                    | `home-inventory/yaml/ha.yaml`   |
+| `home-inventory sync hue`     | `http://<hue-bridge>/api/<key>/lights` + sensors  | `home-inventory/yaml/hue.yaml`  |
+| `home-inventory sync shelly`  | mDNS + Gen1/Gen2 HTTP                             | `home-inventory/yaml/shelly.yaml` |
 
 Idempotenz-Anker: Natural Key `(source, source_id)`. Mehrfach-
 Ausfuehrung darf das YAML byte-identisch lassen, solange sich
@@ -837,7 +837,7 @@ Test-Umgebung folgendes ergeben (Minimum-Set):
 | shelly | 1                     | `Shelly Plus 1` (Gen2) oder `Shelly 1PM` (Gen1)   |
 
 Das ergibt 4 Eintraege im aggregierten Inventar — genug fuer eine
-Sync-Idempotenz-Pruefung (zweimal `inventory sync …` ausfuehren,
+Sync-Idempotenz-Pruefung (zweimal `home-inventory sync …` ausfuehren,
 zweiter Lauf muss `git status` clean lassen).
 
 **Komfort-Set** ergibt ≥ 8 Geraete, deckt alle Channel-Typen
@@ -849,8 +849,8 @@ Die Test-Umgebung erzeugt drei Secret-Klassen:
 
 | Secret                | Verwendet von        | Ablage (Soll)                                              |
 | --------------------- | -------------------- | ---------------------------------------------------------- |
-| RaspberryMatic-Admin  | (perspektivisch CCU-Auth, aktuell ungenutzt von Backend) | `inventory/secrets/ccu.sops.yaml` (ADR-0004 noch offen) |
-| HA Long-Lived Token   | `inventory sync ha`  | `inventory/secrets/ha.sops.yaml`                           |
+| RaspberryMatic-Admin  | (perspektivisch CCU-Auth, aktuell ungenutzt von Backend) | `home-inventory/secrets/ccu.sops.yaml` (ADR-0004 noch offen) |
+| HA Long-Lived Token   | `home-inventory sync ha`  | `home-inventory/secrets/ha.sops.yaml`                           |
 | MQTT-User `shelly-test` Passwort | Shelly-Geraete + HA  | nicht ins Backend; Shelly-eigene Persistenz                |
 
 **Wichtig**: ADR-0004 (sops/age) ist als H.1-STOPP **offen**. Bis
@@ -859,23 +859,23 @@ Klartext. gitleaks-Hook (geplant) wird sonst alle Pushes blocken.
 
 ### 11.4 Aufruf-Beispiele
 
-Mit `inventory/test-setup.env.example` als Vorlage (Pfad existiert
+Mit `home-inventory/test-setup.env.example` als Vorlage (Pfad existiert
 im Repo):
 
 ```bash
 # CCU-Sync (aus VPS heraus via VPN)
-inventory sync ccu --url "http://10.0.0.20"
+home-inventory sync ccu --url "http://10.0.0.20"
 
 # HA-Sync
-inventory sync ha \
+home-inventory sync ha \
   --url "https://homeassistant.example.local:8123" \
   --token "${INVENTORY_HA_TOKEN}"
 
 # Shelly-Sync mit mDNS
-inventory sync shelly --discover-seconds 15
+home-inventory sync shelly --discover-seconds 15
 
 # Shelly-Sync gegen feste IPs (falls mDNS ueber VPN nicht geht)
-inventory sync shelly \
+home-inventory sync shelly \
   --ip 10.0.0.50 \
   --ip 10.0.0.51 \
   --ip 10.0.0.52
@@ -884,7 +884,7 @@ inventory sync shelly \
 Nach erfolgreichem Sync:
 
 ```bash
-cat inventory/yaml/ccu.yaml inventory/yaml/ha.yaml inventory/yaml/shelly.yaml
+cat home-inventory/yaml/ccu.yaml home-inventory/yaml/ha.yaml home-inventory/yaml/shelly.yaml
 sqlite3 inventory.db 'SELECT source, source_id, model FROM devices;'
 ```
 
@@ -925,7 +925,7 @@ Reihenfolge (umgekehrte Aufbau-Reihenfolge):
    oder via API:
    - Gen2: `curl -X POST http://<shelly>/rpc/Shelly.FactoryReset`
    - Gen1: Reset-Taster ≥ 10 s druecken
-4. **Backend-State** (lokal): `inventory.db` loeschen, `inventory/yaml/*.yaml`
+4. **Backend-State** (lokal): `inventory.db` loeschen, `home-inventory/yaml/*.yaml`
    ueber `git checkout` zuruecksetzen.
 
 ### 12.3 Voll-Rueckbau
@@ -976,7 +976,7 @@ diese Hardware-Anleitung und werden in spaetere Sprints geschoben.
   einheitliches Praefix (`home/<room>/<device>/…`) waere ein
   Refactor — separater Backend-Task, **nicht** Hardware-Setup.
 - **mDNS ueber VLAN**: wenn VLAN-Trennung kommt (9.2), braucht
-  `inventory sync shelly --discover` einen mDNS-Reflector. Soll
+  `home-inventory sync shelly --discover` einen mDNS-Reflector. Soll
   in `docs/architecture.md` als Constraint dokumentiert werden.
 - **Fixture-Refresh-Workflow**: ein Skript, das `ccu_devicelist.xml`
   aus der echten Test-Umgebung pullt und mit dem Repo-Fixture
@@ -1036,9 +1036,9 @@ diese Hardware-Anleitung und werden in spaetere Sprints geschoben.
 - `docs/getting-started.md` — Software-Sicht (logischer Vorgaenger
   zu dieser Hardware-Sicht)
 - `docs/vps-setup.md` — VPN-Endpoint
-- `inventory/fixtures/ccu_devicelist.xml` — XML-API-Format-
+- `home-inventory/fixtures/ccu_devicelist.xml` — XML-API-Format-
   Referenz
-- `inventory/test-setup.env.example` — ENV-Vorlage fuer Backend-
+- `home-inventory/test-setup.env.example` — ENV-Vorlage fuer Backend-
   Sync
 
 ---

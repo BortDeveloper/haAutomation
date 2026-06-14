@@ -25,7 +25,7 @@ the MEDIUM/LOW items are tracked as follow-up issues).
 ## Prerequisites
 
 - Linux build host reachable over Tailscale (or SSH tunnel)
-- Rust 1.95 (matches `inventory/rust-toolchain.toml` / `Cargo.toml`
+- Rust 1.95 (matches `home-inventory/rust-toolchain.toml` / `Cargo.toml`
   `rust-version`)
 - Home Assistant with admin access (for a Long-Lived Access Token)
 - Optional: Homematic CCU / RaspberryMatic with XML-API addon enabled
@@ -62,14 +62,14 @@ Clone the repo and run a locked release build:
 
 ```bash
 git clone https://github.com/BortDeveloper/haAutomation.git ~/haAutomation
-cd ~/haAutomation/inventory
+cd ~/haAutomation/home-inventory
 
 # Optional: dependency-advisory check before build
 cargo install cargo-audit --locked
 cargo audit         # stop on findings, update Cargo.lock, then rebuild
 
 cargo build --release --locked
-./target/release/inventory --help
+./target/release/home-inventory --help
 ```
 
 `--locked` ensures `Cargo.lock` is honored byte-for-byte; do not
@@ -101,16 +101,16 @@ backend reads directly. It lives outside the git tree:
 # Restrict the default umask first, so any new file is created 600
 umask 077
 
-mkdir -p ~/haAutomation/inventory/local
-cat > ~/haAutomation/inventory/local/hue.yml <<'EOF'
+mkdir -p ~/haAutomation/home-inventory/local
+cat > ~/haAutomation/home-inventory/local/hue.yml <<'EOF'
 - ip: 192.168.x.x
   token: <bridge-1-api-key>
   name: bridge-1
 EOF
 
 # Belt-and-braces: enforce the mode explicitly (R-HIGH-1)
-chmod 600 ~/haAutomation/inventory/local/hue.yml
-ls -l ~/haAutomation/inventory/local/hue.yml  # expect: -rw-------
+chmod 600 ~/haAutomation/home-inventory/local/hue.yml
+ls -l ~/haAutomation/home-inventory/local/hue.yml  # expect: -rw-------
 ```
 
 If you do not have any Hue bridges, **skip this phase entirely**.
@@ -142,7 +142,7 @@ env | grep -i 'INVENTORY_PUBLISH' && {
 }
 
 # Initialize the DB
-./target/release/inventory migrate
+./target/release/home-inventory migrate
 
 # Lock down the DB file (R-MED-3)
 chmod 600 "$INVENTORY_DB"
@@ -150,14 +150,14 @@ mkdir -p "$INVENTORY_YAML_DIR"
 chmod 700 "$INVENTORY_YAML_DIR"
 
 # Sync each source (Hue is optional — omit --config to skip)
-./target/release/inventory sync ha          # uses HA_URL + HA_TOKEN from env
+./target/release/home-inventory sync ha          # uses HA_URL + HA_TOKEN from env
 
 # CCU (Homematic) — with Basic Auth if your RaspberryMatic has
 # "Authentication" enabled (default since RaspberryMatic 3.65+):
 export CCU_URL='http://ccu.example.local'   # your CCU's hostname or IP
 export CCU_USER='Admin'                     # default RaspberryMatic admin user
 export CCU_PASSWORD='<your-ccu-password>'   # NEVER pass via --password argv
-./target/release/inventory sync ccu
+./target/release/home-inventory sync ccu
 # URL/user/password come from env. CLI args also work but leak the
 # password to /proc/<pid>/cmdline, ps -ef and ~/.bash_history — prefer
 # env (same R-CRIT-1 reasoning as HA_TOKEN).
@@ -165,10 +165,10 @@ export CCU_PASSWORD='<your-ccu-password>'   # NEVER pass via --password argv
 
 # Hue: only if you configured a bridge file in Phase 2.
 # If you omit --config, the command prints an info line and exits 0.
-./target/release/inventory sync hue --config ~/haAutomation/inventory/local/hue.yml
+./target/release/home-inventory sync hue --config ~/haAutomation/home-inventory/local/hue.yml
 
 # Shelly: mDNS discovery for 30 seconds
-./target/release/inventory sync shelly --discover-seconds 30
+./target/release/home-inventory sync shelly --discover-seconds 30
 ```
 
 ### Notes on `INVENTORY_PUBLISH`
@@ -212,7 +212,7 @@ export HISTCONTROL=ignorespace
 # is 127.0.0.1:8080 (loopback only), which is safe but unreachable
 # from your other devices. Replace 100.x.x.x with this host's
 # tailnet IP (output of `tailscale ip -4`).
-./target/release/inventory serve --listen 100.x.x.x:8080
+./target/release/home-inventory serve --listen 100.x.x.x:8080
 ```
 
 On startup, the server prints a stderr warning whenever
@@ -225,7 +225,7 @@ To re-enable authentication, unset `AUTH_BYPASS` and put the
 inventory backend behind the `authgate` sidecar (HTTP Basic with
 PBKDF2-HMAC-SHA256 + signed cookie, fail-closed). See
 [architecture.md](architecture.md) and the `authgate` binary under
-`inventory/src/bin/authgate.rs`.
+`home-inventory/src/bin/authgate.rs`.
 
 ## Troubleshooting
 
@@ -233,7 +233,7 @@ PBKDF2-HMAC-SHA256 + signed cookie, fail-closed). See
 |---|---|---|
 | `bind 127.0.0.1:8080` succeeds but browser cannot reach it | Default `--listen` is loopback-only. | Re-run with `--listen 100.x.x.x:8080` (your tailnet IP). |
 | `HA sync ok: 0 entities` | Token or URL wrong; or HA proxy stripped the `Authorization` header. | Verify `curl -H "Authorization: Bearer $HA_TOKEN" "$HA_URL/api/" `; check HA reverse proxy config. |
-| `hue: no config provided, skipping` | `--config` not passed and `HUE_CONFIG` not set. | Either provide `~/haAutomation/inventory/local/hue.yml` or accept the skip (Hue is optional). |
+| `hue: no config provided, skipping` | `--config` not passed and `HUE_CONFIG` not set. | Either provide `~/haAutomation/home-inventory/local/hue.yml` or accept the skip (Hue is optional). |
 | `hue config does not exist: <path>` | Path typo or wrong working directory. | Use an absolute path or `cd ~/haAutomation` first. |
 | `Refusing to push device inventory to remote` | `INVENTORY_PUBLISH=true` without `--confirm-publish-to`. | Either `unset INVENTORY_PUBLISH` (recommended for first run) or add `--confirm-publish-to '<remote>'`. |
 | `WARNUNG: AUTH_BYPASS aktiv` on every start | Expected: it is the load-bearing warning. | Either accept the warning (PoC mode) or set up `authgate` and `unset AUTH_BYPASS`. |

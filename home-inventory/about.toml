@@ -2,7 +2,7 @@
 #
 # Status: prepared for future migration. The current canonical
 # generator for `THIRD-PARTY-NOTICES.md` is the pure-shell script
-# `inventory/scripts/generate-notices.sh`, which parses `Cargo.lock`
+# `home-inventory/scripts/generate-notices.sh`, which parses `Cargo.lock`
 # directly with no toolchain dependency and is what CI runs in the
 # `license-notices` drift check.
 #

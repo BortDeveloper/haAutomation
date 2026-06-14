@@ -6,7 +6,7 @@
 
 ## Kontext
 
-Der `inventory`-Crate hängt über `ureq`→`ring` und `rusqlite`→`libsqlite3-sys`
+Der `home-inventory`-Crate hängt über `ureq`→`ring` und `rusqlite`→`libsqlite3-sys`
 an C-Code (siehe [ADR-0001](0001-rust-synchroner-minimal-stack.md)). Der
 mingw-`gcc` der Windows-Workstation ist defekt — `cargo build`/`cargo test`
 schlagen dort **immer** fehl, auch für das `authgate`-Binary allein, weil der
