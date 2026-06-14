@@ -381,6 +381,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "home-inventory"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "base64",
+ "clap",
+ "getrandom 0.2.17",
+ "hmac",
+ "mdns-sd",
+ "pbkdf2",
+ "roxmltree",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "serde_yaml_ng",
+ "sha2",
+ "tempfile",
+ "tiny_http",
+ "ureq",
+]
+
+[[package]]
 name = "httpdate"
 version = "1.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -524,28 +546,6 @@ dependencies = [
  "hashbrown 0.17.1",
  "serde",
  "serde_core",
-]
-
-[[package]]
-name = "inventory"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "base64",
- "clap",
- "getrandom 0.2.17",
- "hmac",
- "mdns-sd",
- "pbkdf2",
- "roxmltree",
- "rusqlite",
- "serde",
- "serde_json",
- "serde_yaml_ng",
- "sha2",
- "tempfile",
- "tiny_http",
- "ureq",
 ]
 
 [[package]]

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Generate THIRD-PARTY-NOTICES.md from inventory/Cargo.lock.
+# Generate THIRD-PARTY-NOTICES.md from home-inventory/Cargo.lock.
 #
 # Why a shell script and not `cargo about generate`?
 #   - Deterministic: parses Cargo.lock directly, no network lookups
@@ -20,15 +20,15 @@
 #   inline here.
 #
 # Usage (from the repository root):
-#   bash inventory/scripts/generate-notices.sh > THIRD-PARTY-NOTICES.md
+#   bash home-inventory/scripts/generate-notices.sh > THIRD-PARTY-NOTICES.md
 #
-# Usage (from inventory/):
+# Usage (from home-inventory/):
 #   bash scripts/generate-notices.sh > ../THIRD-PARTY-NOTICES.md
 
 set -euo pipefail
 
 # Resolve repository root regardless of where the script is invoked
-# from (CI runs with working-directory: inventory; local devs may run
+# from (CI runs with working-directory: home-inventory; local devs may run
 # from the repo root).
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 INVENTORY_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
@@ -42,7 +42,7 @@ fi
 
 # Count distinct (name, version) pairs from Cargo.lock for the header.
 CRATE_COUNT="$(awk '/^\[\[package\]\]/{c++} END{print c+0}' "${LOCK_FILE}")"
-# Drop the workspace crate itself ("inventory") from the public count
+# Drop the workspace crate itself ("home-inventory") from the public count
 # of third-party dependencies.
 WORKSPACE_CRATES=1
 THIRD_PARTY_COUNT=$((CRATE_COUNT - WORKSPACE_CRATES))
@@ -50,17 +50,17 @@ THIRD_PARTY_COUNT=$((CRATE_COUNT - WORKSPACE_CRATES))
 cat <<EOF
 # Third-Party Open Source Notices
 
-This file lists every open source dependency of the \`inventory\`
+This file lists every open source dependency of the \`home-inventory\`
 workspace, with version and source. It is **automatically generated**
 and **drift-checked by CI** on every push.
 
-- **Source of truth**: \`inventory/Cargo.lock\` (workspace + transitive)
-- **Generator**: \`inventory/scripts/generate-notices.sh\` (parses
+- **Source of truth**: \`home-inventory/Cargo.lock\` (workspace + transitive)
+- **Generator**: \`home-inventory/scripts/generate-notices.sh\` (parses
   \`Cargo.lock\` directly; no network, no cargo required)
 - **Drift check**: \`.github/workflows/security.yml\`, job
   \`license-notices\` — re-runs the generator and \`diff\`s against
   this committed file. CI fails on any divergence.
-- **License enforcement**: \`inventory/deny.toml\` (\`cargo deny check
+- **License enforcement**: \`home-inventory/deny.toml\` (\`cargo deny check
   licenses\`) restricts the accepted SPDX set to permissive licenses
   (MIT, Apache-2.0, BSD-2/3-Clause, ISC, Unicode-DFS-2016, CC0-1.0,
   Zlib). Copyleft is denied. License compliance is therefore enforced
@@ -70,7 +70,7 @@ and **drift-checked by CI** on every push.
 If you add, remove, or update a dependency:
 
 \`\`\`
-bash inventory/scripts/generate-notices.sh > THIRD-PARTY-NOTICES.md
+bash home-inventory/scripts/generate-notices.sh > THIRD-PARTY-NOTICES.md
 \`\`\`
 
 …and commit the regenerated file alongside your \`Cargo.lock\` change.
@@ -85,7 +85,7 @@ CI will block the merge if you forget.
 ## Accepted licenses
 
 The following SPDX identifiers are accepted by the project (see
-\`inventory/deny.toml\` and \`inventory/about.toml\`):
+\`home-inventory/deny.toml\` and \`home-inventory/about.toml\`):
 
 - MIT
 - Apache-2.0 (also \`Apache-2.0 WITH LLVM-exception\`)
@@ -169,7 +169,7 @@ crates.io page (linked above) and bundled with the crate source in
 specific crate locally:
 
 ```
-cargo metadata --format-version 1 --manifest-path inventory/Cargo.toml \
+cargo metadata --format-version 1 --manifest-path home-inventory/Cargo.toml \
     | jq -r '.packages[] | "\(.name) \(.version) \(.license // .license_file // "UNKNOWN")"' \
     | sort -u
 ```

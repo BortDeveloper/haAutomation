@@ -1,8 +1,5 @@
 [package]
-# TODO: rename crate to avoid name collision with crates.io 'inventory'.
-# Currently causes cargo-audit false-positives (RUSTSEC-2023-0057/0058).
-# Tracked in deny.toml [advisories].ignore.
-name = "inventory"
+name = "home-inventory"
 version = "0.1.0"
 edition = "2021"
 rust-version = "1.95"

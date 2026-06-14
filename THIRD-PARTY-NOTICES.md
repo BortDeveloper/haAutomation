@@ -1,16 +1,16 @@
 # Third-Party Open Source Notices
 
-This file lists every open source dependency of the `inventory`
+This file lists every open source dependency of the `home-inventory`
 workspace, with version and source. It is **automatically generated**
 and **drift-checked by CI** on every push.
 
-- **Source of truth**: `inventory/Cargo.lock` (workspace + transitive)
-- **Generator**: `inventory/scripts/generate-notices.sh` (parses
+- **Source of truth**: `home-inventory/Cargo.lock` (workspace + transitive)
+- **Generator**: `home-inventory/scripts/generate-notices.sh` (parses
   `Cargo.lock` directly; no network, no cargo required)
 - **Drift check**: `.github/workflows/security.yml`, job
   `license-notices` — re-runs the generator and `diff`s against
   this committed file. CI fails on any divergence.
-- **License enforcement**: `inventory/deny.toml` (`cargo deny check
+- **License enforcement**: `home-inventory/deny.toml` (`cargo deny check
   licenses`) restricts the accepted SPDX set to permissive licenses
   (MIT, Apache-2.0, BSD-2/3-Clause, ISC, Unicode-DFS-2016, CC0-1.0,
   Zlib). Copyleft is denied. License compliance is therefore enforced
@@ -20,7 +20,7 @@ and **drift-checked by CI** on every push.
 If you add, remove, or update a dependency:
 
 ```
-bash inventory/scripts/generate-notices.sh > THIRD-PARTY-NOTICES.md
+bash home-inventory/scripts/generate-notices.sh > THIRD-PARTY-NOTICES.md
 ```
 
 …and commit the regenerated file alongside your `Cargo.lock` change.
@@ -35,7 +35,7 @@ CI will block the merge if you forget.
 ## Accepted licenses
 
 The following SPDX identifiers are accepted by the project (see
-`inventory/deny.toml` and `inventory/about.toml`):
+`home-inventory/deny.toml` and `home-inventory/about.toml`):
 
 - MIT
 - Apache-2.0 (also `Apache-2.0 WITH LLVM-exception`)
@@ -99,21 +99,21 @@ Any dependency under a non-listed license will fail
 | 44 | hashlink | 0.12.0 | crates.io | https://crates.io/crates/hashlink/0.12.0 |
 | 45 | heck | 0.5.0 | crates.io | https://crates.io/crates/heck/0.5.0 |
 | 46 | hmac | 0.13.0 | crates.io | https://crates.io/crates/hmac/0.13.0 |
-| 47 | httpdate | 1.0.3 | crates.io | https://crates.io/crates/httpdate/1.0.3 |
-| 48 | hybrid-array | 0.4.12 | crates.io | https://crates.io/crates/hybrid-array/0.4.12 |
-| 49 | icu_collections | 2.2.0 | crates.io | https://crates.io/crates/icu_collections/2.2.0 |
-| 50 | icu_locale_core | 2.2.0 | crates.io | https://crates.io/crates/icu_locale_core/2.2.0 |
-| 51 | icu_normalizer | 2.2.0 | crates.io | https://crates.io/crates/icu_normalizer/2.2.0 |
-| 52 | icu_normalizer_data | 2.2.0 | crates.io | https://crates.io/crates/icu_normalizer_data/2.2.0 |
-| 53 | icu_properties | 2.2.0 | crates.io | https://crates.io/crates/icu_properties/2.2.0 |
-| 54 | icu_properties_data | 2.2.0 | crates.io | https://crates.io/crates/icu_properties_data/2.2.0 |
-| 55 | icu_provider | 2.2.0 | crates.io | https://crates.io/crates/icu_provider/2.2.0 |
-| 56 | id-arena | 2.3.0 | crates.io | https://crates.io/crates/id-arena/2.3.0 |
-| 57 | idna | 1.1.0 | crates.io | https://crates.io/crates/idna/1.1.0 |
-| 58 | idna_adapter | 1.2.2 | crates.io | https://crates.io/crates/idna_adapter/1.2.2 |
-| 59 | if-addrs | 0.15.0 | crates.io | https://crates.io/crates/if-addrs/0.15.0 |
-| 60 | indexmap | 2.14.0 | crates.io | https://crates.io/crates/indexmap/2.14.0 |
-| 61 | inventory | 0.1.0 | _workspace (this repo)_ | n/a |
+| 47 | home-inventory | 0.1.0 | _workspace (this repo)_ | n/a |
+| 48 | httpdate | 1.0.3 | crates.io | https://crates.io/crates/httpdate/1.0.3 |
+| 49 | hybrid-array | 0.4.12 | crates.io | https://crates.io/crates/hybrid-array/0.4.12 |
+| 50 | icu_collections | 2.2.0 | crates.io | https://crates.io/crates/icu_collections/2.2.0 |
+| 51 | icu_locale_core | 2.2.0 | crates.io | https://crates.io/crates/icu_locale_core/2.2.0 |
+| 52 | icu_normalizer | 2.2.0 | crates.io | https://crates.io/crates/icu_normalizer/2.2.0 |
+| 53 | icu_normalizer_data | 2.2.0 | crates.io | https://crates.io/crates/icu_normalizer_data/2.2.0 |
+| 54 | icu_properties | 2.2.0 | crates.io | https://crates.io/crates/icu_properties/2.2.0 |
+| 55 | icu_properties_data | 2.2.0 | crates.io | https://crates.io/crates/icu_properties_data/2.2.0 |
+| 56 | icu_provider | 2.2.0 | crates.io | https://crates.io/crates/icu_provider/2.2.0 |
+| 57 | id-arena | 2.3.0 | crates.io | https://crates.io/crates/id-arena/2.3.0 |
+| 58 | idna | 1.1.0 | crates.io | https://crates.io/crates/idna/1.1.0 |
+| 59 | idna_adapter | 1.2.2 | crates.io | https://crates.io/crates/idna_adapter/1.2.2 |
+| 60 | if-addrs | 0.15.0 | crates.io | https://crates.io/crates/if-addrs/0.15.0 |
+| 61 | indexmap | 2.14.0 | crates.io | https://crates.io/crates/indexmap/2.14.0 |
 | 62 | is_terminal_polyfill | 1.70.2 | crates.io | https://crates.io/crates/is_terminal_polyfill/1.70.2 |
 | 63 | itoa | 1.0.18 | crates.io | https://crates.io/crates/itoa/1.0.18 |
 | 64 | js-sys | 0.3.102 | crates.io | https://crates.io/crates/js-sys/0.3.102 |
@@ -241,7 +241,7 @@ crates.io page (linked above) and bundled with the crate source in
 specific crate locally:
 
 ```
-cargo metadata --format-version 1 --manifest-path inventory/Cargo.toml \
+cargo metadata --format-version 1 --manifest-path home-inventory/Cargo.toml \
     | jq -r '.packages[] | "\(.name) \(.version) \(.license // .license_file // "UNKNOWN")"' \
     | sort -u
 ```

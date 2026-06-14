@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: inventory
+        working-directory: home-inventory
     permissions:
       contents: read
       security-events: write   # SARIF-Upload nach Code-Scanning
@@ -75,5 +75,5 @@ jobs:
         # noch in Code-Scanning sehen.
         if: always()
         with:
-          sarif_file: inventory/rust-clippy-results.sarif
+          sarif_file: home-inventory/rust-clippy-results.sarif
           wait-for-processing: true

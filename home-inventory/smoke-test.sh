@@ -3,13 +3,13 @@
 #
 # Liest local/test-setup.env (siehe test-setup.env.example), checkt
 # Pflichtwerte und fuehrt:
-#   1. `inventory migrate`               (SQLite anlegen)
-#   2. `inventory sync ha`               (sofern HA_URL+HA_TOKEN gesetzt)
-#   3. `inventory sync ccu`              (sofern CCU_URL gesetzt)
-#   4. `inventory sync nodered`          (sofern HA_URL+HA_TOKEN+NODERED_INGRESS_PATH gesetzt)
+#   1. `home-inventory migrate`               (SQLite anlegen)
+#   2. `home-inventory sync ha`               (sofern HA_URL+HA_TOKEN gesetzt)
+#   3. `home-inventory sync ccu`              (sofern CCU_URL gesetzt)
+#   4. `home-inventory sync nodered`          (sofern HA_URL+HA_TOKEN+NODERED_INGRESS_PATH gesetzt)
 #
 # aus. Die Binary muss vorher gebaut sein:
-#   cargo build --release --locked --bin inventory
+#   cargo build --release --locked --bin home-inventory
 #
 # Exit-Codes:
 #   0   alle aktivierten Quellen erfolgreich
@@ -23,7 +23,7 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 cd "$HERE"
 
 ENV_FILE="local/test-setup.env"
-BIN="./target/release/inventory"
+BIN="./target/release/home-inventory"
 # Windows .exe-Suffix tolerieren (Git Bash / MSYS)
 if [ ! -x "$BIN" ] && [ -x "$BIN.exe" ]; then
     BIN="$BIN.exe"
@@ -31,7 +31,7 @@ fi
 
 if [ ! -x "$BIN" ]; then
     echo "ERROR: $BIN nicht gefunden / nicht ausfuehrbar."
-    echo "  -> cargo build --release --locked --bin inventory"
+    echo "  -> cargo build --release --locked --bin home-inventory"
     exit 2
 fi
 
