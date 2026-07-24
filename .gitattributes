@@ -1,4 +1,13 @@
+# Kanonisches Cockpit-Muster (Angleichung 2026-07-24):
+# Default LF fuer alle Textdateien, CRLF nur fuer Windows-Batch.
+* text=auto eol=lf
+
 # Shell-Scripts immer mit LF auschecken — sie laufen auf Linux-Hosts
 # (Raspberry Pi, inventory-Build-Server, VPS). CRLF wuerde die Shebang
 # brechen ("/usr/bin/env bash\r": bad interpreter).
 *.sh text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
