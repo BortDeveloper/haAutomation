@@ -99,7 +99,10 @@ on a public VPS and inspects the home network through a VPN tunnel.
 - [VPS setup](docs/vps-setup.md) — server bootstrap, SSH/keys, ops, DR
 - [Inventory backend](home-inventory/) — Rust app
 - [Docker / VPN](home-inventory/docker/README.md) — sidecar setup, provider switch
-- [Secrets](home-inventory/secrets/) — sops+age layout
+- [Secrets](home-inventory/secrets/) — sops+age layout (inventory ops secrets)
+- [Edge-secret backup](docs/runbooks/edge-secret-backup.md) — sops/age escrow,
+  restore drill (Cockpit ADR-0004); operator checklist for key generation:
+  [docs/runbooks/operator-checklist-adr-0004.md](docs/runbooks/operator-checklist-adr-0004.md)
 
 ## Conventions
 

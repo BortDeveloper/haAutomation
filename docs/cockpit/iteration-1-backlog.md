@@ -93,6 +93,31 @@ Nach Eingang der DR-Hardware-Token und ADR-0004-Implementierungs-Start:
 
 ---
 
+## Nachtrag 2026-07-25 — ADR-0004 repo-seitig umgesetzt (H.1-Teilschließung)
+
+Repo-seitige ADR-0004-Struktur ist vollständig (Ziel-Direktive G2-Pass,
+Welle 1):
+
+- `edge-secrets/.sops.yaml` (Edge-Klasse-creation_rules, SSOT) +
+  `edge-secrets/README.md` (Layout, Regeln)
+- Scripts: `scripts/edge-secrets/{encrypt,decrypt,verify}.sh`
+  (fail-closed ohne Recipients; verify läuft ohne private Schlüssel)
+- Runbook `docs/runbooks/edge-secret-backup.md` (Backup/Restore/Drill/
+  Rotation) + Operator-Checkliste
+  `docs/runbooks/operator-checklist-adr-0004.md`
+- gitleaks-pre-commit-Hook war bereits aktiv (`.gitleaks.toml`,
+  `scripts/install-hooks.sh`)
+
+**Bewusst NICHT repo-seitig lösbar (Operator-Rest, blockiert
+H.1-Deaktivierung weiterhin):** Erzeugung der 3 age-Keys (Edge-Host,
+Backup-Operator, DR-Hardware-Token inkl. Beschaffung/Off-Site-Standort),
+Recipient-Eintragung, Erst-Backup, **Restore-Drill mit Beleg** (G2.6),
+restic-Off-Site (Folge-ADR Backup-Target). Keine Dummy-Keys im Repo —
+Pipeline bleibt bis zur Key-Eintragung fail-closed.
+H.1-Deaktivierung bleibt Orchestrator-Akt nach Abschluss-Audit.
+
+---
+
 ## Verweise
 
 - KPI-Baseline-Werte (Iteration-2-Ziel): `docs/cockpit/kpi-baseline.md`

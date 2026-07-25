@@ -16,25 +16,27 @@ dem Hardware-Token.
 | 2 | Backup-Operator | VPS-Stack-Host, `/etc/backup/age.key` | `backup-operator-<YYYY-MM-DD>.pub` |
 | 3 | DR-Hardware-Token | offline YubiKey/PIV, physisch off-site verwahrt | `dr-token-<YYYY-MM-DD>.pub` |
 
-Dateiname: `<träger>-<YYYY-MM-DD>.pub`, eine Zeile `age1...`.
+Dateiname: `<träger>-<YYYY-MM-DD>.pub`, eine Zeile `age1...`
+(beim DR-Token: `age1yubikey1...`).
 
-## Status (2026-05-17)
+## Status (2026-07-25)
 
-**Noch keine Keys hinterlegt.** Die Erzeugung ist blockiert auf:
-
-- Schritt 0 (User-Beschaffung, Closing-Brief §7): DR-Hardware-Token besorgen,
-  Tresor-/Off-Site-Standort festlegen.
-- Edge-Host- und Operator-Key auf den jeweiligen Hosts erzeugen
-  (`age-keygen -o /etc/inventory/age.key` bzw. `/etc/backup/age.key`).
+**Noch keine Keys hinterlegt** (R-SOPS-RECIPIENTS-TODO). Die Erzeugung ist
+ein **Operator-Akt** mit Host-/Hardware-Zugriff — Schritt-für-Schritt:
+[`docs/runbooks/operator-checklist-adr-0004.md`](../../docs/runbooks/operator-checklist-adr-0004.md).
+Bis dahin ist die Pipeline bewusst fail-closed
+(`scripts/edge-secrets/encrypt.sh` bricht ab). Keine Platzhalter-Keys.
 
 ## Workflow nach Bereitstellung
 
 1. Auf jedem Host/Token den Key erzeugen, **nur den Public-Teil** als
    `<träger>-<YYYY-MM-DD>.pub` hierher committen.
-2. Die drei `age1...`-Werte in `home-inventory/secrets/.sops.yaml` unter **allen**
-   `creation_rules` eintragen.
+2. Die drei `age1...`-Werte in **beiden** sops-Konfigurationen unter **allen**
+   `creation_rules` eintragen: `edge-secrets/.sops.yaml` (Edge-Klasse,
+   maßgeblich) und `home-inventory/secrets/.sops.yaml` (Inventory-Betriebssecrets).
 3. `sops updatekeys` auf alle `.enc`-Dateien anwenden.
-4. PR mit dem sichtbaren Diff.
+4. `scripts/edge-secrets/verify.sh` muss `OK` melden.
+5. PR mit dem sichtbaren Diff.
 
 Eine Reduktion auf weniger als drei Recipients ist nur über ein Re-Open von
 Cockpit-ADR-0004 zulässig, nicht einseitig.

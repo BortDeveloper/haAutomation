@@ -15,8 +15,8 @@
 ## Voraussetzungen
 
 - [ ] Das verschlüsselte Coordinator-Backup liegt vor:
-      `coordinator_backup.json.enc` (sops, Edge-Klasse — siehe
-      `home-inventory/secrets/.sops.yaml`).
+      `edge-secrets/zigbee2mqtt/coordinator_backup.json.enc` (sops,
+      Edge-Klasse — siehe `edge-secrets/.sops.yaml`).
 - [ ] age-Privatkey eines der drei Recipients ist verfügbar
       (Edge-Host, Backup-Operator oder DR-Hardware-Token —
       `edge-secrets/recipients/README.md`).
@@ -36,7 +36,9 @@
 1. Backup entschlüsseln (auf einem Host mit verfügbarem age-Key):
 
    ```sh
-   sops -d coordinator_backup.json.enc > /tmp/coordinator_backup.json
+   scripts/edge-secrets/decrypt.sh \
+       edge-secrets/zigbee2mqtt/coordinator_backup.json.enc \
+       /tmp/coordinator_backup.json
    ```
 
 2. Die drei Identitätswerte aus dem Backup ablesen und festhalten:
@@ -85,8 +87,11 @@ Nach erfolgreichem Tausch ein neues `coordinator_backup.json` erzeugen,
 gegen die drei Recipients verschlüsseln und committen:
 
 ```sh
-sops -e coordinator_backup.json > coordinator_backup.json.enc
-git add coordinator_backup.json.enc && git commit -m "chore: coordinator-backup nach Austausch"
+scripts/edge-secrets/encrypt.sh /tmp/coordinator_backup.json \
+    edge-secrets/zigbee2mqtt/coordinator_backup.json.enc
+git add edge-secrets/zigbee2mqtt/coordinator_backup.json.enc
+git commit -m "chore: coordinator-backup nach Austausch"
+shred -u /tmp/coordinator_backup.json
 ```
 
 ## Wenn doch ein neues Netz entstanden ist
@@ -100,4 +105,5 @@ bleibt das Neuanlernen aller Geräte als letzte Option.
 
 - Closing-Brief §2.6 (Re-Provisioning-Runbook, Pflichtschritt Network-Key-Restore)
 - Security-Audit Finding R-Z2M-KEY (CRITICAL) — gepflegt extern
-- `home-inventory/secrets/.sops.yaml`, `edge-secrets/recipients/README.md`
+- Backup-/Restore-Runbook: [`edge-secret-backup.md`](edge-secret-backup.md)
+- `edge-secrets/.sops.yaml`, `edge-secrets/recipients/README.md`

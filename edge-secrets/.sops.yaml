@@ -1,0 +1,72 @@
+# sops-Konfiguration für die Edge-Klasse (Cockpit-ADR-0004 §1).
+#
+# Diese Datei ist die MASSGEBLICHE creation_rules-Quelle für alle
+# Edge-Secret-Chiffrate unter edge-secrets/. (Die zweite .sops.yaml unter
+# home-inventory/secrets/ gehört zum eingefrorenen Rust-Inventory-Tool und
+# deckt nur dessen Betriebssecrets ab; bei der Recipient-Eintragung werden
+# BEIDE Dateien gepflegt — siehe docs/runbooks/operator-checklist-adr-0004.md.)
+#
+# === Multi-Recipient-Eskrow (ADR-0004 §3) ===================================
+# Jede Datei der Edge-Klasse MUSS gegen GENAU DREI unabhängige age-Recipients
+# verschlüsselt werden. Die Public Keys liegen versioniert unter
+#   edge-secrets/recipients/<träger>-<YYYY-MM-DD>.pub
+#
+#   1. Edge-Host-Recipient         — Privatkey auf HAOS, /etc/inventory/age.key
+#                                    (0400 root:root)
+#   2. Backup-Operator-Recipient   — Privatkey auf dem VPS-Stack-Host,
+#                                    /etc/backup/age.key
+#   3. DR-Hardware-Token-Recipient — offline (YubiKey/PIV), physisch off-site
+#                                    (anderer Brandabschnitt / Schließfach)
+#
+# STATUS 2026-07-25: Recipients noch NICHT erzeugt (Operator-Akt, siehe
+# Checkliste). Bis alle drei Pubkeys eingetragen sind, bleiben die
+# age:-Strings leer — scripts/edge-secrets/encrypt.sh bricht dann fail-closed
+# ab. KEINE Platzhalter-/Dummy-Keys eintragen.
+# Eine Reduktion auf weniger als 3 Recipients ist nur über ein Re-Open von
+# Cockpit-ADR-0004 zulässig (§Alternatives Considered G).
+#
+# HINWEIS Verschlüsselung: die path_regex-Regeln matchen auf den ZIEL-Namen
+# (*.enc). scripts/edge-secrets/encrypt.sh sorgt dafür (per
+# --filename-override bei sops >= 3.9, sonst über eine zielgleich benannte
+# Temp-Kopie) — nicht von Hand mit abweichenden Dateinamen verschlüsseln.
+
+creation_rules:
+  # (Verzeichnis-Regeln nutzen eine Separator-Klasse aus Slash UND
+  #  Backslash: sops sieht unter Windows Backslash-Pfade.)
+  # --- Zigbee2MQTT: Coordinator-Backup + Addon-Konfiguration ----------------
+  - path_regex: coordinator_backup\.json\.enc$
+    # TODO(recipients): die 3 Pubkeys als EINEN Komma-String eintragen,
+    # z. B. age: "age1<edge-host>,age1<backup-operator>,age1yubikey1<dr-token>"
+    age: ""
+  - path_regex: zigbee2mqtt[/\\].*\.yaml\.enc$
+    # TODO(recipients): die 3 Pubkeys als EINEN Komma-String eintragen,
+    # z. B. age: "age1<edge-host>,age1<backup-operator>,age1yubikey1<dr-token>"
+    age: ""
+
+  # --- Home Assistant: secrets.yaml + Long-Lived Access Tokens --------------
+  - path_regex: .*secrets\.yaml\.enc$
+    # TODO(recipients): die 3 Pubkeys als EINEN Komma-String eintragen,
+    # z. B. age: "age1<edge-host>,age1<backup-operator>,age1yubikey1<dr-token>"
+    age: ""
+  - path_regex: .*tokens\.json\.enc$
+    # TODO(recipients): die 3 Pubkeys als EINEN Komma-String eintragen,
+    # z. B. age: "age1<edge-host>,age1<backup-operator>,age1yubikey1<dr-token>"
+    age: ""
+
+  # --- Node-RED: Credentials-Store -------------------------------------------
+  - path_regex: flows_cred\.json\.enc$
+    # TODO(recipients): die 3 Pubkeys als EINEN Komma-String eintragen,
+    # z. B. age: "age1<edge-host>,age1<backup-operator>,age1yubikey1<dr-token>"
+    age: ""
+
+  # --- Mosquitto: Passwort- und ACL-Datei ------------------------------------
+  - path_regex: mosquitto[/\\](passwd|acl)\.enc$
+    # TODO(recipients): die 3 Pubkeys als EINEN Komma-String eintragen,
+    # z. B. age: "age1<edge-host>,age1<backup-operator>,age1yubikey1<dr-token>"
+    age: ""
+
+  # --- CCU / RaspberryMatic: Sicherungs-Archiv (binär, sops-Binary-Store) ----
+  - path_regex: ccu[/\\].*\.tar\.gz\.enc$
+    # TODO(recipients): die 3 Pubkeys als EINEN Komma-String eintragen,
+    # z. B. age: "age1<edge-host>,age1<backup-operator>,age1yubikey1<dr-token>"
+    age: ""
