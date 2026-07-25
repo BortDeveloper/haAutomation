@@ -116,6 +116,23 @@ restic-Off-Site (Folge-ADR Backup-Target). Keine Dummy-Keys im Repo —
 Pipeline bleibt bis zur Key-Eintragung fail-closed.
 H.1-Deaktivierung bleibt Orchestrator-Akt nach Abschluss-Audit.
 
+### Offene Operator-Tasks (außerhalb dieses Repos)
+
+- **N-1 (aus ccu2mqtt-A1-security, G2.2-relevant): influxdb-Klartext-
+  Passwort in der Live-`configuration.yaml`** der HA-Instanz.
+  Repo-Befund 2026-07-25: die Datei ist in diesem Repo **nicht getrackt**
+  (kein `influx`-Treffer im Working Tree; Pickaxe-Suche über die gesamte
+  Git-History aller Branches negativ) — der Wert war hier **nie
+  committet**, aus Repo-Sicht daher keine Rotationspflicht.
+  Fix auf der Live-Instanz (Operator): Wert nach HA-Konvention in
+  `/config/secrets.yaml` verschieben (`influxdb_password: ...`), in
+  `configuration.yaml` per `!secret influxdb_password` referenzieren;
+  `secrets.yaml` wird danach über den ADR-0004-Backup-Pfad als
+  `edge-secrets/homeassistant/secrets.yaml.enc` gesichert (niemals im
+  Klartext committen — `.gitignore` sperrt `**/*secrets.yaml`).
+  Ob der Wert anderweitig exponiert war (Rotationsentscheid), bewertet
+  der ccu2mqtt-A1-Kontext, nicht dieses Repo.
+
 ---
 
 ## Verweise

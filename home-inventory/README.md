@@ -1,5 +1,18 @@
 # inventory — Rust-Backend
 
+> ## ⏸️ ABGELÖST / EINGEFROREN (seit 2026-06-14)
+>
+> Dieses Rust-Tool ist **eingefroren** und erhält keine
+> Weiterentwicklung mehr. Nachfolger und aktiver SSOT-Träger ist der
+> C11-Fork **`home-inventory-c`** (eigenes Repo/Cockpit-Projekt); dort
+> liegt auch die Producer-Rolle für den Inventar-Snapshot-Vertrag
+> (Cockpit-ADR-0013, revidiert 2026-07-24; diese Markierung =
+> ADR-0013 Folgeentscheidung 6 / ADR-0017 Folgeentscheidung 1).
+> Nur Markierung, kein Umbau — der Code bleibt als Referenz stehen.
+> Die sops-Betriebssecrets-Konfiguration unter `secrets/` bleibt bis
+> zur Ablösung mitgepflegt (siehe
+> `docs/runbooks/operator-checklist-adr-0004.md`).
+
 Synchroner, framework-armer Rust-Code. Eine ausfuehrbare Datei mit drei
 Subkommandos:
 

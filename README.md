@@ -97,7 +97,8 @@ on a public VPS and inspects the home network through a VPN tunnel.
 - [Architecture](docs/architecture.md) — components, data flow, trust
 - [Roadmap](docs/roadmap.md) — step plan S1–S14
 - [VPS setup](docs/vps-setup.md) — server bootstrap, SSH/keys, ops, DR
-- [Inventory backend](home-inventory/) — Rust app
+- [Inventory backend](home-inventory/) — Rust app (frozen since 2026-06-14;
+  successor: `home-inventory-c`)
 - [Docker / VPN](home-inventory/docker/README.md) — sidecar setup, provider switch
 - [Secrets](home-inventory/secrets/) — sops+age layout (inventory ops secrets)
 - [Edge-secret backup](docs/runbooks/edge-secret-backup.md) — sops/age escrow,
