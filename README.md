@@ -55,7 +55,7 @@ the complete, auto-generated list of dependencies, versions, and
 sources. CI enforces (a) byte-for-byte sync with `home-inventory/Cargo.lock`
 on every push (`.github/workflows/security.yml`, job `license-notices`)
 and (b) a permissive-license allowlist via `cargo deny`
-([`home-inventory/deny.toml`](./inventory/deny.toml)). Copyleft licenses
+([`home-inventory/deny.toml`](./home-inventory/deny.toml)). Copyleft licenses
 are rejected.
 
 Single Source of Truth for a personal home-automation setup. Captures,
@@ -66,6 +66,29 @@ on a public VPS and inspects the home network through a VPN tunnel.
 **Status:** Phase 1 + 2 + 3 complete, 52 cargo tests green. VPS deploy
 (VPN sidecar + Caddy + Authentik forward_auth) is up next. Details:
 [docs/roadmap.md](docs/roadmap.md).
+
+## Where to start
+
+Three audiences, three entry points:
+
+| Audience | Interest | Starting question | Primary document |
+|---|---|---|---|
+| Technically interested | Overview | What does this do, and why? | This README + [Requirements](docs/requirements.md) |
+| Operators | Running it | Where do I press what? | [Runbooks](docs/runbooks/) — install, VPS, edge-secret restore |
+| Developers | Extending it | How is it built, how do I extend it? | [Architecture](docs/architecture.md) + [ADRs](docs/decisions/README.md) |
+
+### I want to …
+
+| I want to … | Document |
+|---|---|
+| set up the PoC on my home network | [Getting started](docs/getting-started.md) |
+| build and run it on a Raspberry Pi | [Raspberry Pi install](docs/runbooks/raspberry-pi-install.md) |
+| bootstrap the public VPS | [VPS setup](docs/vps-setup.md) |
+| restore the edge secrets after key loss | [Edge-secret backup runbook](docs/runbooks/edge-secret-backup.md) |
+| generate operator keys (ADR-0004) | [Operator checklist](docs/runbooks/operator-checklist-adr-0004.md) |
+| understand trust boundaries and data flow | [Architecture](docs/architecture.md) |
+| look up a design decision | [ADR index](docs/decisions/README.md) |
+| browse all documentation | [docs/](docs/README.md) |
 
 ## Components
 
@@ -89,21 +112,35 @@ on a public VPS and inspects the home network through a VPN tunnel.
 | Philips Hue | `home-inventory sync hue --config <yaml>` | lights + sensors, multiple bridges | yes, diff-based |
 | Shelly | `home-inventory sync shelly [--ip ...] [--discover-seconds N]` | Gen1+Gen2 via HTTP, mDNS auto-discovery | yes, diff-based |
 
-## Quick links
+## Documentation
+
+A full, categorized index lives in [docs/README.md](docs/README.md). Most-used
+entries:
+
+**Setup and first run**
 
 - [Getting started](docs/getting-started.md) — first-run PoC on a home network (security-audited walkthrough)
-- [Raspberry Pi install](docs/runbooks/raspberry-pi-install.md) — step-by-step: prepare a Pi, build the suite, run the HA sync
-- [Requirements](docs/requirements.md) — what is being built and why
-- [Architecture](docs/architecture.md) — components, data flow, trust
-- [Roadmap](docs/roadmap.md) — step plan S1–S14
+- [Raspberry Pi install](docs/runbooks/raspberry-pi-install.md) — prepare a Pi, build the suite, run the HA sync
 - [VPS setup](docs/vps-setup.md) — server bootstrap, SSH/keys, ops, DR
-- [Inventory backend](home-inventory/) — Rust app (frozen since 2026-06-14;
-  successor: `home-inventory-c`)
+
+**Operating (Day-2)**
+
+- [Runbooks](docs/runbooks/) — edge-secret backup/restore, coordinator replacement, Node-RED flow update
+- [Edge-secret backup](docs/runbooks/edge-secret-backup.md) — sops/age escrow, restore drill (Cockpit ADR-0004)
+- [Operator checklist ADR-0004](docs/runbooks/operator-checklist-adr-0004.md) — key generation steps
+
+**Architecture and decisions**
+
+- [Requirements](docs/requirements.md) — what is being built and why
+- [Architecture](docs/architecture.md) — components, data flow, trust boundaries
+- [Roadmap](docs/roadmap.md) — step plan S1–S14
+- [ADRs](docs/decisions/README.md) — design decisions with rationale
+
+**Code**
+
+- [Inventory backend](home-inventory/) — Rust app (frozen since 2026-06-14; successor: `home-inventory-c`)
 - [Docker / VPN](home-inventory/docker/README.md) — sidecar setup, provider switch
 - [Secrets](home-inventory/secrets/) — sops+age layout (inventory ops secrets)
-- [Edge-secret backup](docs/runbooks/edge-secret-backup.md) — sops/age escrow,
-  restore drill (Cockpit ADR-0004); operator checklist for key generation:
-  [docs/runbooks/operator-checklist-adr-0004.md](docs/runbooks/operator-checklist-adr-0004.md)
 
 ## Conventions
 

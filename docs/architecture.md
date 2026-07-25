@@ -2,7 +2,7 @@
 
 ## Komponenten und Datenfluss
 
-```
+```text
 +----------------------- Public VPS --------------------------+
 |                                                              |
 |   +-------+    +----------+    +------------+               |
@@ -83,7 +83,7 @@ Die wichtigste Designentscheidung. Jede automatisierte Funktion lebt in
 
 ## Trust Boundaries
 
-```
+```text
 [ Internet ]
      |
      | HTTPS, Let's Encrypt
@@ -109,7 +109,7 @@ Die wichtigste Designentscheidung. Jede automatisierte Funktion lebt in
 
 ## Secrets-Architektur
 
-```
+```text
 home-inventory/secrets/                          (im Repo, verschluesselt)
 ├── .sops.yaml                              listet age-recipients (pubkeys)
 ├── common.env.enc                          HA_TOKEN, CCU_USER, CCU_PASS, …
@@ -126,7 +126,7 @@ home-inventory/secrets/                          (im Repo, verschluesselt)
 
 ## Build- und Deploy-Pfad
 
-```
+```text
 Entwickler-Laptop                          VPS-Host
 +-------------------+                      +-------------------+
 | cargo build       |                      |                   |
