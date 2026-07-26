@@ -58,10 +58,16 @@ if grep -q 'TODO(recipients)' "$sops_config"; then
 Schlüssel-Erzeugung ist ein Operator-Akt: docs/runbooks/operator-checklist-adr-0004.md"
 fi
 # Recipients stehen je Regel als EIN Komma-String: age: "age1...,age1...,age1..."
-recipient_count=$(grep -v '^[[:space:]]*#' "$sops_config" \
-                    | grep -Eo 'age1[0-9a-z]+' | wc -l | tr -d '[:space:]')
-[ "$recipient_count" -ge 3 ] || die "weniger als 3 age-Recipients in \
-edge-secrets/.sops.yaml gefunden ($recipient_count) — ADR-0004 §3 verlangt genau 3 je Regel."
+# Regel-genauer Guard (ADR-0004 §3, Nachtrag 1 Auflage d): JEDE creation_rule
+# muss GENAU 3 age-Recipients tragen — "== 3", nicht ">= 3"; eine Datei-
+# Gesamtsumme >= 3 würde leere oder überzählige Einzel-Regeln durchlassen.
+age_lines=$(grep -v '^[[:space:]]*#' "$sops_config" \
+              | grep -E '^[[:space:]]*age:' || :)
+[ -n "$age_lines" ] || die "keine age:-Regel in edge-secrets/.sops.yaml gefunden."
+bad_rules=$(printf '%s\n' "$age_lines" \
+              | grep -Evc '^[[:space:]]*age:[[:space:]]*"age1[0-9a-z]+(,[[:space:]]*age1[0-9a-z]+){2}"[[:space:]]*$' || :)
+[ "$bad_rules" -eq 0 ] || die "$bad_rules creation_rule(s) in \
+edge-secrets/.sops.yaml ohne GENAU 3 age-Recipients — ADR-0004 §3 verlangt exakt 3 je Regel."
 
 mkdir -p "$(dirname "$abs_dest")"
 

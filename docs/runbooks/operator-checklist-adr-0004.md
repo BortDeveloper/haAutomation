@@ -99,6 +99,10 @@ age-plugin-yubikey --identity > ~/dr-token-identity.txt
 - [ ] Beim Backup-Lauf `sha256sum` der Klartexte notieren (Referenz für den
       Drill-Vollständigkeits-Hash; Notiz NICHT ins Repo, sie beschreibt
       Secret-Inhalte).
+- [ ] Erst-Backup-Beleg als destilliertes Protokoll nach
+      [`edge-secret-backup.md`](edge-secret-backup.md) §3/§6 ablegen
+      (ADR-0004 Nachtrag 1, Auflage b — das Erst-Backup ist der
+      Materialschluss des Mesh-Key-Risikos, ohne Beleg zählt es nicht).
 
 ## Schritt 6 — Restore-Drill (schließt den G2.6-Beleg)
 
@@ -106,7 +110,11 @@ age-plugin-yubikey --identity > ~/dr-token-identity.txt
       **alle drei** Recipient-Pfade.
 - [ ] Beleg-Datei in
       `stack-master/shared/audit-log/YYYY-MM-DD-ha-automation-restore-drill.md`
-      (Datum, Operator, Recipient, RTO, Vollständigkeits-Hash).
+      im Beleg-Format nach [`edge-secret-backup.md`](edge-secret-backup.md)
+      §6 (Standard `wiederkehrende-verifikation.md` §3: Datum UTC,
+      Ausführender, Commit-Stand, Kommando-Kette, PASS/FAIL je
+      Recipient-Pfad, Abweichungsliste; plus RTO + Vollständigkeits-Hash;
+      keine Roh-Output-Dumps).
 
 ## Schritt 7 — Meldung
 

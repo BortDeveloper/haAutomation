@@ -61,6 +61,11 @@ Regeln:
   Pfade zusätzlich; `decrypt.sh` verweigert Repo-Ziele).
 - Nach jeder Änderung am Edge (neuer Token, Passwort-Wechsel, Re-Pairing)
   das betroffene Backup erneuern.
+- **Erst-Backup-Beleg** (ADR-0004 Nachtrag 1, Auflage b): auch das
+  Erst-Backup wird als destilliertes Protokoll im Beleg-Format nach §6
+  dokumentiert (ohne die Drill-spezifischen Felder RTO/Recipient-Pfade) —
+  es ist der Materialschluss des irreversiblen Mesh-Key-Risikos und muss
+  nachvollziehbar sein.
 
 ## 4. Off-Site (zweite Schicht)
 
@@ -105,11 +110,29 @@ Für den Coordinator-Tausch gilt zusätzlich das Runbook
 - **Umfang:** vollständiges Snapshot-Set in eine frische (nicht produktive)
   Umgebung wiederherstellen, sops-Dekryption mit **jedem** der drei
   Recipient-Pfade (Edge / Operator / DR-Token), nicht nur dem Standard-Pfad.
-- **Beleg** (ohne ihn ist G2.6 NICHT erfüllt):
+- **Beleg** (ohne ihn ist G2.6 NICHT erfüllt): destilliertes Protokoll im
+  Format des Cockpit-Standards
+  `stack-master/shared/standards/wiederkehrende-verifikation.md` §3, als
   `stack-master/shared/audit-log/YYYY-MM-DD-ha-automation-restore-drill.md`
-  mit: Datum, Operator, verwendeter Recipient, gemessene RTO,
-  Vollständigkeits-Hash (z. B. `sha256sum` über die entschlüsselten Dateien,
-  verglichen gegen den Hash beim Backup-Lauf).
+  mit:
+  - Datum (UTC) und Ausführendem (Operator),
+  - geprüftem Commit-Stand (Runbook + `edge-secrets/`-Chiffrate:
+    Commit-Hash),
+  - Kommando-Kette (was wurde in welcher Reihenfolge ausgeführt),
+  - Ergebnis **PASS/FAIL je Prüfpunkt** — je Recipient-Pfad
+    (Edge / Operator / DR-Token) ein eigener Prüfpunkt,
+  - **Abweichungsliste** (gefundene Drift ist ein dokumentiertes Finding,
+    kein Schönheitsfehler),
+  - gemessene RTO und Vollständigkeits-Hash (z. B. `sha256sum` über die
+    entschlüsselten Dateien, verglichen gegen den Hash beim Backup-Lauf).
+- **Zählt NICHT als Beleg** (Standard §3): Doku-Claims ohne Protokoll,
+  Erinnerungs-Aussagen sowie **Roh-Output-Dumps** — Restore-Rohausgaben
+  können Pfade, Hostnamen und Credentials tragen und gehören weder ins
+  Repo noch ins Audit-Log.
+- **Terminierung** (Standard §4): nach vollzogenem Drill sofort den
+  Folgetermin (+3 Monate, siehe Frequenz oben) mit Owner und
+  Verfalls-Folge im `stack-master`-Follow-up-Register eintragen lassen
+  (Eintrag erfolgt durch den Orchestrator, nicht durch dieses Projekt).
 
 ## 7. Rotation
 
