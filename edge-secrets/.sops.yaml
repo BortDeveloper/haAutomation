@@ -66,7 +66,7 @@ creation_rules:
     age: "age1ulqsaags45u2hx2qutt4t3vj7ntj932clrw3wvd4gy52ztrcfg4s4hujyj,age1h6mmnh3cfhrac36epgsq96lcvaa90d7mca8wg26zd75qal6jfqeqjuzr6t"
 
   # --- CCU / RaspberryMatic: Sicherungs-Archiv (binär, sops-Binary-Store) ----
-  - path_regex: ccu[/\\].*\.tar\.gz\.enc$
+  - path_regex: ccu[/\\].*\.(tar\.gz|sbk)\.enc$
     # edge-host-2026-07-27, backup-operator-2026-07-27 — Interim 2 Recipients
     # per ADR-0004 Nachtrag 2 (2026-07-27); dr-token wird bis 2026-08-15 ergänzt.
     age: "age1ulqsaags45u2hx2qutt4t3vj7ntj932clrw3wvd4gy52ztrcfg4s4hujyj,age1h6mmnh3cfhrac36epgsq96lcvaa90d7mca8wg26zd75qal6jfqeqjuzr6t"
