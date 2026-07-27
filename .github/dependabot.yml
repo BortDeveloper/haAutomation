@@ -1,13 +1,16 @@
 version: 2
 
-# Wöchentliche Dependency-Updates für:
-#   - Rust-Crates des inventory-Workspaces
-#   - GitHub-Actions-Pinnings (für alle Workflows in .github/workflows/)
-#
-# Open-PR-Limit auf 5 begrenzt, damit ein CVE-Sturm die Queue nicht
-# blockiert. Schedule Mo 06:00 UTC läuft nach dem wöchentlichen
-# Security-Scan (Mo 04:00 UTC), damit die security.yml-Findings als
-# Kontext schon vorliegen.
+# Dependency-Update-Politik (architect-4D-Empfehlung 2, 2026-07-27):
+#   - Rust-Crates (cargo): SECURITY-ONLY. Der Inventory-Code ist
+#     eingefroren; Version-Bump-PRs auf totem Code erzeugen nur
+#     PR-Rauschen (5 geschlossene PRs in der Bereinigung 2026-07-27).
+#     `open-pull-requests-limit: 0` deaktiviert Version-Updates —
+#     Dependabot-SECURITY-Updates (GitHub Advisory / RustSec) kommen
+#     davon unabhängig weiterhin als PR.
+#   - GitHub-Actions-Pinnings: weiterhin wöchentliche Version-Updates
+#     (Limit 5), Schedule Mo 06:00 UTC nach dem wöchentlichen
+#     Security-Scan (Mo 04:00 UTC), damit security.yml-Findings als
+#     Kontext vorliegen.
 #
 # Quelle: OWASP A06:2021, NIST SP 800-218 PW.4.1.
 
@@ -19,7 +22,16 @@ updates:
       day: monday
       time: "06:00"
       timezone: UTC
-    open-pull-requests-limit: 5
+    # 0 = keine Version-Update-PRs; Security-Updates bleiben aktiv.
+    open-pull-requests-limit: 0
+    ignore:
+      # getrandom bleibt strukturell auf 0.2: ring 0.17 (via
+      # ureq -> rustls -> ring) verlangt getrandom ^0.2.10 — ein
+      # Major-Bump brächte nur eine zweite getrandom-Major in den
+      # Baum. Dokumentierter Dauer-Pin: home-inventory/Cargo.toml
+      # Z. 50-57. Security-Patches innerhalb 0.2.x bleiben zulässig.
+      - dependency-name: getrandom
+        update-types: ["version-update:semver-major"]
     labels:
       - dependencies
       - automated

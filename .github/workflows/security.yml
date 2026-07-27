@@ -31,7 +31,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Rust toolchain (stable)
-        uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c  # master @ 2026-05-19 (stable profile)
+        uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c  # master (Dependabot-Bump 2026-07-20, stable profile)
         with:
           toolchain: stable
       - name: Cache Cargo registry + target
@@ -57,7 +57,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Install Rust toolchain (stable)
-        uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c  # master @ 2026-05-19 (stable profile)
+        uses: dtolnay/rust-toolchain@2c7215f132e9ebf062739d9130488b56d53c060c  # master (Dependabot-Bump 2026-07-20, stable profile)
         with:
           toolchain: stable
       - name: Cache Cargo registry + target
