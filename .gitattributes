@@ -6,6 +6,10 @@
 # (Raspberry Pi, inventory-Build-Server, VPS). CRLF wuerde die Shebang
 # brechen ("/usr/bin/env bash\r": bad interpreter).
 *.sh text eol=lf
+# Git-Hooks tragen keine Endung — explizit LF erzwingen (Vorfall
+# 2026-07-27: install-hooks.sh + hooks/pre-commit brauchten dos2unix
+# auf dem Windows-Checkout, bevor sie in WSL lauffaehig waren).
+scripts/hooks/* text eol=lf
 *.yml text eol=lf
 *.yaml text eol=lf
 *.md text eol=lf
