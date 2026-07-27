@@ -19,15 +19,27 @@ Multi-Recipient-Eskrow (Ziel: 3 age-Recipients) und gedrilltem Restore-Pfad.
 
 ## 1. Geltungsbereich (Edge-Klasse)
 
-| Secret | Quelle am Edge | Ablage im Repo |
+**Scope-Feststellung vor Ort (Operator, 2026-07-27):** Auf dem
+Edge-Host existiert **kein Zigbee-Stack** (kein Z2M-/deCONZ-Add-on
+installiert, kein ZHA-Eintrag in `core.config_entries`). Der
+installierte Matter-Server ist ungenutzt (kein `matter`-Eintrag in
+`config_entries`, `addon_configs` leer). Beleg:
+`audit-log/2026-07-27-f11-erst-backup-beleg.md` (Abweichungen A1–A5).
+
+| Secret | Quelle am Edge | Ablage im Repo / Status |
 |---|---|---|
-| Zigbee-Network-Key + Coordinator-Backup | Z2M-Datenverzeichnis: `coordinator_backup.json` | `edge-secrets/zigbee2mqtt/coordinator_backup.json.enc` |
-| Z2M-Addon-Konfiguration (inkl. `advanced.network_key`, `frontend.auth_token`) | Z2M `configuration.yaml` | `edge-secrets/zigbee2mqtt/configuration.yaml.enc` |
-| HA `secrets.yaml` | HAOS `/config/secrets.yaml` | `edge-secrets/homeassistant/secrets.yaml.enc` |
-| HA Long-Lived Access Tokens / Supervisor-Token | Export als `tokens.json` | `edge-secrets/homeassistant/tokens.json.enc` |
-| Node-RED Credentials-Store | Addon-Datenverzeichnis: `flows_cred.json` | `edge-secrets/nodered/flows_cred.json.enc` |
-| Mosquitto-Credentials + ACL | `mosquitto/passwd`, `mosquitto/acl` | `edge-secrets/mosquitto/passwd.enc`, `acl.enc` |
-| CCU/RaspberryMatic-Sicherung | Sicherungs-Archiv `.tar.gz` | `edge-secrets/ccu/<name>.tar.gz.enc` |
+| Zigbee-Network-Key + Coordinator-Backup | — | **N/A (real, 2026-07-27):** kein Zigbee auf dem Edge-Host — kein Z2M-/deCONZ-Add-on, kein ZHA in `core.config_entries` |
+| Z2M-Addon-Konfiguration (inkl. `advanced.network_key`, `frontend.auth_token`) | — | **N/A (real, 2026-07-27):** s. o., kein Z2M vorhanden |
+| HA `secrets.yaml` | HAOS `/config/secrets.yaml` | `edge-secrets/homeassistant/secrets.yaml.enc` — **AKTIV** (Erst-Backup `77a5eb8`) |
+| HA Long-Lived Access Tokens / Supervisor-Token | — | **N/A mit Begründung:** Tokens sind reissuable (kein irreversibles Material); nach einem Restore werden Tokens neu ausgestellt — kein `tokens.json`-Export |
+| Node-RED Credentials-Store | Addon-Datenverzeichnis: `flows_cred.json` | `edge-secrets/nodered/flows_cred.json.enc` — **AKTIV** (Erst-Backup `77a5eb8`) |
+| Mosquitto-Credentials + ACL | Add-on-Optionen bzw. Fremd-SSOT | **N/A per Querverweis:** Logins liegen in den Add-on-Optionen (über den HA-Backup-Restore-Pfad abgedeckt; mqtt-broker-addon-Drill 2026-07-27) und in ccu2mqtt `.local/secrets`; ACL-SSOT ist das ccu2mqtt-Repo (ADR-0017) |
+| CCU/RaspberryMatic-Sicherung | Sicherungs-Archiv **`.sbk`** (CCU3-WebUI-Systemsicherung) | `edge-secrets/ccu/<name>.sbk.enc` — **AKTIV** (Erst-Backup `171f304`) |
+| Matter-Server | installiert, ungenutzt | **N/A**; LOW-Empfehlung: Add-on deinstallieren erwägen (Angriffsflächen-/Scope-Hygiene) |
+
+N/A-Zeilen gelten bis zur nächsten Scope-Feststellung: bei
+Inbetriebnahme (z. B. Zigbee-Coordinator, Matter-Nutzung) rückt der
+betroffene Bestand **sofort** wieder in den Backup-Scope.
 
 ## 2. Voraussetzungen
 
@@ -40,6 +52,16 @@ Multi-Recipient-Eskrow (Ziel: 3 age-Recipients) und gedrilltem Restore-Pfad.
       Versionen).
 - [ ] gitleaks-pre-commit-Hook aktiv: `scripts/install-hooks.sh`
       (fail-closed; Stop-Gap bis zur CI-Instanz, ADR-0004 §5 / S19).
+
+> **Betriebsnotiz Windows-Checkout / WSL (2026-07-27):** Auf einem
+> Windows-Arbeitshost laufen die Scripts (`encrypt.sh`, `decrypt.sh`,
+> `verify.sh`, `install-hooks.sh`, Hooks) in **WSL**; die
+> Werkzeug-Basis `sops`/`age`/`gitleaks` muss **in WSL** installiert
+> sein (Windows-seitige Installationen genügen nicht).
+> Zeilenenden: `.gitattributes` erzwingt LF für `*.sh` und
+> `scripts/hooks/*` — Anlass: am 2026-07-27 lagen `install-hooks.sh`
+> und `scripts/hooks/pre-commit` im Windows-Checkout mit CRLF vor und
+> brauchten `dos2unix`, bevor sie in WSL lauffähig waren.
 
 ## 3. Backup-Pfad
 
@@ -107,6 +129,14 @@ scripts/edge-secrets/decrypt.sh \
 # ... verwenden, dann:
 shred -u /tmp/coordinator_backup.json
 ```
+
+> **Hinweis für Zielhosts ohne dieses Repo (Drill-Erfahrung
+> 2026-07-27):** Liegt nur das Chiffrat plus sops-Binary vor (kein
+> `decrypt.sh`), braucht `sops decrypt` explizite
+> `--input-type`/`--output-type`-Flags (`json` bzw. `yaml`), weil die
+> Typ-Erkennung an der `.enc`-Endung scheitert. `decrypt.sh` kodiert
+> das bereits — bei Drills auf fremden Hosts entweder das Script
+> mitnehmen oder die Flags setzen.
 
 Für den Coordinator-Tausch gilt zusätzlich das Runbook
 [`coordinator-replacement.md`](coordinator-replacement.md) — Network-Key
