@@ -2,7 +2,15 @@
 
 **Zweck:** Verschlüsseltes, wiederherstellbares Backup aller Edge-Secrets
 (Zigbee, Home Assistant, Mosquitto, Node-RED, CCU) mit
-Multi-Recipient-Eskrow (3 age-Recipients) und gedrilltem Restore-Pfad.
+Multi-Recipient-Eskrow (Ziel: 3 age-Recipients) und gedrilltem Restore-Pfad.
+
+> **INTERIM (ADR-0004 Nachtrag 2, 2026-07-27):** Die Pipeline läuft
+> übergangsweise mit **2 Recipients** (Edge-Host + Backup-Operator).
+> Der DR-Hardware-Token-Recipient wird bis **2026-08-15** nachgerüstet
+> (YubiKey-Konsens besteht, nur verschoben). Bis dahin ist der Drill ein
+> **2-Pfad-Drill** (P1 Edge, P2 Operator); P3 (DR-Token) wird nach dem
+> Token-Setup nachgeholt — erst dann greift die volle
+> H.1-Deaktivierungs-Voraussetzung nach ADR-0004 §6.
 
 **Spec:** `stack-master/shared/architecture-decisions/0004-edge-secret-backup.md`
 **Quality-Gates:** G2.2 (keine Klartext-Secrets), G2.6 (Backup getestet, Restore-Beleg)
@@ -23,8 +31,8 @@ Multi-Recipient-Eskrow (3 age-Recipients) und gedrilltem Restore-Pfad.
 
 ## 2. Voraussetzungen
 
-- [ ] Die drei age-Recipients sind erzeugt und eingetragen —
-      **Operator-Akt**, Schritt-für-Schritt:
+- [ ] Die age-Recipients sind erzeugt und eingetragen (Interim: 2, siehe
+      Kasten oben) — **Operator-Akt**, Schritt-für-Schritt:
       [`operator-checklist-adr-0004.md`](operator-checklist-adr-0004.md).
       Ohne sie bricht `encrypt.sh` fail-closed ab.
 - [ ] `sops` und `age` sind auf dem Arbeitshost installiert
@@ -79,13 +87,14 @@ die einzige Off-Site-Kopie — dokumentierte Lücke, kein G2.6-Vollpass.
 
 ## 5. Restore-Pfad
 
-Drei gleichwertige Wege (je Recipient):
+Gleichwertige Wege (je Recipient; DR-Token erst nach Nachrüstung,
+Interim-Kasten oben):
 
 | Recipient | Privatkey | Vorgehen |
 |---|---|---|
 | Edge-Host | HAOS `/etc/inventory/age.key` | `decrypt.sh` findet den Key automatisch |
 | Backup-Operator | VPS-Host `/etc/backup/age.key` | `decrypt.sh` findet den Key automatisch |
-| DR-Hardware-Token | YubiKey (offline verwahrt) | `age-plugin-yubikey` im PATH; `SOPS_AGE_KEY_FILE` auf die Token-Identity-Datei setzen |
+| DR-Hardware-Token *(ab Nachrüstung, bis 2026-08-15)* | YubiKey (offline verwahrt) | `age-plugin-yubikey` im PATH; `SOPS_AGE_KEY_FILE` auf die Token-Identity-Datei setzen |
 
 ```sh
 # Klartext direkt weiterverarbeiten (bevorzugt, nichts landet auf Platte):
@@ -108,8 +117,13 @@ Für den Coordinator-Tausch gilt zusätzlich das Runbook
 - **Frequenz:** vierteljährlich; zusätzlich nach jeder Strukturänderung
   des Backup-Pfads.
 - **Umfang:** vollständiges Snapshot-Set in eine frische (nicht produktive)
-  Umgebung wiederherstellen, sops-Dekryption mit **jedem** der drei
-  Recipient-Pfade (Edge / Operator / DR-Token), nicht nur dem Standard-Pfad.
+  Umgebung wiederherstellen, sops-Dekryption mit **jedem** eingetragenen
+  Recipient-Pfad, nicht nur dem Standard-Pfad.
+  **Interim (Nachtrag 2, 2026-07-27):** bis zur DR-Token-Nachrüstung ist
+  das ein **2-Pfad-Drill** — P1 Edge-Host, P2 Backup-Operator. P3
+  (DR-Token) wird nach dem Token-Setup (Frist 2026-08-15) nachgeholt;
+  erst mit vollzogenem P3 greift die volle H.1-Deaktivierungs-
+  Voraussetzung nach ADR-0004 §6.
 - **Beleg** (ohne ihn ist G2.6 NICHT erfüllt): destilliertes Protokoll im
   Format des Cockpit-Standards
   `stack-master/shared/standards/wiederkehrende-verifikation.md` §3, als

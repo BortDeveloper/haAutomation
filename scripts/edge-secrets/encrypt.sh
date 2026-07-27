@@ -1,8 +1,11 @@
 #!/bin/sh
 # ha-automation Edge-Secret-Verschlüsselung (Cockpit-ADR-0004 §1/§3).
 #
-# Verschlüsselt genau EINE Klartext-Datei gegen die drei age-Recipients aus
+# Verschlüsselt genau EINE Klartext-Datei gegen die age-Recipients aus
 # edge-secrets/.sops.yaml und legt das Chiffrat unter edge-secrets/ ab.
+# INTERIM (ADR-0004 Nachtrag 2, 2026-07-27): 2 Recipients (Edge-Host +
+# Backup-Operator); DR-Token wird bis 2026-08-15 nachgerüstet, danach
+# Guards zurück auf ==3.
 #
 # Aufruf:
 #   scripts/edge-secrets/encrypt.sh <klartext-datei> <ziel-pfad.enc>
@@ -13,14 +16,14 @@
 #
 # Eigenschaften:
 #   - fail-closed: solange die Recipients in edge-secrets/.sops.yaml nicht
-#     vollständig eingetragen sind (3x age1...), bricht das Script ab —
-#     siehe docs/runbooks/operator-checklist-adr-0004.md.
+#     vollständig eingetragen sind (2x age1..., Interim s. o.), bricht das
+#     Script ab — siehe docs/runbooks/operator-checklist-adr-0004.md.
 #   - nutzt `sops --filename-override` (sops >= 3.9), damit die
 #     .enc-orientierten path_regex-Regeln greifen; für älteres sops greift
 #     ein Fallback über eine temporäre, zielgleich benannte Kopie
 #     AUSSERHALB des Repos.
 #   - verifiziert das Ergebnis sofort via verify.sh (sops-Header,
-#     Recipient-Anzahl == 3).
+#     Recipient-Anzahl == 2, Interim).
 #   - die Klartext-Quelle bleibt unangetastet; nach erfolgreichem Commit
 #     sicher löschen (`shred -u <datei>` bzw. äquivalent).
 set -eu
@@ -57,17 +60,19 @@ if grep -q 'TODO(recipients)' "$sops_config"; then
   die "Recipients in edge-secrets/.sops.yaml sind noch TODO — \
 Schlüssel-Erzeugung ist ein Operator-Akt: docs/runbooks/operator-checklist-adr-0004.md"
 fi
-# Recipients stehen je Regel als EIN Komma-String: age: "age1...,age1...,age1..."
+# Recipients stehen je Regel als EIN Komma-String: age: "age1...,age1..."
 # Regel-genauer Guard (ADR-0004 §3, Nachtrag 1 Auflage d): JEDE creation_rule
-# muss GENAU 3 age-Recipients tragen — "== 3", nicht ">= 3"; eine Datei-
-# Gesamtsumme >= 3 würde leere oder überzählige Einzel-Regeln durchlassen.
+# muss GENAU 2 age-Recipients tragen — "== 2", nicht ">= 2"; eine Datei-
+# Gesamtsumme würde leere oder überzählige Einzel-Regeln durchlassen.
+# INTERIM per Nachtrag 2 (2026-07-27): ==2 statt ==3; bei DR-Token-
+# Nachrüstung (bis 2026-08-15) zurück auf ==3 stellen ({1} -> {2} im Regex).
 age_lines=$(grep -v '^[[:space:]]*#' "$sops_config" \
               | grep -E '^[[:space:]]*age:' || :)
 [ -n "$age_lines" ] || die "keine age:-Regel in edge-secrets/.sops.yaml gefunden."
 bad_rules=$(printf '%s\n' "$age_lines" \
-              | grep -Evc '^[[:space:]]*age:[[:space:]]*"age1[0-9a-z]+(,[[:space:]]*age1[0-9a-z]+){2}"[[:space:]]*$' || :)
+              | grep -Evc '^[[:space:]]*age:[[:space:]]*"age1[0-9a-z]+(,[[:space:]]*age1[0-9a-z]+){1}"[[:space:]]*$' || :)
 [ "$bad_rules" -eq 0 ] || die "$bad_rules creation_rule(s) in \
-edge-secrets/.sops.yaml ohne GENAU 3 age-Recipients — ADR-0004 §3 verlangt exakt 3 je Regel."
+edge-secrets/.sops.yaml ohne GENAU 2 age-Recipients — Interim-Soll nach ADR-0004 Nachtrag 2 (2026-07-27)."
 
 mkdir -p "$(dirname "$abs_dest")"
 

@@ -10,6 +10,16 @@ Public Keys (`age1…`) unter `edge-secrets/recipients/`.
 **Keine Platzhalter-/Dummy-Keys** — solange Recipients fehlen, bleibt die
 Pipeline bewusst fail-closed.
 
+> **INTERIM (ADR-0004 Nachtrag 2, 2026-07-27):** Schritte 1, 2 und 4 sind
+> mit **2 Recipients** vollzogen (`edge-host-2026-07-27.pub`,
+> `backup-operator-2026-07-27.pub`). Schritt 3 (DR-Hardware-Token) ist
+> **verschoben, nicht gestrichen** — Nachrüst-Frist **2026-08-15**
+> (YubiKey-Konsens besteht). Bis dahin: Guards und `verify.sh` prüfen auf
+> genau 2 Recipients; der Drill (Schritt 6) ist ein **2-Pfad-Drill**
+> (P1 Edge, P2 Operator). P3 (DR-Token) wird nach dem Token-Setup
+> nachgeholt — erst dann greift die volle H.1-Deaktivierungs-Voraussetzung
+> nach ADR-0004 §6.
+
 ---
 
 ## Schritt 0 — Beschaffung / Standort (einmalig)
@@ -48,6 +58,11 @@ age-keygen -y /etc/backup/age.key
 
 ## Schritt 3 — DR-Hardware-Token-Recipient (YubiKey)
 
+> **INTERIM: verschoben bis 2026-08-15** (ADR-0004 Nachtrag 2, 2026-07-27).
+> Nach Vollzug: `dr-token-<datum>.pub` committen, beide `.sops.yaml` auf
+> 3er-Komma-Strings heben, `sops updatekeys` auf alle `.enc`-Dateien,
+> Guards in `encrypt.sh`/`verify.sh` zurück auf ==3, P3-Drill nachholen.
+
 > Hardware-Interaktion (`ykman`/`age-plugin-yubikey`) nur mit explizitem
 > User-Konsens — Briefing-Vorgabe.
 
@@ -67,8 +82,9 @@ age-plugin-yubikey --identity > ~/dr-token-identity.txt
 
 ## Schritt 4 — Recipients ins Repo eintragen
 
-- [ ] Die drei `.pub`-Dateien committen (`edge-secrets/recipients/`).
-- [ ] Alle drei `age1…`-Werte in **beide** sops-Konfigurationen unter
+- [x] Die `.pub`-Dateien committen (`edge-secrets/recipients/`) —
+      Interim: 2 Dateien (2026-07-27); dr-token folgt bis 2026-08-15.
+- [x] Alle `age1…`-Werte in **beide** sops-Konfigurationen unter
       **jeder** `creation_rules`-Regel eintragen und die
       `# TODO(recipients)`-Kommentare entfernen:
   - `edge-secrets/.sops.yaml` (Edge-Klasse — maßgeblich)
@@ -76,18 +92,19 @@ age-plugin-yubikey --identity > ~/dr-token-identity.txt
     Inventory-Tools; mitpflegen, solange dessen `.enc`-Klassen existieren)
 
   Format je Regel — sops erwartet die Recipients als **einen
-  Komma-String** (keine YAML-Liste):
+  Komma-String** (keine YAML-Liste; Interim ohne dr-token):
 
   ```yaml
   - path_regex: coordinator_backup\.json\.enc$
-    # edge-host-<datum>, backup-operator-<datum>, dr-token-<datum>
-    age: "age1AAA...,age1BBB...,age1yubikey1CCC..."
+    # edge-host-<datum>, backup-operator-<datum>[, dr-token-<datum> ab Nachrüstung]
+    age: "age1AAA...,age1BBB..."
   ```
 
 - [ ] Falls bereits `.enc`-Dateien existieren (bei Rotation):
       `sops updatekeys <datei>.enc` auf jede Datei anwenden.
-- [ ] `scripts/edge-secrets/verify.sh` ausführen → muss `OK` melden
-      (Pubkeys 3/3, keine TODO-Reste bei vorhandenen Chiffraten).
+- [x] `scripts/edge-secrets/verify.sh` ausführen → muss `OK` melden
+      (Interim: Pubkeys 2/2, keine TODO-Reste bei vorhandenen Chiffraten;
+      nach Nachrüstung wieder 3/3).
 - [ ] Commit + PR mit sichtbarem Diff.
 
 ## Schritt 5 — Erst-Backup ziehen
@@ -107,7 +124,10 @@ age-plugin-yubikey --identity > ~/dr-token-identity.txt
 ## Schritt 6 — Restore-Drill (schließt den G2.6-Beleg)
 
 - [ ] Drill nach [`edge-secret-backup.md`](edge-secret-backup.md) §6 über
-      **alle drei** Recipient-Pfade.
+      **alle eingetragenen** Recipient-Pfade — Interim (Nachtrag 2):
+      **2-Pfad-Drill** (P1 Edge, P2 Operator); P3 (DR-Token) wird nach dem
+      Token-Setup nachgeholt, erst dann greift die volle
+      H.1-Deaktivierungs-Voraussetzung nach ADR-0004 §6.
 - [ ] Beleg-Datei in
       `stack-master/shared/audit-log/YYYY-MM-DD-ha-automation-restore-drill.md`
       im Beleg-Format nach [`edge-secret-backup.md`](edge-secret-backup.md)

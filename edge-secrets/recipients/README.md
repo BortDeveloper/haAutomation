@@ -19,13 +19,19 @@ dem Hardware-Token.
 Dateiname: `<träger>-<YYYY-MM-DD>.pub`, eine Zeile `age1...`
 (beim DR-Token: `age1yubikey1...`).
 
-## Status (2026-07-25)
+## Status (2026-07-27) — Interim 2 Recipients
 
-**Noch keine Keys hinterlegt** (R-SOPS-RECIPIENTS-TODO). Die Erzeugung ist
-ein **Operator-Akt** mit Host-/Hardware-Zugriff — Schritt-für-Schritt:
+Hinterlegt sind **2 von 3** Recipients (ADR-0004 Nachtrag 2, 2026-07-27):
+
+- `edge-host-2026-07-27.pub`
+- `backup-operator-2026-07-27.pub`
+
+Der DR-Hardware-Token-Recipient (`dr-token-<datum>.pub`) wird bis
+**2026-08-15** nachgerüstet (YubiKey-Konsens besteht, nur verschoben) —
+Schritt-für-Schritt:
 [`docs/runbooks/operator-checklist-adr-0004.md`](../../docs/runbooks/operator-checklist-adr-0004.md).
-Bis dahin ist die Pipeline bewusst fail-closed
-(`scripts/edge-secrets/encrypt.sh` bricht ab). Keine Platzhalter-Keys.
+Bis dahin prüfen `encrypt.sh`/`verify.sh` auf genau 2 Recipients.
+Keine Platzhalter-Keys.
 
 ## Workflow nach Bereitstellung
 
@@ -38,5 +44,6 @@ Bis dahin ist die Pipeline bewusst fail-closed
 4. `scripts/edge-secrets/verify.sh` muss `OK` melden.
 5. PR mit dem sichtbaren Diff.
 
-Eine Reduktion auf weniger als drei Recipients ist nur über ein Re-Open von
-Cockpit-ADR-0004 zulässig, nicht einseitig.
+Eine Reduktion auf weniger als drei Recipients ist nur über ein Re-Open bzw.
+einen Nachtrag zu Cockpit-ADR-0004 zulässig, nicht einseitig — der aktuelle
+Interim-2-Modus ist durch Nachtrag 2 (2026-07-27) gedeckt.

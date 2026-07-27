@@ -13,11 +13,13 @@
 # Prüfungen je Datei:
 #   V1  Datei endet auf .enc (alles andere unter edge-secrets/ = Verstoß)
 #   V2  sops-Chiffrat-Signatur vorhanden (ENC[AES256_GCM + sops-Metadaten)
-#   V3  GENAU 3 age-Recipients in den sops-Metadaten (Eskrow, ADR-0004 §3)
+#   V3  GENAU 2 age-Recipients in den sops-Metadaten (Eskrow, ADR-0004 §3;
+#       INTERIM per Nachtrag 2, 2026-07-27 — nach DR-Token-Nachrüstung
+#       bis 2026-08-15 zurück auf 3)
 #   V4  bekannte Edge-Marker-Schlüssel tragen keinen Klartext-Wert
 # Zusätzlich (Gesamtstatus):
-#   V5  Recipient-Stand: sobald Chiffrate existieren, müssen 3 Pubkeys unter
-#       recipients/ liegen und die TODOs in .sops.yaml getilgt sein.
+#   V5  Recipient-Stand: sobald Chiffrate existieren, müssen 2 Pubkeys unter
+#       recipients/ liegen und die TODOs in .sops.yaml getilgt sein (Interim).
 #
 # Exit-Code 0 = alles sauber, 1 = mindestens ein Verstoß.
 set -eu
@@ -61,10 +63,11 @@ for f in $files; do
     err "V2 $f: keine sops-Metadaten gefunden."
   fi
 
-  # V3: genau 3 age-Recipients (YAML: 'recipient: age1…' / JSON: '"recipient": "age1…')
+  # V3: genau 2 age-Recipients (YAML: 'recipient: age1…' / JSON: '"recipient": "age1…')
+  # (Interim per Nachtrag 2; nach DR-Token-Nachrüstung zurück auf 3.)
   n=$(grep -Ec 'recipient"?:[[:space:]]*"?age1' "$f") || n=0
-  if [ "$n" -ne 3 ]; then
-    err "V3 $f: erwartet GENAU 3 age-Recipients (ADR-0004 §3), gefunden: $n"
+  if [ "$n" -ne 2 ]; then
+    err "V3 $f: erwartet GENAU 2 age-Recipients (ADR-0004 §3, Interim Nachtrag 2), gefunden: $n"
   fi
 
   # V4: Marker-Schlüssel dürfen nur ENC[-Werte tragen (sops lässt Keys im Klartext)
@@ -91,18 +94,18 @@ if grep -q 'TODO(recipients)' "$sops_config" 2>/dev/null; then
 fi
 
 if [ "$enc_count" -gt 0 ]; then
-  [ "$pub_count" -eq 3 ] || err "V5: $enc_count Chiffrat(e) vorhanden, aber $pub_count/3 Pubkeys unter recipients/."
+  [ "$pub_count" -eq 2 ] || err "V5: $enc_count Chiffrat(e) vorhanden, aber $pub_count/2 Pubkeys unter recipients/."
   [ "$todo_open" -eq 0 ] || err "V5: Chiffrate vorhanden, aber .sops.yaml trägt noch TODO(recipients)."
 else
-  if [ "$todo_open" -eq 1 ] || [ "$pub_count" -lt 3 ]; then
-    info "HINWEIS: noch keine Chiffrate; Recipients unvollständig ($pub_count/3, \
+  if [ "$todo_open" -eq 1 ] || [ "$pub_count" -lt 2 ]; then
+    info "HINWEIS: noch keine Chiffrate; Recipients unvollständig ($pub_count/2, \
 TODO offen: $todo_open) — Operator-Checkliste docs/runbooks/operator-checklist-adr-0004.md \
 (R-SOPS-RECIPIENTS-TODO)."
   fi
 fi
 
 if [ "$fail" -eq 0 ]; then
-  info "OK — geprüfte Chiffrate: $enc_count, Pubkeys: $pub_count/3."
+  info "OK — geprüfte Chiffrate: $enc_count, Pubkeys: $pub_count/2."
 else
   echo "verify: FEHLGESCHLAGEN (Details oben)." >&2
 fi

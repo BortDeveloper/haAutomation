@@ -27,6 +27,8 @@ Die Komponenten-Verzeichnisse entstehen mit dem ersten Backup-Lauf
    Edge-Klasse sind in `.gitignore` gesperrt (deny-then-allow-Pattern).
 2. **Genau 3 age-Recipients** pro Datei (Edge-Host, Backup-Operator,
    DR-Hardware-Token) — Multi-Recipient-Eskrow, ADR-0004 §3.
+   *Interim per Nachtrag 2 (2026-07-27): genau 2 Recipients (Edge-Host +
+   Backup-Operator); DR-Token wird bis 2026-08-15 nachgerüstet.*
 3. Verschlüsseln/Entschlüsseln/Prüfen ausschließlich über die Scripts:
    - `scripts/edge-secrets/encrypt.sh` — Klartext → Chiffrat (fail-closed
      ohne eingetragene Recipients)

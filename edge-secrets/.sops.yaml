@@ -7,8 +7,8 @@
 # BEIDE Dateien gepflegt — siehe docs/runbooks/operator-checklist-adr-0004.md.)
 #
 # === Multi-Recipient-Eskrow (ADR-0004 §3) ===================================
-# Jede Datei der Edge-Klasse MUSS gegen GENAU DREI unabhängige age-Recipients
-# verschlüsselt werden. Die Public Keys liegen versioniert unter
+# Ziel-Zustand: GENAU DREI unabhängige age-Recipients je Datei. Die Public
+# Keys liegen versioniert unter
 #   edge-secrets/recipients/<träger>-<YYYY-MM-DD>.pub
 #
 #   1. Edge-Host-Recipient         — Privatkey auf HAOS, /etc/inventory/age.key
@@ -18,12 +18,12 @@
 #   3. DR-Hardware-Token-Recipient — offline (YubiKey/PIV), physisch off-site
 #                                    (anderer Brandabschnitt / Schließfach)
 #
-# STATUS 2026-07-25: Recipients noch NICHT erzeugt (Operator-Akt, siehe
-# Checkliste). Bis alle drei Pubkeys eingetragen sind, bleiben die
-# age:-Strings leer — scripts/edge-secrets/encrypt.sh bricht dann fail-closed
-# ab. KEINE Platzhalter-/Dummy-Keys eintragen.
-# Eine Reduktion auf weniger als 3 Recipients ist nur über ein Re-Open von
-# Cockpit-ADR-0004 zulässig (§Alternatives Considered G).
+# INTERIM (ADR-0004 Nachtrag 2, 2026-07-27): Übergangsweise GENAU ZWEI
+# Recipients (Edge-Host + Backup-Operator). Der DR-Hardware-Token-Recipient
+# wird bis 2026-08-15 nachgerüstet (YubiKey-Konsens besteht, nur verschoben);
+# danach: dr-token-Pubkey ergänzen, beide .sops.yaml auf 3er-Strings heben,
+# `sops updatekeys` auf alle .enc-Dateien, Guards zurück auf ==3.
+# KEINE Platzhalter-/Dummy-Keys eintragen (Checklisten-Verbot).
 #
 # HINWEIS Verschlüsselung: die path_regex-Regeln matchen auf den ZIEL-Namen
 # (*.enc). scripts/edge-secrets/encrypt.sh sorgt dafür (per
@@ -35,38 +35,38 @@ creation_rules:
   #  Backslash: sops sieht unter Windows Backslash-Pfade.)
   # --- Zigbee2MQTT: Coordinator-Backup + Addon-Konfiguration ----------------
   - path_regex: coordinator_backup\.json\.enc$
-    # TODO(recipients): die 3 Pubkeys als EINEN Komma-String eintragen,
-    # z. B. age: "age1<edge-host>,age1<backup-operator>,age1yubikey1<dr-token>"
-    age: ""
+    # edge-host-2026-07-27, backup-operator-2026-07-27 — Interim 2 Recipients
+    # per ADR-0004 Nachtrag 2 (2026-07-27); dr-token wird bis 2026-08-15 ergänzt.
+    age: "age1ulqsaags45u2hx2qutt4t3vj7ntj932clrw3wvd4gy52ztrcfg4s4hujyj,age1h6mmnh3cfhrac36epgsq96lcvaa90d7mca8wg26zd75qal6jfqeqjuzr6t"
   - path_regex: zigbee2mqtt[/\\].*\.yaml\.enc$
-    # TODO(recipients): die 3 Pubkeys als EINEN Komma-String eintragen,
-    # z. B. age: "age1<edge-host>,age1<backup-operator>,age1yubikey1<dr-token>"
-    age: ""
+    # edge-host-2026-07-27, backup-operator-2026-07-27 — Interim 2 Recipients
+    # per ADR-0004 Nachtrag 2 (2026-07-27); dr-token wird bis 2026-08-15 ergänzt.
+    age: "age1ulqsaags45u2hx2qutt4t3vj7ntj932clrw3wvd4gy52ztrcfg4s4hujyj,age1h6mmnh3cfhrac36epgsq96lcvaa90d7mca8wg26zd75qal6jfqeqjuzr6t"
 
   # --- Home Assistant: secrets.yaml + Long-Lived Access Tokens --------------
   - path_regex: .*secrets\.yaml\.enc$
-    # TODO(recipients): die 3 Pubkeys als EINEN Komma-String eintragen,
-    # z. B. age: "age1<edge-host>,age1<backup-operator>,age1yubikey1<dr-token>"
-    age: ""
+    # edge-host-2026-07-27, backup-operator-2026-07-27 — Interim 2 Recipients
+    # per ADR-0004 Nachtrag 2 (2026-07-27); dr-token wird bis 2026-08-15 ergänzt.
+    age: "age1ulqsaags45u2hx2qutt4t3vj7ntj932clrw3wvd4gy52ztrcfg4s4hujyj,age1h6mmnh3cfhrac36epgsq96lcvaa90d7mca8wg26zd75qal6jfqeqjuzr6t"
   - path_regex: .*tokens\.json\.enc$
-    # TODO(recipients): die 3 Pubkeys als EINEN Komma-String eintragen,
-    # z. B. age: "age1<edge-host>,age1<backup-operator>,age1yubikey1<dr-token>"
-    age: ""
+    # edge-host-2026-07-27, backup-operator-2026-07-27 — Interim 2 Recipients
+    # per ADR-0004 Nachtrag 2 (2026-07-27); dr-token wird bis 2026-08-15 ergänzt.
+    age: "age1ulqsaags45u2hx2qutt4t3vj7ntj932clrw3wvd4gy52ztrcfg4s4hujyj,age1h6mmnh3cfhrac36epgsq96lcvaa90d7mca8wg26zd75qal6jfqeqjuzr6t"
 
   # --- Node-RED: Credentials-Store -------------------------------------------
   - path_regex: flows_cred\.json\.enc$
-    # TODO(recipients): die 3 Pubkeys als EINEN Komma-String eintragen,
-    # z. B. age: "age1<edge-host>,age1<backup-operator>,age1yubikey1<dr-token>"
-    age: ""
+    # edge-host-2026-07-27, backup-operator-2026-07-27 — Interim 2 Recipients
+    # per ADR-0004 Nachtrag 2 (2026-07-27); dr-token wird bis 2026-08-15 ergänzt.
+    age: "age1ulqsaags45u2hx2qutt4t3vj7ntj932clrw3wvd4gy52ztrcfg4s4hujyj,age1h6mmnh3cfhrac36epgsq96lcvaa90d7mca8wg26zd75qal6jfqeqjuzr6t"
 
   # --- Mosquitto: Passwort- und ACL-Datei ------------------------------------
   - path_regex: mosquitto[/\\](passwd|acl)\.enc$
-    # TODO(recipients): die 3 Pubkeys als EINEN Komma-String eintragen,
-    # z. B. age: "age1<edge-host>,age1<backup-operator>,age1yubikey1<dr-token>"
-    age: ""
+    # edge-host-2026-07-27, backup-operator-2026-07-27 — Interim 2 Recipients
+    # per ADR-0004 Nachtrag 2 (2026-07-27); dr-token wird bis 2026-08-15 ergänzt.
+    age: "age1ulqsaags45u2hx2qutt4t3vj7ntj932clrw3wvd4gy52ztrcfg4s4hujyj,age1h6mmnh3cfhrac36epgsq96lcvaa90d7mca8wg26zd75qal6jfqeqjuzr6t"
 
   # --- CCU / RaspberryMatic: Sicherungs-Archiv (binär, sops-Binary-Store) ----
   - path_regex: ccu[/\\].*\.tar\.gz\.enc$
-    # TODO(recipients): die 3 Pubkeys als EINEN Komma-String eintragen,
-    # z. B. age: "age1<edge-host>,age1<backup-operator>,age1yubikey1<dr-token>"
-    age: ""
+    # edge-host-2026-07-27, backup-operator-2026-07-27 — Interim 2 Recipients
+    # per ADR-0004 Nachtrag 2 (2026-07-27); dr-token wird bis 2026-08-15 ergänzt.
+    age: "age1ulqsaags45u2hx2qutt4t3vj7ntj932clrw3wvd4gy52ztrcfg4s4hujyj,age1h6mmnh3cfhrac36epgsq96lcvaa90d7mca8wg26zd75qal6jfqeqjuzr6t"
